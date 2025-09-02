@@ -1,0 +1,52 @@
+{
+  "parrilla": {
+    "name": "PARRILLA",
+    "description": "12 a 16 hs",
+    "order": 1
+  },
+  "tapeo": {
+    "name": "TAPEO",
+    "description": "",
+    "order": 2
+  },
+  "principales": {
+    "name": "PRINCIPALES",
+    "description": "",
+    "order": 3
+  },
+  "sandwicheria": {
+    "name": "SANDWICHERIA Y PANES",
+    "description": "",
+    "order": 4
+  },
+  "cafeteria": {
+    "name": "CAFETERIA",
+    "description": "",
+    "order": 5
+  },
+  "postres": {
+    "name": "POSTRES",
+    "description": "",
+    "order": 6
+  },
+  "bebidas": {
+    "name": "BEBIDAS SIN ALCOHOL",
+    "description": "",
+    "order": 7
+  },
+  "tragos": {
+    "name": "TRAGOS CLÁSICOS",
+    "description": "",
+    "order": 8
+  },
+  "vinos": {
+    "name": "VINOS",
+    "description": "",
+    "order": 9
+  },
+  "promociones": {
+    "name": "PROMOCIONES ESPECIALES",
+    "description": "",
+    "order": 10
+  }
+}

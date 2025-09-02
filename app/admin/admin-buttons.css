@@ -1,0 +1,118 @@
+/* Estilos personalizados para los botones del modal de editar categorías */
+.admin-edit-button {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  border-color: #3b82f6 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-edit-button:hover {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+.admin-increase-prices-button {
+  background-color: #10b981 !important;
+  color: white !important;
+  border-color: #10b981 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-increase-prices-button:hover {
+  background-color: #059669 !important;
+  border-color: #059669 !important;
+}
+
+.admin-close-button {
+  background-color: #6b7280 !important;
+  color: white !important;
+  border-color: #6b7280 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-close-button:hover {
+  background-color: #4b5563 !important;
+  border-color: #4b5563 !important;
+}
+
+.admin-cancel-button {
+  background-color: #6b7280 !important;
+  color: white !important;
+  border-color: #6b7280 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-cancel-button:hover {
+  background-color: #4b5563 !important;
+  border-color: #4b5563 !important;
+}
+
+/* Forzar estilos para botones con variant="outline" */
+.admin-edit-button[data-variant="outline"] {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  border-color: #3b82f6 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-increase-prices-button[data-variant="outline"] {
+  background-color: #10b981 !important;
+  color: white !important;
+  border-color: #10b981 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-close-button[data-variant="outline"] {
+  background-color: #6b7280 !important;
+  color: white !important;
+  border-color: #6b7280 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-cancel-button[data-variant="outline"] {
+  background-color: #6b7280 !important;
+  color: white !important;
+  border-color: #6b7280 !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* Espaciado global para todos los botones del admin */
+.admin-panel button,
+.admin-panel .btn,
+.admin-panel [class*="Button"] {
+  letter-spacing: 0.08em !important;
+}
+
+/* Espaciado específico para botones de acción principales */
+.admin-action-button {
+  letter-spacing: 0.08em !important;
+}
+
+/* Espaciado para botones de editar categorías */
+.admin-edit-categories button {
+  letter-spacing: 0.08em !important;
+}
+
+/* Espaciado global para TODOS los botones del panel admin */
+.admin-panel button,
+.admin-panel [class*="button"],
+.admin-panel [class*="Button"],
+.admin-panel .btn,
+.admin-panel .Button {
+  letter-spacing: 0.08em !important;
+}
+
+/* Espaciado específico para botones de las pestañas */
+.admin-panel .TabsContent button,
+.admin-panel .TabsContent [class*="Button"] {
+  letter-spacing: 0.08em !important;
+}
+
+/* Espaciado para botones de agregar/editar/eliminar */
+.admin-panel button[onClick*="setIsAdding"],
+.admin-panel button[onClick*="handleEdit"],
+.admin-panel button[onClick*="handleDelete"],
+.admin-panel button[onClick*="handleAdd"],
+.admin-panel button[onClick*="setIsEditing"] {
+  letter-spacing: 0.08em !important;
+}
