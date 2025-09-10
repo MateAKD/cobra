@@ -315,7 +315,7 @@
 
 /* Contenedor de categoría solo gris con líneas verdes */
 .neon-category-container {
-  border: 1px solid #000000;
+  border: 1px solid #AEAEAE;
   border-radius: 12px;
   padding: 2rem;
   margin: 2rem 0;
@@ -486,7 +486,7 @@
 /* Estilos para los tabs de navegación móvil */
 .mobile-tabs {
   background: #EDE9DD82; /* Fondo sólido blanco */
-  border: 1px solid #000000; /* Borde negro fino */
+  border: 1px solid #C5C5C5; /* Borde gris claro */
   border-radius: 0;
   backdrop-filter: blur(12px);
   margin: 0;
@@ -557,7 +557,7 @@
 .category-button:not(.active):hover {
   color: #333333; /* Texto negro más oscuro al hover */
   background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid #C5C5C5;
 }
 
 .tab-button {
