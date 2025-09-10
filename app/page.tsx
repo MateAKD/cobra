@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useEffect } from "react"
 
 import { useState } from "react"
 import type React from "react"
@@ -18,7 +18,7 @@ const CobraLoadingScreen = ({ isLoading }: { isLoading: boolean }) => {
       <div className="relative">
         <div className="cobra-logo-fill"></div>
         <div className="cobra-loading-text">
-          COBRA BAR
+          COBRA
           <span className="cobra-loading-dots"></span>
         </div>
       </div>
@@ -54,11 +54,17 @@ const MenuIcon = ({ type }: { type: "vegan" | "sin-tacc" | "picante" }) => {
   return icons[type]
 }
 
+// Función helper para capitalizar la primera letra
+const capitalizeFirstLetter = (text: string) => {
+  if (!text || text.length === 0) return text
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
+}
+
 const MenuSection = ({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) => (
   <section className="neon-category-container">
-    <div className="flex items-center gap-4 mb-3 sm:mb-4">
+    <div className="flex items-center gap-2 mb-3 sm:mb-4">
+      <h2 className="bebas-title-category">{title}</h2>
       <div className="geometric-accent"></div>
-      <h2 className="bebas-title text-2xl sm:text-3xl lg:text-4xl text-white !text-white">{title}</h2>
     </div>
     <div className="neon-category-divider"></div>
     {description && (
@@ -71,11 +77,10 @@ const MenuSection = ({ title, description, children }: { title: string; descript
 )
 
 const MenuItemComponent = ({ item }: { item: MenuItem }) => (
-  <div className="menu-item-hover p-4 sm:p-5 lg:p-6 mb-4 sm:mb-5 lg:mb-6 relative">
-    <div className="industrial-line"></div>
-    <div className="flex justify-between items-start mb-2 sm:mb-3">
+  <div className="menu-item-hover">
+    <div className="flex justify-between items-start">
       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-        <h3 className="text-lg sm:text-xl truncate text-white bebas-title">{item.name}</h3>
+        <h3 className="text-lg sm:text-xl truncate bebas-title" style={{color: '#231F20'}}>{item.name}</h3>
         {item.tags && (
           <div className="flex gap-1 sm:gap-2 flex-shrink-0">
             {item.tags.map((tag) => (
@@ -87,8 +92,8 @@ const MenuItemComponent = ({ item }: { item: MenuItem }) => (
       <span className="text-lg sm:text-xl flex-shrink-0 ml-2 text-coral bebas-title">${item.price}</span>
     </div>
     {item.description && (
-      <p className="text-sm sm:text-base leading-relaxed text-gray-light podium-soft lowercase">
-        {item.description.toLowerCase()}
+      <p className="description-text">
+        {capitalizeFirstLetter(item.description)}
       </p>
     )}
   </div>
@@ -96,32 +101,31 @@ const MenuItemComponent = ({ item }: { item: MenuItem }) => (
 
 const SubcategorySection = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="neon-subcategory-container">
-    <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">{title}</h3>
+    <h3 className="bebas-title-subcategory">{title}</h3>
     <div className="neon-subcategory-divider"></div>
     {children}
   </div>
 )
 
 const DrinkItemComponent = ({ item }: { item: DrinkItem }) => (
-  <div className="menu-item-hover p-4 sm:p-5 lg:p-6 mb-4 sm:mb-5 lg:mb-6 relative">
-    <div className="industrial-line"></div>
-    <div className="flex justify-between items-start mb-2 sm:mb-3">
+  <div className="menu-item-hover">
+    <div className="flex justify-between items-start">
       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-        <h3 className="text-lg sm:text-xl truncate text-white bebas-title">{item.name}</h3>
+        <h3 className="text-lg sm:text-xl truncate bebas-title" style={{color: '#231F20'}}>{item.name}</h3>
       </div>
       <span className="text-lg sm:text-xl flex-shrink-0 ml-2 text-coral bebas-title">${item.price}</span>
     </div>
     {item.description && (
-      <p className="text-sm sm:text-base leading-relaxed text-gray-light podium-soft lowercase">
-        {item.description.toLowerCase()}
+      <p className="description-text">
+        {capitalizeFirstLetter(item.description)}
       </p>
     )}
     {item.ingredients && (
-      <p className="text-xs sm:text-sm mb-2 text-gray-light podium-text">
+      <p className="text-sm sm:text-base mb-2 text-gray-light podium-text mt-1">
         <span className="text-gold font-semibold">Ingredientes:</span> {item.ingredients}
       </p>
     )}
-    <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm text-gray-light podium-text">
+    <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-sm sm:text-base text-gray-light podium-text mt-1">
       {item.glass && (
         <span>
           <span className="text-gold font-semibold">Vaso:</span> {item.glass}
@@ -160,6 +164,140 @@ export default function MauerMenu() {
     vinos: useRef<HTMLDivElement>(null),
     promociones: useRef<HTMLDivElement>(null)
   }
+
+  // Hook para detectar automáticamente la categoría visible
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout
+
+    const detectActiveCategory = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      
+      timeoutId = setTimeout(() => {
+        const scrollTop = window.scrollY
+        const windowHeight = window.innerHeight
+        const centerOfViewport = scrollTop + windowHeight / 2
+        
+        // Crear lista de todas las secciones con sus posiciones
+        const sections: Array<{key: string, top: number, bottom: number}> = []
+        
+        // Agregar secciones estándar
+        Object.entries(sectionRefs).forEach(([key, ref]) => {
+          if (ref.current) {
+            const rect = ref.current.getBoundingClientRect()
+            const top = rect.top + scrollTop
+            const bottom = top + rect.height
+            sections.push({ key, top, bottom })
+          }
+        })
+        
+        // Agregar categorías personalizadas
+        const customSections = document.querySelectorAll('[data-category]')
+        customSections.forEach(section => {
+          const rect = section.getBoundingClientRect()
+          const top = rect.top + scrollTop
+          const bottom = top + rect.height
+          const key = section.getAttribute('data-category') || ''
+          if (key) {
+            sections.push({ key, top, bottom })
+          }
+        })
+        
+        // Ordenar por posición vertical
+        sections.sort((a, b) => a.top - b.top)
+        
+        // Encontrar la sección activa
+        let activeSection = ''
+        
+        // Buscar la sección que contiene el centro del viewport
+        for (const section of sections) {
+          if (centerOfViewport >= section.top && centerOfViewport <= section.bottom) {
+            activeSection = section.key
+            break
+          }
+        }
+        
+        // Si no encontramos ninguna, buscar la que está más cerca del centro
+        if (!activeSection) {
+          let minDistance = Infinity
+          for (const section of sections) {
+            const sectionCenter = (section.top + section.bottom) / 2
+            const distance = Math.abs(centerOfViewport - sectionCenter)
+            if (distance < minDistance) {
+              minDistance = distance
+              activeSection = section.key
+            }
+          }
+        }
+        
+        // Debug: mostrar todas las secciones
+        console.log('=== DEBUG DETECCIÓN ===')
+        console.log(`Centro del viewport: ${centerOfViewport}`)
+        console.log('Secciones encontradas:')
+        sections.forEach(section => {
+          console.log(`  ${section.key}: ${section.top} - ${section.bottom} (centro: ${(section.top + section.bottom) / 2})`)
+        })
+        
+        // Actualizar si es diferente
+        if (activeSection && activeSection !== activeTab) {
+          console.log(`✅ Cambiando a: ${activeSection} (centro: ${centerOfViewport})`)
+          setActiveTab(activeSection)
+          
+          // Scroll automático de la barra de categorías
+          setTimeout(() => {
+            const activeButton = document.querySelector(`[data-tab="${activeSection}"]`)
+            if (activeButton) {
+              const categoryContainer = document.querySelector('.category-scroll-container')
+              if (categoryContainer) {
+                const containerRect = categoryContainer.getBoundingClientRect()
+                const buttonRect = activeButton.getBoundingClientRect()
+                
+                // Calcular si el botón está fuera de la vista
+                const isButtonVisible = buttonRect.left >= containerRect.left && 
+                                       buttonRect.right <= containerRect.right
+                
+                if (!isButtonVisible) {
+                  // Calcular la posición de scroll para centrar el botón
+                  const containerScrollLeft = categoryContainer.scrollLeft
+                  const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
+                  const containerWidth = containerRect.width
+                  const buttonWidth = buttonRect.width
+                  
+                  const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
+                  
+                  // Scroll suave hacia el botón activo
+                  categoryContainer.scrollTo({
+                    left: targetScrollLeft,
+                    behavior: 'smooth'
+                  })
+                  
+                  console.log(`📱 Scrolleando barra hacia: ${activeSection}`)
+                }
+              }
+            }
+          }, 150) // Pequeño delay para asegurar que el DOM se actualice
+        } else if (activeSection) {
+          console.log(`✅ Ya activa: ${activeSection}`)
+        } else {
+          console.log('❌ No se encontró sección activa')
+        }
+      }, 100)
+    }
+
+    // Ejecutar al cargar
+    detectActiveCategory()
+
+    // Listener de scroll
+    window.addEventListener('scroll', detectActiveCategory, { passive: true })
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      window.removeEventListener('scroll', detectActiveCategory)
+    }
+  }, [activeTab])
   
   if (loading || subcategoryLoading) {
     return (
@@ -168,7 +306,7 @@ export default function MauerMenu() {
           <div className="relative w-32 h-32 mx-auto mb-4">
             {/* Logo en escala de grises como fondo */}
             <img
-              src="/Logo cobra sf.png"
+              src="/Logo cobra NEGRO.png"
               alt="Logo Cobra"
               className="absolute inset-0 w-full h-full object-contain opacity-30"
               style={{ filter: "grayscale(1)" }}
@@ -176,7 +314,7 @@ export default function MauerMenu() {
             />
             {/* Logo blanco encima, con animación de "llenado" vertical */}
             <img
-              src="/Logo cobra sf.png"
+              src="/Logo cobra NEGRO.png"
               alt="Logo Cobra"
               className="absolute inset-0 w-full h-full object-contain animate-logo-fill"
               style={{
@@ -187,19 +325,26 @@ export default function MauerMenu() {
               }}
               draggable={false}
             />
-            {/* Barra de progreso animada debajo del logo */}
-            <div className="absolute left-0 right-0 bottom-[-18px] flex justify-center">
-              <div className="h-2 w-24 rounded-full overflow-hidden bg-gray-700/40">
-                <div className="h-full bg-gold animate-progress-bar" />
-              </div>
-            </div>
             <style jsx global>{`
               @keyframes logo-fill {
                 0% {
                   clip-path: inset(100% 0 0 0);
                   opacity: 1;
                 }
+                20% {
+                  clip-path: inset(80% 0 0 0);
+                  opacity: 1;
+                }
+                40% {
+                  clip-path: inset(60% 0 0 0);
+                  opacity: 1;
+                }
+                60% {
+                  clip-path: inset(40% 0 0 0);
+                  opacity: 1;
+                }
                 80% {
+                  clip-path: inset(20% 0 0 0);
                   opacity: 1;
                 }
                 100% {
@@ -208,17 +353,8 @@ export default function MauerMenu() {
                 }
               }
               .animate-logo-fill {
-                animation: logo-fill 2.2s cubic-bezier(0.4,0,0.2,1) forwards;
+                animation: logo-fill 3s ease-in-out forwards;
                 will-change: clip-path;
-              }
-              @keyframes progress-bar {
-                0% { transform: translateX(-100%); }
-                60% { transform: translateX(10%); }
-                100% { transform: translateX(0); }
-              }
-              .animate-progress-bar {
-                animation: progress-bar 2.2s cubic-bezier(0.4,0,0.2,1) infinite alternate;
-                will-change: transform;
               }
             `}</style>
           </div>
@@ -494,11 +630,32 @@ export default function MauerMenu() {
         setTimeout(() => {
           const activeButton = document.querySelector(`[data-tab="${sectionKey}"]`)
           if (activeButton) {
-            activeButton.scrollIntoView({
-              behavior: "smooth",
-              block: "nearest",
-              inline: "center"
-            })
+            const categoryContainer = document.querySelector('.category-scroll-container')
+            if (categoryContainer) {
+              const containerRect = categoryContainer.getBoundingClientRect()
+              const buttonRect = activeButton.getBoundingClientRect()
+              
+              // Calcular si el botón está fuera de la vista
+              const isButtonVisible = buttonRect.left >= containerRect.left && 
+                                     buttonRect.right <= containerRect.right
+              
+              if (!isButtonVisible) {
+                // Calcular la posición de scroll para centrar el botón
+                const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
+                const containerWidth = containerRect.width
+                const buttonWidth = buttonRect.width
+                
+                const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
+                
+                // Scroll suave hacia el botón activo
+                categoryContainer.scrollTo({
+                  left: targetScrollLeft,
+                  behavior: 'smooth'
+                })
+                
+                console.log(`📱 Scroll manual hacia: ${sectionKey}`)
+              }
+            }
           }
         }, 300)
       }, 100)
@@ -514,30 +671,31 @@ export default function MauerMenu() {
         {/* Contenido centrado */}
         <div className="relative z-10 text-center px-4 sm:px-6">
           {/* Logo */}
-          <div className="mb-8 sm:mb-12">
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Cobra_NoBackground-trwzeFIXzdmEuvngiprrcuYD24nRsU.png"
-              alt="Cobra Logo"
-              className="h-32 sm:h-40 lg:h-48 w-auto object-contain mx-auto opacity-90"
+          <div className="mb-1 sm:mb-5">
+            <img
+              src="/Logo cobra NEGRO.png"
+              alt="Logo Cobra Negro"
+              className="h-60 sm:h-40 lg:h-48 w-auto object-contain mx-auto opacity-90"
             />
           </div>
 
-          {/* Título principal */}
-          <h1 className="bebas-title text-5xl sm:text-6xl lg:text-7xl text-transparent bg-clip-text bg-gradient-to-b from-amber-300 to-amber-600 mb-4 sm:mb-6">
-            COBRA BAR
-          </h1>
-
           {/* Año */}
-          <p className="text-2xl sm:text-3xl tracking-[0.3em] text-gray-300 mb-8 sm:mb-12 podium-text">
-            2025
+          <p
+            className="text-sm sm:text-base tracking-tighter text-gray-300 mb-22 sm:mb-8 podium-text"
+            style={{ letterSpacing: "-1px" }}
+          >
+            Since 2020
           </p>
 
           {/* Sección de chefs */}
-          <div className="mb-16 sm:mb-20">
-            <h2 className="bebas-title text-xl sm:text-2xl text-white/80 mb-3">
-              Chefs:
+          <div className="mb-6 sm:mb-8">
+            <h2
+              className="bebas-title font-bold"
+              style={{ color: "#231F20", letterSpacing: "-1px", fontSize: "20px" }}
+            >
+              <b>Chefs:</b>
             </h2>
-            <div className="space-y-1 mb-6">
+            <div className="space-y-1 mb-2">
               <p className="podium-text text-gray-400 text-lg sm:text-xl">
                 Ezequiel Román
               </p>
@@ -576,7 +734,7 @@ export default function MauerMenu() {
       {/* Contenido del menú */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
 
-        <div className="sticky top-0 z-50 mobile-tabs mb-8 lg:hidden">
+        <div className="sticky top-0 z-50 mobile-tabs mb-6 lg:hidden">
           <div className="flex overflow-x-auto category-scroll-container">
             {[
               { key: "parrilla", label: "PARRILLA" },
@@ -594,7 +752,7 @@ export default function MauerMenu() {
                 key={tab.key}
                 data-tab={tab.key}
                 onClick={() => scrollToSection(tab.key)}
-                className={`flex-shrink-0 text-xs bebas-title category-button ${
+                className={`flex-shrink-0 bebas-title-category-bar category-button ${
                   activeTab === tab.key ? "active" : ""
                 }`}
               >
@@ -608,7 +766,7 @@ export default function MauerMenu() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12 lg:gap-16">
             {/* Left Column */}
             <div>
-              <div ref={sectionRefs.parrilla}>
+              <div ref={sectionRefs.parrilla} data-section-id="parrilla">
                 <MenuSection 
                   title={categories.parrilla?.name || "PARRILLA"}
                   description={categories.parrilla?.description}
@@ -622,7 +780,7 @@ export default function MauerMenu() {
                 </MenuSection>
               </div>
 
-              <div ref={sectionRefs.tapeo}>
+              <div ref={sectionRefs.tapeo} data-section-id="tapeo">
                 <MenuSection 
                   title={categories.tapeo?.name || "TAPEO"}
                   description={categories.tapeo?.description}
@@ -633,7 +791,7 @@ export default function MauerMenu() {
                 </MenuSection>
               </div>
 
-              <div ref={sectionRefs.principales}>
+              <div ref={sectionRefs.principales} data-section-id="principales">
                 <MenuSection 
                   title={categories.principales?.name || "PRINCIPALES"}
                   description={categories.principales?.description}
@@ -646,7 +804,7 @@ export default function MauerMenu() {
 
             {/* Center Column */}
             <div>
-              <div ref={sectionRefs.sandwicheria}>
+              <div ref={sectionRefs.sandwicheria} data-section-id="sandwicheria">
                 <MenuSection 
                   title={categories.sandwicheria?.name || "SANDWICHERIA Y PANES"}
                   description={categories.sandwicheria?.description}
@@ -657,7 +815,7 @@ export default function MauerMenu() {
                 </MenuSection>
               </div>
 
-              <div ref={sectionRefs.cafeteria}>
+              <div ref={sectionRefs.cafeteria} data-section-id="cafeteria">
                 <MenuSection 
                   title={categories.cafeteria?.name || "CAFETERIA"}
                   description={categories.cafeteria?.description}
@@ -673,7 +831,7 @@ export default function MauerMenu() {
                 </MenuSection>
               </div>
 
-              <div ref={sectionRefs.postres}>
+              <div ref={sectionRefs.postres} data-section-id="postres">
                 <MenuSection 
                   title={categories.postres?.name || "POSTRES"}
                   description={categories.postres?.description}
@@ -684,7 +842,7 @@ export default function MauerMenu() {
                 </MenuSection>
               </div>
 
-              <div ref={sectionRefs.bebidas}>
+              <div ref={sectionRefs.bebidas} data-section-id="bebidas">
                 <MenuSection 
                   title={categories.bebidas?.name || "BEBIDAS SIN ALCOHOL"}
                   description={categories.bebidas?.description}
@@ -703,34 +861,38 @@ export default function MauerMenu() {
 
             {/* Right Column */}
             <div>
-              <div ref={sectionRefs.tragos}>
+              <div ref={sectionRefs.tragos} data-section-id="tragos">
                 <MenuSection 
-                  title={categories.tragos?.name || "TRAGOS CLÁSICOS"}
+                  title={categories.tragos?.name || "TRAGOS"}
                   description={categories.tragos?.description}
                 >
-                  <div className="space-y-2 sm:space-y-3">
-                    {tragosClasicos?.map((drink, index) => (
-                      <DrinkItemComponent key={drink.id || index} item={drink} />
-                    ))}
-                  </div>
+                  <SubcategorySection title="TRAGOS CLÁSICOS">
+                    <div className="space-y-2 sm:space-y-3">
+                      {tragosClasicos?.map((drink, index) => (
+                        <DrinkItemComponent key={drink.id || index} item={drink} />
+                      ))}
+                    </div>
+                  </SubcategorySection>
                   
-                  <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light mt-8">TRAGOS ESPECIALES</h3>
-                  <div className="space-y-2 sm:space-y-3">
-                    {tragosEspeciales?.map((drink, index) => (
-                      <DrinkItemComponent key={drink.id || index} item={drink} />
-                    ))}
-                  </div>
+                  <SubcategorySection title="TRAGOS ESPECIALES">
+                    <div className="space-y-2 sm:space-y-3">
+                      {tragosEspeciales?.map((drink, index) => (
+                        <DrinkItemComponent key={drink.id || index} item={drink} />
+                      ))}
+                    </div>
+                  </SubcategorySection>
                   
-                  <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light mt-8">TRAGOS CON RED BULL</h3>
-                  <div className="space-y-2 sm:space-y-3">
-                    {tragosRedBull?.map((drink, index) => (
-                      <DrinkItemComponent key={drink.id || index} item={drink} />
-                    ))}
-                  </div>
+                  <SubcategorySection title="TRAGOS CON RED BULL">
+                    <div className="space-y-2 sm:space-y-3">
+                      {tragosRedBull?.map((drink, index) => (
+                        <DrinkItemComponent key={drink.id || index} item={drink} />
+                      ))}
+                    </div>
+                  </SubcategorySection>
                 </MenuSection>
               </div>
 
-              <div ref={sectionRefs.vinos}>
+              <div ref={sectionRefs.vinos} data-section-id="vinos">
                 <MenuSection 
                   title={categories.vinos?.name || "VINOS"}
                   description={categories.vinos?.description}
@@ -739,25 +901,25 @@ export default function MauerMenu() {
                     <div>
                       <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">TINTOS</h3>
                       {vinos?.tintos?.map((vino, index) => (
-                        <MenuItemComponent key={vino.id || index} item={vino} />
+                        <MenuItemComponent key={vino.id || index} item={{...vino, description: ''}} />
                       ))}
                     </div>
                     <div>
                       <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">BLANCOS</h3>
                       {vinos?.blancos?.map((vino, index) => (
-                        <MenuItemComponent key={vino.id || index} item={vino} />
+                        <MenuItemComponent key={vino.id || index} item={{...vino, description: ''}} />
                       ))}
                     </div>
                     <div>
                       <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">ROSADOS</h3>
                       {vinos?.rosados?.map((vino, index) => (
-                        <MenuItemComponent key={vino.id || index} item={vino} />
+                        <MenuItemComponent key={vino.id || index} item={{...vino, description: ''}} />
                       ))}
                     </div>
                     <div>
                       <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">COPAS DE VINO</h3>
                       {vinos?.copas?.map((vino, index) => (
-                        <MenuItemComponent key={vino.id || index} item={vino} />
+                        <MenuItemComponent key={vino.id || index} item={{...vino, description: ''}} />
                       ))}
                     </div>
                   </div>
@@ -767,12 +929,12 @@ export default function MauerMenu() {
               <MenuSection title="BOTELLAS" description="10% de descuento de 20 a 23hs">
                 <div className="space-y-2 sm:space-y-3">
                   {botellas?.map((drink, index) => (
-                    <MenuItemComponent key={drink.id || index} item={drink} />
+                    <MenuItemComponent key={drink.id || index} item={{...drink, description: ''}} />
                   ))}
                 </div>
               </MenuSection>
 
-              <div ref={sectionRefs.promociones}>
+              <div ref={sectionRefs.promociones} data-section-id="promociones">
                 <MenuSection 
                   title={categories.promociones?.name || "PROMOCIONES ESPECIALES"}
                   description={categories.promociones?.description}
@@ -792,25 +954,25 @@ export default function MauerMenu() {
               ))}
 
               <div className="promo-box rounded-lg p-6 sm:p-8 mt-8 sm:mt-10 lg:mt-12 industrial-accent">
-                <h3 className="bebas-title text-2xl sm:text-3xl mb-2 sm:mb-3 text-white !text-white">
+                <h3 className="bebas-title text-2xl sm:text-3xl mb-2 sm:mb-3 text-black !text-black">
                   COBRA BAR
                 </h3>
-                <div className="space-y-2 sm:space-y-3">
-                  <p className="text-sm sm:text-base mb-4 sm:mb-6 text-gray-light podium-text">
+                <div className="space-y-2 sm:space-y-3 text-black">
+                  <p className="text-sm sm:text-base mb-4 sm:mb-6 text-black podium-text">
                     <span className="bebas-title text-gold text-lg"></span> Avisar en caja para tomar extremos cuidados en su preparación
                   </p>
-                  <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-gray-light">
+                  <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-black">
                     <div className="flex items-center justify-center gap-2">
-                      <Leaf className="w-3 h-3 sm:w-4 sm:h-4 text-green" />
-                      <span className="podium-text">Vegano</span>
+                      <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-green" style={{ filter: 'drop-shadow(0 0 6px #00ff41)' }} />
+                      <span className="podium-text text-black">Vegano</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                      <Wheat className="w-3 h-3 sm:w-4 sm:h-4 text-gold" />
-                      <span className="podium-text">Sin TACC</span>
+                      <Wheat className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" style={{ filter: 'drop-shadow(0 0 6px #FFD700)' }} />
+                      <span className="podium-text text-black">Sin TACC</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                      <Flame className="w-3 h-3 sm:w-4 sm:h-4 text-coral" />
-                      <span className="podium-text">Picante</span>
+                      <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-coral" style={{ filter: 'drop-shadow(0 0 6px #FF5733)' }} />
+                      <span className="podium-text text-black">Picante</span>
                     </div>
                   </div>
                 </div>

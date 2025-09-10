@@ -930,25 +930,5 @@
         "price": "17.500"
       }
     ]
-  },
-  "frias": [
-    {
-      "id": "product-1756853819901-t5dufb3a1",
-      "name": "frutilla",
-      "description": "",
-      "price": "22.00",
-      "tags": [
-        "vegan"
-      ],
-      "hidden": false
-    },
-    {
-      "id": "product-1756854097778-ntdf3fb7w",
-      "name": "cheescake",
-      "description": "",
-      "price": "11.00",
-      "tags": [],
-      "hidden": false
-    }
-  ]
+  }
 }

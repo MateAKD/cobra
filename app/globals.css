@@ -184,36 +184,99 @@
 
 /* Íconos con colores consistentes de la paleta */
 .icon-vegan {
-  color: #00ff41; /* Verde neón */
+  color: #2f6f3a; /* Verde más sobrio sobre fondo claro */
 }
 
 .icon-gluten-free {
-  color: #f4b942; /* Amarillo dorado */
+  color: #b4703b; /* Tono cálido acorde al divisor */
 }
 
 .icon-spicy {
-  color: #ff7043; /* Coral */
+  color: #c9573a; /* Coral más apagado */
 }
 
 /* Tipografías con colores consistentes */
+/* Tipografía base para títulos Bebas Neue */
 .bebas-title {
   font-family: var(--font-bebas);
-  color: #ffffff; /* Blanco para títulos principales */
+  color: #c45a2a; /* Naranja/rojizo como en la imagen */
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  vertical-align: middle;
+}
+
+/* Categorías principales: Bebas Neue Bold 40px */
+.bebas-title-category {
+  font-family: var(--font-bebas);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 32px;
+  letter-spacing: 1.92px;
+  color: #C35C3C;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+/* Subcategorías: Bebas Neue Regular responsive */
+.bebas-title-subcategory {
+  font-family: var(--font-bebas);
   font-weight: 400;
+  font-size: 24px;
+  line-height: 20px;
+  letter-spacing: 1.2px;
+  color: #C35C3C;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+@media (min-width: 640px) {
+  .bebas-title-subcategory {
+    font-size: 28px;
+    line-height: 22px;
+    letter-spacing: 1.4px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bebas-title-subcategory {
+    font-size: 32px;
+    line-height: 24px;
+    letter-spacing: 1.6px;
+  }
+}
+
+/* Barra de categorías: Bebas Neue Regular 12px */
+.bebas-title-category-bar {
+  font-family: var(--font-bebas);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.96px;
+  text-align: center;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+/* Descripciones de platos: Inter Light 14px */
+.description-text {
+  font-family: var(--font-podium);
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 22.75px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: #775729;
 }
 
 .podium-text {
   font-family: var(--font-podium);
   font-weight: 400;
-  color: #cccccc; /* Gris claro para texto general */
+  color: #333333; /* Gris oscuro para texto general */
 }
 
 .podium-soft {
   font-family: var(--font-podium);
   font-weight: 300;
-  color: #cccccc; /* Gris claro para texto suave */
+  color: #4a4a4a; /* Gris medio para texto suave */
 }
 
 /* Divisores con colores de la paleta */
@@ -230,57 +293,68 @@
   border-radius: 0.5px;
 }
 
-/* Separadores solo líneas verdes */
+/* Divisores tipo línea manual como en la imagen */
 .neon-category-divider {
-  background: #00ff41;
-  height: 2px;
-  margin: 2rem 0;
+  height: 4px;
+  margin: 0.5rem 0 1.5rem 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 4' preserveAspectRatio='none'><path d='M1 2c8-1 16 1 24 0s16-2 24-1 16 3 24 1 16-2 24 0' fill='none' stroke='%23C35C3C' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' opacity='0.95'/></svg>");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  width: 200px;
+  max-width: 80%;
 }
 
-/* Separadores solo líneas verdes para subcategorías */
+/* Divisores para subcategorías - línea manual debajo del título */
 .neon-subcategory-divider {
-  background: #00ff41;
-  height: 1px;
-  margin: 1.5rem 0;
+  height: 3px;
+  margin: 0.3rem 0 1.2rem 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 3' preserveAspectRatio='none'><path d='M1 1.5c10-1 20 1 30 0s20-1.5 30-0.5 20 2 30 1' fill='none' stroke='%23C35C3C' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round' opacity='0.9'/></svg>");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 /* Contenedor de categoría solo gris con líneas verdes */
 .neon-category-container {
   border: 1px solid #000000;
-  border-radius: 8px;
-  padding: 1.5rem;
+  border-radius: 12px;
+  padding: 2rem;
   margin: 2rem 0;
-  background: rgba(42, 42, 42, 0.5);
+  background: transparent;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Contenedor de subcategoría con borde tipo corchete */
+.neon-subcategory-container {
+  border-left: 8px solid transparent;
+  padding-left: 2rem;
+  margin: 1.5rem 0;
+  border-radius: 0 4px 4px 0;
   position: relative;
 }
 
-/* Contenedor de subcategoría */
-.neon-subcategory-container {
-  border-left: 3px solid #00ff41;
-  padding-left: 1rem;
-  margin: 1rem 0;
-  border-radius: 0 4px 4px 0;
+/* Borde tipo corchete dibujado a mano para subcategorías */
+.neon-subcategory-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px; /* Ancho del corchete más visible */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 100' preserveAspectRatio='none'><path d='M 6 0 C 3 5, 1 15, 1 50 C 1 85, 3 95, 6 100' fill='none' stroke='%23C35C3C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' opacity='0.95'/></svg>");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
-/* Elemento geométrico con gradiente de la paleta */
+/* Asterisco personalizado con el mismo estilo que las líneas */
 .geometric-accent {
-  width: 12px;
-  height: 12px;
-  background: linear-gradient(45deg, #f4b942 0%, #00ff41 100%);
-  transform: rotate(45deg);
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   position: relative;
-}
-
-.geometric-accent::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  right: 2px;
-  bottom: 2px;
-  background: #000000;
-  transform: rotate(45deg);
+  background-image: url("/Group.svg");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 /* Líneas industriales con gradiente de la paleta */
@@ -332,30 +406,22 @@
   z-index: 10;
 }
 
-/* Mejorando los elementos del menú con líneas industriales */
+/* Elementos del menú simplificados como en la imagen */
 .menu-item-hover {
   position: relative;
   transition: all 0.3s ease;
   border-radius: 8px;
+  padding: 0.75rem 0;
+  margin-bottom: 0.5rem;
 }
 
 .menu-item-hover:hover {
-  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.2);
 }
 
+/* Removemos la línea industrial para un look más limpio */
 .industrial-line {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 0;
-  height: 1px;
-  background: linear-gradient(90deg, #f4b942 0%, #8bc34a 100%);
-  transition: width 0.3s ease;
-  transform: translateY(-50%);
-}
-
-.menu-item-hover:hover .industrial-line {
-  width: 4px;
+  display: none;
 }
 
 /* Highlight de precios con color coral */
@@ -377,10 +443,10 @@
   transition: opacity 0.3s ease;
 }
 
-/* Caja de promociones con gradiente de la paleta */
+/* Caja de promociones con gradiente diagonal naranja */
 .promo-box {
-  background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(255, 112, 67, 0.1) 100%);
-  border: 2px solid #00ff41;
+  background: linear-gradient(135deg, rgba(244, 185, 66, 0.5) 0%, rgba(244, 185, 66, 1) 100%);
+  border: 1px solid #000000; /* Borde negro fino */
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
@@ -419,17 +485,14 @@
 
 /* Estilos para los tabs de navegación móvil */
 .mobile-tabs {
-  background: rgba(42, 42, 42, 0.5);
-  border: 1px solid #000000;
-  border-radius: 8px;
+  background: #EDE9DD82; /* Fondo sólido blanco */
+  border: 1px solid #000000; /* Borde negro fino */
+  border-radius: 0;
   backdrop-filter: blur(12px);
-  margin: 1rem 0;
-  padding: 0.5rem;
+  margin: 0;
+  padding: 1rem 1.5rem;
   margin-left: -1rem;
   margin-right: -1rem;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
 }
 
 /* Mejoras para el scroll de categorías */
@@ -437,6 +500,9 @@
   scroll-behavior: smooth;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* Mejorar el scroll automático */
+  scroll-padding-left: 1rem;
+  scroll-padding-right: 1rem;
 }
 
 .category-scroll-container::-webkit-scrollbar {
@@ -447,16 +513,23 @@
 .category-button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 0.5rem 1rem;
-  margin: 0 0.25rem;
+  margin: 0 0.3rem;
   border: 1px solid transparent;
+  /* Aplicando tipografía específica para barra de categorías */
+  font-family: var(--font-bebas);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.96px;
+  text-align: center;
+  vertical-align: middle;
+  text-transform: uppercase;
 }
 
 .category-button:hover {
   transform: translateY(-1px);
-  border-color: #00ff41;
-  background: rgba(0, 255, 65, 0.1);
 }
 
 .category-button:active {
@@ -464,22 +537,27 @@
   transition: all 0.1s ease;
 }
 
-/* Botón activo con estilo del menú */
+/* Botón activo con estilo naranja oscuro del proyecto */
 .category-button.active {
-  background: rgba(0, 255, 65, 0.2);
-  border-color: #00ff41;
-  color: #00ff41;
+  background: rgba(195, 92, 60, 0.2); /* Fondo naranja suave usando #C35C3C */
+  border: 2px solid #C35C3C; /* Recuadro naranja oscuro */
+  color: #C35C3C; /* Texto naranja oscuro */
   font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(195, 92, 60, 0.3);
 }
 
 /* Botón inactivo */
 .category-button:not(.active) {
-  color: #cccccc;
+  color: #000000; /* Texto negro */
   background: transparent;
+  border: 1px solid transparent;
 }
 
 .category-button:not(.active):hover {
-  color: #00ff41;
+  color: #333333; /* Texto negro más oscuro al hover */
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .tab-button {
@@ -495,14 +573,16 @@
 }
 
 .tab-button.active {
-  background: linear-gradient(135deg, #f4b942 0%, #ff7043 100%);
-  color: #000000;
+  background: #c45a2a;
+  border-color: #a0471f;
+  color: #ffffff;
   font-weight: 600;
   transform: scale(1.05);
+  font-size: 1rem;
 }
 
 .tab-button:not(.active) {
-  color: #cccccc; /* Gris claro consistente */
+  color: #333333; /* Gris oscuro para tema claro */
   background: transparent;
 }
 
@@ -539,8 +619,8 @@
   }
 
   .geometric-accent {
-    width: 8px;
-    height: 8px;
+    width: 20px;
+    height: 20px;
   }
 
   /* Mejoras específicas para tabs en móvil */
@@ -596,18 +676,14 @@
   position: relative;
 }
 
-/* Fondo de escamas de cobra para el menú */
+/* Fondo beige claro con imagen fusionada en modo aclarar */
 .cobra-snake-bg {
-  background-image: url('/Fondo cobra.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-color: #EDE9DD; /* Color de fondo específico solicitado */
   min-height: 100vh;
   position: relative;
 }
 
-/* Overlay para mejorar la legibilidad del texto */
+/* Imagen de fondo con modo de fusión aclarar */
 .cobra-snake-bg::before {
   content: '';
   position: absolute;
@@ -615,7 +691,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background-image: url('/Fondo sutil.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  mix-blend-mode: lighten; /* Modo de fusión aclarar como en Figma */
+  opacity: 0.68; /* 68% de opacidad */
   z-index: 1;
 }
 
@@ -659,8 +741,8 @@ html {
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 12px solid #f4b942;
-  filter: drop-shadow(0 0 8px rgba(244, 185, 66, 0.6));
+  border-top: 12px solid #C35C3C;
+  filter: drop-shadow(0 0 8px rgba(195, 92, 60, 0.6));
 }
 
 .graffiti-arrow-down::after {
@@ -673,8 +755,8 @@ html {
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 10px solid #00ff41;
-  filter: drop-shadow(0 0 6px rgba(0, 255, 65, 0.6));
+  border-top: 10px solid #C35C3C;
+  filter: drop-shadow(0 0 6px rgba(195, 92, 60, 0.6));
   animation: graffitiPulse 2s ease-in-out infinite;
 }
 
@@ -718,8 +800,8 @@ html {
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 10px solid #00ff41;
-  filter: drop-shadow(0 0 6px rgba(0, 255, 65, 0.6));
+  border-top: 10px solid #C35C3C;
+  filter: drop-shadow(0 0 6px rgba(195, 92, 60, 0.6));
   animation: graffitiPulse 2s ease-in-out infinite;
 }
 
@@ -1074,7 +1156,7 @@ html {
   width: 200px;
   height: 200px;
   position: relative;
-  background-image: url('/Logo cobra sf.png');
+  background-image: url('/Logo cobra NEGRO.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -1089,13 +1171,13 @@ html {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/Logo cobra sf.png');
+  background-image: url('/Logo cobra NEGRO.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   filter: brightness(1.2) saturate(1.2);
   clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%);
-  animation: fillLogo 2s ease-in-out forwards;
+  animation: fillLogo 3s ease-in-out forwards;
 }
 
 /* Animación de relleno */
@@ -1103,8 +1185,17 @@ html {
   0% {
     clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%);
   }
-  50% {
-    clip-path: polygon(0 0, 50% 0, 50% 100%, 0% 100%);
+  20% {
+    clip-path: polygon(0 0, 20% 0, 20% 100%, 0% 100%);
+  }
+  40% {
+    clip-path: polygon(0 0, 40% 0, 40% 100%, 0% 100%);
+  }
+  60% {
+    clip-path: polygon(0 0, 60% 0, 60% 100%, 0% 100%);
+  }
+  80% {
+    clip-path: polygon(0 0, 80% 0, 80% 100%, 0% 100%);
   }
   100% {
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
