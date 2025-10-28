@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { fetchMenuData, filterHiddenItems } from "@/lib/menuUtils"
 
 interface MenuItem {
   id: string
@@ -66,40 +67,12 @@ export function useMenuData() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Función para filtrar productos ocultos
-  const filterHiddenItems = (data: any): MenuData => {
-    const filteredData: any = {}
-    
-    // Filtrar arrays simples
-    Object.keys(data).forEach(key => {
-      if (Array.isArray(data[key])) {
-        filteredData[key] = data[key].filter((item: any) => !item.hidden)
-      } else if (typeof data[key] === 'object' && data[key] !== null) {
-        // Filtrar objetos anidados
-        filteredData[key] = filterHiddenItems(data[key])
-      } else {
-        filteredData[key] = data[key]
-      }
-    })
-    
-    return filteredData
-  }
-
-  const fetchMenuData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/menu", {
-        cache: "no-store", // Siempre obtener datos frescos
-      })
-      
-      if (!response.ok) {
-        throw new Error("Error al cargar los datos del menú")
-      }
-      
-      const data = await response.json()
-      // Filtrar productos ocultos antes de establecer los datos
-      const filteredData = filterHiddenItems(data)
-      setMenuData(filteredData)
+      // Usar la función compartida que ya filtra productos ocultos
+      const data = await fetchMenuData(false) // false = no incluir productos ocultos
+      setMenuData(data)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido")
@@ -110,11 +83,11 @@ export function useMenuData() {
   }
 
   useEffect(() => {
-    fetchMenuData()
+    fetchData()
   }, [])
 
   const refetch = () => {
-    fetchMenuData()
+    fetchData()
   }
 
   return {

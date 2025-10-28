@@ -51,19 +51,23 @@ vercel --prod
 
 ### 3. Configuración Post-Deploy
 
-#### Variables de Entorno (Opcional)
+#### Variables de Entorno (Importante para Emails)
 
-Si necesitas configurar EmailJS o otras variables:
+Para que las notificaciones por email funcionen en producción:
 
 1. Ve al **Dashboard de Vercel**
 2. Selecciona tu proyecto
 3. Ve a **Settings > Environment Variables**
-4. Agrega las variables necesarias:
+4. Agrega las siguientes variables:
    ```
-   NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=tu_public_key
-   NEXT_PUBLIC_EMAILJS_SERVICE_ID=tu_service_id
-   NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=tu_template_id
+   RESEND_API_KEY=re_tu_api_key_de_resend
+   RECIPIENT_EMAIL=tu_email@ejemplo.com
    ```
+5. **Redeploy** el proyecto para que tome las nuevas variables
+
+⚠️ **IMPORTANTE**: Sin estas variables, las notificaciones por email NO funcionarán en producción.
+
+Para obtener una API Key de Resend, consulta `EMAIL_SETUP.md`
 
 #### Dominio Personalizado (Opcional)
 

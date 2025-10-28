@@ -133,15 +133,14 @@ export default function HideItemModal({
               variant="outline"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1"
+              className="flex-1 bg-black hover:bg-gray-800 text-white border-black"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              variant={isHiding ? "destructive" : "default"}
               disabled={loading}
-              className="flex-1"
+              className="flex-1 bg-black hover:bg-gray-800 text-white"
             >
               {loading ? (
                 <div className="flex items-center gap-2">

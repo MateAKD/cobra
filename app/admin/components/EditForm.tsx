@@ -73,11 +73,18 @@ export default function EditForm({ item, section, onSave, onCancel }: EditFormPr
     e.preventDefault()
     const dataToSave = { ...formData }
     
-    // Solo incluir tags si es un MenuItem
-    if (section === "tapas" || section === "panes" || section === "postres" ||
-        section === "parrilla" || section === "guarniciones" || section === "tapeo" ||
-        section === "milanesas" || section === "hamburguesas" || section === "ensaladas" ||
-        section === "otros" || section === "sandwicheria") {
+    // Verificar si es una categoría principal que debe incluir tags
+    const mainCategoriesWithTags = ["tapas", "panes", "postres", "parrilla", "guarniciones", "tapeo", 
+                                   "milanesas", "hamburguesas", "ensaladas", "otros", "sandwicheria", "empanadas"]
+    
+    // Verificar si es una subcategoría (no está en las categorías principales estándar)
+    const isSubcategory = !mainCategoriesWithTags.includes(section) && 
+                         !section.startsWith("vinos-") && 
+                         !section.startsWith("promociones-") &&
+                         !["tragos", "tragosClasicos", "tragosEspeciales", "tragosRedBull"].includes(section)
+    
+    // Solo incluir tags si es un MenuItem (categoría principal o subcategoría)
+    if (mainCategoriesWithTags.includes(section) || isSubcategory) {
       dataToSave.tags = tags
     }
     
@@ -274,6 +281,8 @@ export default function EditForm({ item, section, onSave, onCancel }: EditFormPr
         return "Editar Pan"
       case "postres":
         return "Editar Postre"
+      case "empanadas":
+        return "Editar Empanada"
       case "tragos":
         return "Editar Trago de Autor"
       case "clasicos":
@@ -289,10 +298,17 @@ export default function EditForm({ item, section, onSave, onCancel }: EditFormPr
   }
 
   const renderForm = () => {
-    if (section === "tapas" || section === "panes" || section === "postres" ||
-        section === "parrilla" || section === "guarniciones" || section === "tapeo" ||
-        section === "milanesas" || section === "hamburguesas" || section === "ensaladas" ||
-        section === "otros" || section === "sandwicheria") {
+    // Verificar si es una categoría principal que debe mostrar tags
+    const mainCategoriesWithTags = ["tapas", "panes", "postres", "parrilla", "guarniciones", "tapeo", 
+                                   "milanesas", "hamburguesas", "ensaladas", "otros", "sandwicheria", "empanadas"]
+    
+    // Verificar si es una subcategoría (no está en las categorías principales estándar)
+    const isSubcategory = !mainCategoriesWithTags.includes(section) && 
+                         !section.startsWith("vinos-") && 
+                         !section.startsWith("promociones-") &&
+                         !["tragos", "tragosClasicos", "tragosEspeciales", "tragosRedBull"].includes(section)
+    
+    if (mainCategoriesWithTags.includes(section) || isSubcategory) {
       return renderMenuItemForm()
     } else if (section === "tragos" || section === "tragosClasicos" || section === "tragosEspeciales" || section === "tragosRedBull") {
       return renderDrinkItemForm()
@@ -306,7 +322,7 @@ export default function EditForm({ item, section, onSave, onCancel }: EditFormPr
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>{getSectionTitle()}</CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="bg-black hover:bg-gray-800 text-white">
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -316,10 +332,10 @@ export default function EditForm({ item, section, onSave, onCancel }: EditFormPr
           {renderForm()}
           
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} className="bg-black hover:bg-gray-800 text-white border-black">
               Cancelar
             </Button>
-            <Button type="submit" className="flex items-center gap-2">
+            <Button type="submit" className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white">
               <Save className="w-4 h-4" />
               Guardar
             </Button>

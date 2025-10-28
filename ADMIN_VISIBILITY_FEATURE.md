@@ -76,8 +76,8 @@ Asunto: 🔔 Cambio en el Menú COBRA - OCULTAR/MOSTRAR
 ```
 
 ### Configuración
-- **Servicio**: EmailJS (ya configurado)
-- **Destinatario**: `matepedace@gmail.com`
+- **Servicio**: Resend (configurado en `.env.local`)
+- **Destinatario**: Configurado en `RECIPIENT_EMAIL`
 - **Trigger**: Automático en cada acción de visibilidad
 
 ## 🔧 Estructura Técnica
@@ -152,10 +152,11 @@ PATCH /api/menu/[section]/[id]/visibility
 4. ✅ Verifica la conexión a internet
 
 ### No recibo notificaciones
-1. ✅ Revisa la configuración de EmailJS
-2. ✅ Verifica el archivo `.env.local`
+1. ✅ Revisa la configuración de Resend en `.env.local`
+2. ✅ Verifica que `RESEND_API_KEY` y `RECIPIENT_EMAIL` estén configurados
 3. ✅ Revisa la carpeta de spam
-4. ✅ Consulta el dashboard de EmailJS
+4. ✅ Consulta el dashboard de Resend: https://resend.com/emails
+5. ✅ Prueba el endpoint de test: http://localhost:3000/api/test
 
 ### Error en la API
 1. ✅ Verifica que el servidor esté corriendo

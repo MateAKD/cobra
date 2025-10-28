@@ -22,12 +22,15 @@ import {
   ArrowLeft,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  GripVertical
 } from "lucide-react"
 import EditForm from "./components/EditForm"
 import AddForm from "./components/AddForm"
 import HideItemModal from "./components/HideItemModal"
+import CategoryDragDrop from "./components/CategoryDragDrop"
 import { sendProductNotification, getUserInfo, validateEmailConfig, type NotificationAction } from "@/lib/emailService"
+import { useAdminMenuData } from "@/hooks/use-admin-menu-data"
 import { useCategories } from "@/hooks/use-categories"
 
 interface MenuItem {
@@ -55,6 +58,7 @@ interface WineItem {
   id: string
   name: string
   price: string
+  description?: string
   hidden?: boolean
 }
 
@@ -78,7 +82,10 @@ export default function AdminPanel() {
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState("")
   
-  // Hook para categorías
+  // Hook para datos del menú del admin (incluye productos ocultos)
+  const { menuData: adminMenuData, loading: adminMenuLoading, refetch: refetchAdminMenu, getCategoryStats } = useAdminMenuData()
+  
+  // Hook para gestionar categorías
   const { categories, updateCategory } = useCategories()
   
   const [activeTab, setActiveTab] = useState("parrilla")
@@ -94,50 +101,45 @@ export default function AdminPanel() {
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [selectedSection, setSelectedSection] = useState<string>("")
   const [hideModalLoading, setHideModalLoading] = useState(false)
+  
+  // Estado para el modo de reordenamiento de categorías
+  const [isReorderingCategories, setIsReorderingCategories] = useState(false)
 
   // Estado para cada sección del menú - Nuevas categorías
-  const [parrilla, setParrilla] = useState<MenuItem[]>([])
-  const [guarniciones, setGuarniciones] = useState<MenuItem[]>([])
-  const [tapeo, setTapeo] = useState<MenuItem[]>([])
-  const [milanesas, setMilanesas] = useState<MenuItem[]>([])
-  const [hamburguesas, setHamburguesas] = useState<MenuItem[]>([])
-  const [ensaladas, setEnsaladas] = useState<MenuItem[]>([])
-  const [otros, setOtros] = useState<MenuItem[]>([])
-  const [postres, setPostres] = useState<MenuItem[]>([])
-  const [sandwicheria, setSandwicheria] = useState<MenuItem[]>([])
-  const [cafeteria, setCafeteria] = useState<MenuItem[]>([])
-  const [pasteleria, setPasteleria] = useState<MenuItem[]>([])
-  const [bebidasSinAlcohol, setBebidasSinAlcohol] = useState<MenuItem[]>([])
-  const [cervezas, setCervezas] = useState<MenuItem[]>([])
-  const [tragosClasicos, setTragosClasicos] = useState<MenuItem[]>([])
-  const [tragosEspeciales, setTragosEspeciales] = useState<MenuItem[]>([])
-  const [tragosRedBull, setTragosRedBull] = useState<MenuItem[]>([])
-  const [vinos, setVinos] = useState({
+  const [parrilla, setParrilla] = useState<any[]>([])
+  const [guarniciones, setGuarniciones] = useState<any[]>([])
+  const [tapeo, setTapeo] = useState<any[]>([])
+  const [milanesas, setMilanesas] = useState<any[]>([])
+  const [hamburguesas, setHamburguesas] = useState<any[]>([])
+  const [ensaladas, setEnsaladas] = useState<any[]>([])
+  const [otros, setOtros] = useState<any[]>([])
+  const [postres, setPostres] = useState<any[]>([])
+  const [sandwicheria, setSandwicheria] = useState<any[]>([])
+  const [cafeteria, setCafeteria] = useState<any[]>([])
+  const [pasteleria, setPasteleria] = useState<any[]>([])
+  const [bebidasSinAlcohol, setBebidasSinAlcohol] = useState<any[]>([])
+  const [cervezas, setCervezas] = useState<any[]>([])
+  const [tragosClasicos, setTragosClasicos] = useState<any[]>([])
+  const [tragosEspeciales, setTragosEspeciales] = useState<any[]>([])
+  const [tragosRedBull, setTragosRedBull] = useState<any[]>([])
+  const [vinos, setVinos] = useState<any>({
     tintos: [],
     blancos: [],
     rosados: [],
     copas: [],
   })
-  const [botellas, setBotellas] = useState<MenuItem[]>([])
-  const [promociones, setPromociones] = useState({
+  const [botellas, setBotellas] = useState<any[]>([])
+  const [promociones, setPromociones] = useState<any>({
     cafe: [],
     tapeos: [],
     bebidas: [],
   })
 
   // Estado para almacenar dinámicamente las secciones del menú
-  const [menuSections, setMenuSections] = useState<{[key: string]: MenuItem[]}>({})
+  const [menuSections, setMenuSections] = useState<{[key: string]: any[]}>({})
 
-  // Estado para todas las categorías (estándar + nuevas)
-  const [allCategories, setAllCategories] = useState([
-    { id: 'parrilla', name: 'PARRILLA', isStandard: true },
-    { id: 'tapeo', name: 'TAPEO', isStandard: true },
-    { id: 'principales', name: 'PRINCIPALES', isStandard: true },
-    { id: 'cafeteria', name: 'CAFETERÍA', isStandard: true },
-    { id: 'bebidas', name: 'BEBIDAS', isStandard: true },
-    { id: 'tragos', name: 'TRAGOS', isStandard: true },
-    { id: 'promociones', name: 'PROMOCIONES', isStandard: true }
-  ])
+  // Estado para todas las categorías (se cargarán dinámicamente desde el JSON)
+  const [allCategories, setAllCategories] = useState<any[]>([])
 
   // Estado para mapear subcategorías con sus categorías padre
   const [subcategoryMapping, setSubcategoryMapping] = useState<{[key: string]: string}>({
@@ -162,6 +164,11 @@ export default function AdminPanel() {
   const [selectedCategoryForSubcategory, setSelectedCategoryForSubcategory] = useState("")
   const [bulkPriceIncrease, setBulkPriceIncrease] = useState("")
   
+  // Estados para aumento porcentual de precios
+  const [showPriceIncreaseModal, setShowPriceIncreaseModal] = useState(false)
+  const [priceIncreasePercentage, setPriceIncreasePercentage] = useState("")
+  const [isIncreasingPrices, setIsIncreasingPrices] = useState(false)
+  
   // Estados para agregar productos
   const [isAddingProduct, setIsAddingProduct] = useState(false)
   const [selectedSectionForProduct, setSelectedSectionForProduct] = useState("")
@@ -178,23 +185,15 @@ export default function AdminPanel() {
     const authStatus = localStorage.getItem('cobra-admin-auth')
     if (authStatus === 'true') {
       setIsAuthenticated(true)
-      loadMenuData()
       
-      // Verificar configuración de EmailJS
+      // Verificar configuración de Resend
       if (!validateEmailConfig()) {
-        setNotificationStatus("⚠️ EmailJS no configurado - Ver EMAIL_SETUP.md")
+        setNotificationStatus("⚠️ Resend no configurado - Ver EMAIL_SETUP.md")
       }
     } else {
       setLoading(false)
     }
   }, [])
-
-  // Cargar datos solo si está autenticado
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadMenuData()
-    }
-  }, [isAuthenticated])
 
   // Función de login
   const handleLogin = (e: React.FormEvent) => {
@@ -215,6 +214,159 @@ export default function AdminPanel() {
     localStorage.removeItem('cobra-admin-auth')
     setPassword("")
   }
+
+  // Función para manejar el reordenamiento de categorías
+  const handleCategoriesReorder = async (reorderedCategories: any[]) => {
+    try {
+      setSaving(true)
+      setNotificationStatus("Guardando nuevo orden de categorías...")
+      
+      // Actualizar el estado local
+      setAllCategories(reorderedCategories)
+      
+      // Enviar al servidor
+      const response = await fetch('/api/admin/reorder-categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ categories: reorderedCategories }),
+      })
+      
+      if (response.ok) {
+        setNotificationStatus("✅ Orden de categorías actualizado correctamente")
+        setTimeout(() => setNotificationStatus(""), 3000)
+      } else {
+        throw new Error('Error al guardar el orden')
+      }
+    } catch (error) {
+      console.error('Error al reordenar categorías:', error)
+      setNotificationStatus("❌ Error al guardar el orden de categorías")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Función para sincronizar datos del admin con los estados locales
+  const syncAdminData = async () => {
+    if (!adminMenuData) return
+
+    // Siempre cargar el mapeo de subcategorías más reciente desde la API
+    let currentSubcategoryMapping = subcategoryMapping
+    try {
+      const mappingResponse = await fetch("/api/admin/subcategory-mapping")
+      if (mappingResponse.ok) {
+        currentSubcategoryMapping = await mappingResponse.json()
+        setSubcategoryMapping(currentSubcategoryMapping)
+      }
+    } catch (error) {
+      console.warn("Error cargando mapeo de subcategorías:", error)
+    }
+
+    // Actualizar todos los estados con las nuevas categorías
+    setParrilla(adminMenuData.parrilla || [])
+    setGuarniciones(adminMenuData.guarniciones || [])
+    setTapeo(adminMenuData.tapeo || [])
+    setMilanesas(adminMenuData.milanesas || [])
+    setHamburguesas(adminMenuData.hamburguesas || [])
+    setEnsaladas(adminMenuData.ensaladas || [])
+    setOtros(adminMenuData.otros || [])
+    setPostres(adminMenuData.postres || [])
+    setSandwicheria(adminMenuData.sandwicheria || [])
+    setCafeteria(adminMenuData.cafeteria || [])
+    setPasteleria(adminMenuData.pasteleria || [])
+    setBebidasSinAlcohol(adminMenuData.bebidasSinAlcohol || [])
+    setCervezas(adminMenuData.cervezas || [])
+    setTragosClasicos(adminMenuData.tragosClasicos || [])
+    setTragosEspeciales(adminMenuData.tragosEspeciales || [])
+    setTragosRedBull(adminMenuData.tragosRedBull || [])
+    setVinos(adminMenuData.vinos || {
+      tintos: [],
+      blancos: [],
+      rosados: [],
+      copas: [],
+    })
+    setBotellas(adminMenuData.botellas || [])
+    setPromociones(adminMenuData.promociones || {
+      cafe: [],
+      tapeos: [],
+      bebidas: [],
+    })
+
+    // Crear un objeto con todas las secciones del menú para acceso dinámico
+    const sections: {[key: string]: any[]} = {}
+    Object.keys(adminMenuData).forEach(key => {
+      const categoryData = adminMenuData[key as keyof typeof adminMenuData]
+      
+      if (Array.isArray(categoryData)) {
+        // Categoría con array directo
+        sections[key] = categoryData as any[]
+      } else if (typeof categoryData === 'object' && categoryData !== null) {
+        // Para objetos como vinos que tienen subcategorías
+        const obj = categoryData as any
+        Object.keys(obj).forEach(subKey => {
+          if (Array.isArray(obj[subKey])) {
+            sections[`${key}-${subKey}`] = obj[subKey]
+          }
+        })
+        
+        // También agregar la categoría principal si tiene contenido
+        if (Object.keys(obj).length > 0) {
+          sections[key] = [] // Array vacío para indicar que existe pero tiene subcategorías
+        }
+      }
+    })
+    setMenuSections(sections)
+
+    // Actualizar el estado de todas las categorías basándose en el archivo JSON
+    setAllCategories(prev => {
+      // Obtener todas las categorías del archivo JSON (solo las que realmente existen)
+      const jsonCategories: any[] = []
+      
+      // Solo agregar categorías que están realmente en el archivo JSON
+      Object.keys(adminMenuData).forEach(key => {
+        const categoryData = adminMenuData[key as keyof typeof adminMenuData]
+        
+        // Verificar si es un array directo o un objeto con subcategorías
+        const isArray = Array.isArray(categoryData)
+        const isObjectWithSubcategories = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
+        
+        if (isArray || isObjectWithSubcategories) {
+          // Determinar si es una categoría estándar o personalizada
+          const standardCategories = [
+            'parrilla', 'guarniciones', 'tapeo', 'milanesas', 'hamburguesas', 
+            'ensaladas', 'otros', 'postres', 'sandwicheria', 'cafeteria', 
+            'pasteleria', 'bebidasSinAlcohol', 'cervezas', 'tragosClasicos', 
+            'tragosEspeciales', 'tragosRedBull', 'vinos', 'botellas', 'promociones'
+          ]
+          
+          const isStandard = standardCategories.includes(key)
+          
+          // EXCLUIR SUBCATEGORÍAS: No agregar si esta clave es una subcategoría
+          const isSubcategory = Object.keys(currentSubcategoryMapping).includes(key)
+          
+          if (!isSubcategory) {
+            jsonCategories.push({
+              id: key,
+              name: key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+              isStandard: isStandard
+            })
+          }
+        }
+      })
+      return jsonCategories
+    })
+  }
+
+  // Sincronizar datos cuando cambien los datos del admin
+  useEffect(() => {
+    if (adminMenuData && isAuthenticated) {
+      syncAdminData().then(() => {
+        setLoading(false)
+      })
+    }
+  }, [adminMenuData, isAuthenticated])
 
   const loadMenuData = async () => {
     try {
@@ -298,12 +450,17 @@ export default function AdminPanel() {
       const customCategories: any[] = []
       Object.keys(data).forEach(key => {
         if (!standardCategories.includes(key) && Array.isArray(data[key])) {
-          // Crear una categoría personalizada con el nombre como ID
-          customCategories.push({
-            id: key,
-            name: key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-            isStandard: false
-          })
+          // EXCLUIR SUBCATEGORÍAS: No agregar si esta clave es una subcategoría
+          const isSubcategory = Object.keys(subcategoryMapping).includes(key)
+          
+          if (!isSubcategory) {
+            // Crear una categoría personalizada con el nombre como ID
+            customCategories.push({
+              id: key,
+              name: key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+              isStandard: false
+            })
+          }
         }
       })
       
@@ -1057,7 +1214,7 @@ export default function AdminPanel() {
       }, 100)
       
       // Crear la categoría en el archivo JSON del menú
-      const response = await fetch(`/api/menu/${categoryId}`, {
+      const menuResponse = await fetch(`/api/menu/${categoryId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1065,13 +1222,41 @@ export default function AdminPanel() {
         body: JSON.stringify([]),
       })
       
-      if (response.ok) {
+      if (menuResponse.ok) {
+        // También crear la categoría en categories.json
+        const categoryData = {
+          name: categoryName,
+          description: "",
+          order: allCategories.length + 1
+        }
+        
+        // Obtener las categorías actuales
+        const categoriesResponse = await fetch("/api/categories")
+        if (categoriesResponse.ok) {
+          const currentCategories = await categoriesResponse.json()
+          
+          // Agregar la nueva categoría
+          const updatedCategories = {
+            ...currentCategories,
+            [categoryId]: categoryData
+          }
+          
+          // Actualizar categories.json
+          await fetch("/api/categories", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedCategories),
+          })
+        }
+        
         // Limpiar y cerrar modal
         setNewCategoryName("")
         setIsAddingCategory(false)
         
         // Recargar datos del menú
-        await loadMenuData()
+        await refetchAdminMenu()
       }
     } catch (error) {
       console.error("Error adding category:", error)
@@ -1273,12 +1458,37 @@ export default function AdminPanel() {
       
       // PERSISTIR LA SUBCATEGORÍA EN EL ARCHIVO JSON DEL MENÚ
       try {
-        // En lugar de crear una nueva sección, agregar la subcategoría dentro de la categoría padre
-        // La subcategoría se manejará a través del mapeo y se renderizará dinámicamente
-        console.log("Subcategoría configurada para renderizarse dentro de", selectedCategoryForSubcategory)
+        // Crear la subcategoría en el archivo menu.json
+        const menuResponse = await fetch("/api/menu")
+        if (menuResponse.ok) {
+          const menuData = await menuResponse.json()
+          
+          // Agregar la nueva subcategoría al menú
+          const updatedMenuData = {
+            ...menuData,
+            [subcategoryId]: [] // Array vacío para la nueva subcategoría
+          }
+          
+          // Guardar el menú actualizado
+          const saveMenuResponse = await fetch("/api/menu", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedMenuData),
+          })
+          
+          if (!saveMenuResponse.ok) {
+            throw new Error("Error al guardar la subcategoría en el menú")
+          }
+          
+          console.log("Subcategoría creada en el archivo menu.json:", subcategoryId)
+        } else {
+          throw new Error("Error al cargar los datos del menú")
+        }
       } catch (error) {
-        console.error("Error configurando subcategoría:", error)
-        alert("Advertencia: La subcategoría se creó localmente pero no se pudo configurar correctamente")
+        console.error("Error configurando subcategoría en menu.json:", error)
+        alert("Advertencia: La subcategoría se creó localmente pero no se pudo guardar en el menú")
       }
       
       // PERSISTIR EL MAPEO DE SUBCATEGORÍAS EN EL ARCHIVO JSON
@@ -1330,7 +1540,9 @@ export default function AdminPanel() {
   // Función para editar categoría
   const handleEditCategory = (category: any) => {
     setEditingCategory(category)
-    setEditingCategoryDescription(categories[category.id]?.description || "")
+    // Cargar la descripción actual de la categoría desde el hook useCategories
+    const categoryData = categories[category.id]
+    setEditingCategoryDescription(categoryData?.description || "")
   }
 
   // Función para guardar cambios de categoría
@@ -1339,10 +1551,12 @@ export default function AdminPanel() {
       setSaving(true)
       setNotificationStatus("Guardando cambios de categoría...")
       
-      // Actualizar la descripción de la categoría
-      if (editingCategoryDescription !== categories[editingCategory?.id]?.description) {
-        await updateCategory(editingCategory.id, {
-          description: editingCategoryDescription
+      // Actualizar la descripción de la categoría usando el hook useCategories
+      if (updatedCategory.description !== undefined) {
+        await updateCategory(updatedCategory.id, {
+          name: updatedCategory.name,
+          description: updatedCategory.description || "",
+          order: updatedCategory.order || 1
         })
       }
       
@@ -1581,13 +1795,48 @@ export default function AdminPanel() {
           })
       }
 
-      // Eliminar del servidor (si existe la API)
+      // Eliminar del servidor solo si la categoría existe en el archivo JSON
       try {
-        await fetch(`/api/menu/${categoryId}`, {
+        const response = await fetch(`/api/menu/${categoryId}`, {
           method: "DELETE",
         })
+        
+        if (!response.ok && response.status !== 404) {
+          console.warn("Error al eliminar del servidor:", response.statusText)
+        }
       } catch (error) {
         console.warn("No se pudo eliminar del servidor:", error)
+      }
+
+      // Actualizar el archivo de categorías para eliminar la categoría
+      try {
+        const response = await fetch('/api/categories')
+        if (response.ok) {
+          const categoriesData = await response.json()
+          const updatedCategories = { ...categoriesData }
+          delete updatedCategories[categoryId]
+          
+          console.log("Eliminando categoría del archivo categories.json:", categoryId)
+          console.log("Categorías actualizadas:", updatedCategories)
+          
+          const updateResponse = await fetch('/api/categories', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedCategories),
+          })
+          
+          if (updateResponse.ok) {
+            console.log("Categoría eliminada exitosamente del archivo categories.json")
+            // Recargar los datos del admin para sincronizar
+            await refetchAdminMenu()
+          } else {
+            console.error("Error al actualizar categories.json:", updateResponse.statusText)
+          }
+        }
+      } catch (error) {
+        console.warn("No se pudo actualizar el archivo de categorías:", error)
       }
 
       setNotificationStatus("✅ Categoría eliminada")
@@ -1753,7 +2002,7 @@ export default function AdminPanel() {
       }
       
       // Recargar datos del menú para asegurar sincronización completa
-      await loadMenuData()
+      await refetchAdminMenu()
       
       // Limpiar mapeos inválidos (subcategorías que apuntan a categorías inexistentes)
       const validCategories = allCategories.map(cat => cat.id)
@@ -1964,6 +2213,56 @@ export default function AdminPanel() {
     }
   }
 
+  // Función para aumentar precios porcentualmente en toda la carta
+  const handleIncreaseAllPrices = async () => {
+    if (!priceIncreasePercentage || isNaN(parseFloat(priceIncreasePercentage)) || parseFloat(priceIncreasePercentage) <= 0) {
+      alert("Por favor ingresa un porcentaje válido mayor a 0")
+      return
+    }
+
+    const percentage = parseFloat(priceIncreasePercentage)
+    const confirmMessage = `¿Estás seguro de que quieres aumentar TODOS los precios de la carta en un ${percentage}%?\n\nEsta acción afectará TODOS los productos y NO se puede deshacer.`
+    
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    try {
+      setIsIncreasingPrices(true)
+      setNotificationStatus(`Aumentando todos los precios en ${percentage}%...`)
+
+      const response = await fetch("/api/admin/increase-prices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ percentage }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al aumentar precios")
+      }
+
+      const result = await response.json()
+      
+      // Recargar todos los datos del menú
+      await refetchAdminMenu()
+      
+      setNotificationStatus(`✅ ${result.message}`)
+      setShowPriceIncreaseModal(false)
+      setPriceIncreasePercentage("")
+      
+      setTimeout(() => setNotificationStatus(""), 5000)
+
+    } catch (error) {
+      console.error("Error increasing prices:", error)
+      alert(`Error al aumentar precios: ${error instanceof Error ? error.message : "Error desconocido"}`)
+    } finally {
+      setIsIncreasingPrices(false)
+    }
+  }
+
   // Función para renderizar subcategorías dentro de una categoría
   const renderSubcategories = (categoryId: string) => {
     const subcategories = Object.entries(subcategoryMapping)
@@ -2016,22 +2315,22 @@ export default function AdminPanel() {
                 <div className="flex gap-2">
                   <Button 
                     size="sm"
-                    className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold"
                     onClick={() => {
                       setSelectedSectionForProduct(subcatId)
                       setIsAddingProduct(true)
                     }}
                   >
-                    <Plus className="w-4 h-4" />
-                    Agregar Producto
+                    <Plus className="w-4 h-4 text-white" />
+                    <span className="text-white">Agregar Producto</span>
                   </Button>
                   <Button 
                     size="sm"
                     variant="outline"
-                    className="flex items-center gap-2 text-[#d32f2f] border-[#d32f2f] hover:bg-red-50 font-semibold"
+                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white border-red-600 font-semibold admin-delete-button"
                     onClick={() => handleDeleteSubcategory(subcatId)}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 text-white" />
                     Eliminar
                   </Button>
                 </div>
@@ -2055,21 +2354,21 @@ export default function AdminPanel() {
   }
 
   const renderMenuItem = (item: MenuItem, section: string) => (
-    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item' : 'admin-visible-item'}`}>
+    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <h3 className={`font-semibold text-lg ${item.hidden ? 'item-name' : 'item-name'}`}>{item.name}</h3>
-              <span className="text-gold font-bold">${item.price}</span>
+              <h3 className={`font-semibold text-lg ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
+              <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
               {item.hidden && (
-                <Badge variant="secondary" className="admin-hidden-badge text-xs">
+                <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
                   <EyeOff className="w-3 h-3 mr-1" />
                   OCULTO
                 </Badge>
               )}
             </div>
-            <p className={`text-sm mb-2 ${item.hidden ? 'item-description' : 'item-description'}`}>
+            <p className={`text-sm mb-2 ${item.hidden ? 'item-description text-gray-500' : 'item-description'}`}>
               {formatDescription(item.description)}
             </p>
           </div>
@@ -2078,27 +2377,34 @@ export default function AdminPanel() {
               <Button
                 size="sm"
                 onClick={() => handleEdit(item, section)}
-                className="bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
               >
-                <Edit className="w-4 h-4" />
+                <Edit className="w-4 h-4 text-white" />
               </Button>
               <Button
                 size="sm"
                 onClick={() => handleToggleVisibility(item, section)}
-                className={`${
+                className={`group relative ${
                   item.hidden 
-                    ? "bg-[#8bc34a] hover:bg-[#7cb342] text-white" 
-                    : "bg-[#ff7043] hover:bg-[#e65a3a] text-white"
+                    ? "bg-orange-600 hover:bg-green-600 text-white" 
+                    : "bg-green-600 hover:bg-orange-600 text-white"
                 } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
               >
-                {item.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
+                {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
+                <span className="group-hover:hidden">
+                  {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
+                </span>
+                <span className="hidden group-hover:block">
+                  {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
+                </span>
               </Button>
-              <Button
+              <Button 
                 size="sm"
                 onClick={() => handleDelete(item.id, section)}
-                className="bg-[#d32f2f] hover:bg-[#c62828] text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4 text-white" />
               </Button>
             </div>
             {item.tags && (
@@ -2120,26 +2426,26 @@ export default function AdminPanel() {
   )
 
   const renderDrinkItem = (item: DrinkItem, section: string) => (
-    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item' : 'admin-visible-item'}`}>
+    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <h3 className={`font-semibold text-lg ${item.hidden ? 'item-name' : 'item-name'}`}>{item.name}</h3>
-              <span className="text-gold font-bold">${item.price}</span>
+              <h3 className={`font-semibold text-lg ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
+              <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
               {item.hidden && (
-                <Badge variant="secondary" className="admin-hidden-badge text-xs">
+                <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
                   <EyeOff className="w-3 h-3 mr-1" />
                   OCULTO
                 </Badge>
               )}
             </div>
             {item.description && (
-              <p className={`text-sm mb-2 italic ${item.hidden ? 'item-description' : 'item-description'}`}>
+              <p className={`text-sm mb-2 italic ${item.hidden ? 'item-description text-gray-500' : 'item-description'}`}>
                 {formatDescription(item.description)}
               </p>
             )}
-            <div className={`grid grid-cols-2 gap-2 text-xs ${item.hidden ? 'item-details' : 'item-details'}`}>
+            <div className={`grid grid-cols-2 gap-2 text-xs ${item.hidden ? 'item-details text-gray-500' : 'item-details'}`}>
               {item.ingredients && (
                 <div><strong>Ingredientes:</strong> {item.ingredients}</div>
               )}
@@ -2159,27 +2465,34 @@ export default function AdminPanel() {
               <Button
                 size="sm"
                 onClick={() => handleEdit(item, section)}
-                className="bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
               >
-                <Edit className="w-4 h-4" />
+                <Edit className="w-4 h-4 text-white" />
               </Button>
               <Button
                 size="sm"
                 onClick={() => handleToggleVisibility(item, section)}
-                className={`${
+                className={`group relative ${
                   item.hidden 
-                    ? "bg-[#8bc34a] hover:bg-[#7cb342] text-white" 
-                    : "bg-[#ff7043] hover:bg-[#e65a3a] text-white"
+                    ? "bg-orange-600 hover:bg-green-600 text-white" 
+                    : "bg-green-600 hover:bg-orange-600 text-white"
                 } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
               >
-                {item.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
+                {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
+                <span className="group-hover:hidden">
+                  {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
+                </span>
+                <span className="hidden group-hover:block">
+                  {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
+                </span>
               </Button>
-              <Button
+              <Button 
                 size="sm"
                 onClick={() => handleDelete(item.id, section)}
-                className="bg-[#d32f2f] hover:bg-[#c62828] text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4 text-white" />
               </Button>
             </div>
         </div>
@@ -2189,45 +2502,52 @@ export default function AdminPanel() {
 )
 
   const renderWineItem = (item: WineItem, section: string) => (
-    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item' : 'admin-visible-item'}`}>
+    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
       <CardContent className="p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <h3 className={`font-semibold ${item.hidden ? 'item-name' : 'item-name'}`}>{item.name}</h3>
+            <h3 className={`font-semibold ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
             {item.hidden && (
-              <Badge variant="secondary" className="admin-hidden-badge text-xs">
+              <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
                 <EyeOff className="w-3 h-3 mr-1" />
                 OCULTO
               </Badge>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gold font-bold">${item.price}</span>
+            <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
             <Button
               size="sm"
               onClick={() => handleEdit(item, section)}
-              className="bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+              className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="w-4 h-4 text-white" />
             </Button>
             <Button
               size="sm"
               onClick={() => handleToggleVisibility(item, section)}
-              className={`${
+              className={`group relative ${
                 item.hidden 
-                  ? "bg-[#8bc34a] hover:bg-[#7cb342] text-white" 
-                  : "bg-[#ff7043] hover:bg-[#e65a3a] text-white"
+                  ? "bg-orange-600 hover:bg-green-600 text-white" 
+                  : "bg-green-600 hover:bg-orange-600 text-white"
               } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
             >
-              {item.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
+              {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
+              <span className="group-hover:hidden">
+                {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
+              </span>
+              <span className="hidden group-hover:block">
+                {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
+              </span>
             </Button>
-            <Button
-              size="sm"
-              onClick={() => handleDelete(item.id, section)}
-              className="bg-[#d32f2f] hover:bg-[#c62828] text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+              <Button 
+                size="sm"
+                onClick={() => handleDelete(item.id, section)}
+                className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
+              >
+                <Trash2 className="w-4 h-4 text-white" />
+              </Button>
           </div>
         </div>
       </CardContent>
@@ -2287,7 +2607,7 @@ export default function AdminPanel() {
                     {loginError}
                   </div>
                 )}
-                <Button type="submit" className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white border-0">
+                <Button type="submit" className="w-full bg-black hover:bg-gray-800 text-white border-0">
                   Acceder
                 </Button>
               </form>
@@ -2358,15 +2678,29 @@ export default function AdminPanel() {
           </div>
           <div className="flex gap-4">
             <Button 
+              onClick={() => setShowPriceIncreaseModal(true)}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+            >
+              <span className="text-lg">📈</span>
+              Aumentar Precios
+            </Button>
+            <Button 
+              onClick={() => setIsReorderingCategories(true)}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+            >
+              <GripVertical className="w-4 h-4" />
+              <span style={{ color: "white" }}>Reordenar Categorías</span>
+            </Button>
+            <Button 
               onClick={() => setIsEditingCategories(true)}
-              className="flex items-center gap-2 bg-[#ff7043] hover:bg-[#e65a3a] text-white border-0 font-semibold admin-action-button"
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
             >
               <Edit className="w-4 h-4" />
-              <span style={{ color: "black" }}>Editar Categorías</span>
+              <span style={{ color: "white" }}>Editar Categorías</span>
             </Button>
             <Button 
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-[#d32f2f] hover:bg-[#c62828] text-white border-0 font-semibold admin-action-button"
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
             >
               <Lock className="w-4 h-4" />
               Cerrar Sesión
@@ -2396,9 +2730,6 @@ export default function AdminPanel() {
             </div>
             <TabsList className="grid w-full gap-2 grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
             {allCategories.map((category) => {
-              // Debug: mostrar información de cada categoría
-              console.log(`Renderizando categoría: ${category.id} - ${category.name}`)
-              
               // Contar subcategorías para esta categoría
               const subcategoryCount = Object.entries(subcategoryMapping)
                 .filter(([subcatId, parentId]) => parentId === category.id)
@@ -2414,7 +2745,7 @@ export default function AdminPanel() {
                 >
                   {category.name}
                   {subcategoryCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#f4b942] text-black text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                    <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
                       {subcategoryCount}
                     </span>
                   )}
@@ -2426,36 +2757,52 @@ export default function AdminPanel() {
 
 
 
-                     {/* Parrilla */}
-           <TabsContent value="parrilla" className="space-y-4">
-             <div className="flex justify-between items-center">
-               <h2 className="text-2xl font-semibold text-gray-900">Parrilla</h2>
-               <div className="flex gap-2">
-                 <Button 
-                   size="sm"
-                   className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
-                   onClick={() => {
-                     setSelectedCategoryForSubcategory("parrilla")
-                     setIsAddingSubcategory(true)
-                   }}
-                 >
-                   <Plus className="w-4 h-4" />
-                   Agregar Subcategoría
-                 </Button>
-                 <Button 
-                   className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
-                   onClick={() => setIsAdding("parrilla")}
-                 >
-                   <Plus className="w-4 h-4" />
-                   Agregar Producto
-                 </Button>
-               </div>
-             </div>
-             {parrilla.map((item) => renderMenuItem(item, "parrilla"))}
-             
-             {/* Renderizar subcategorías dinámicamente */}
-             {renderSubcategories("parrilla")}
-           </TabsContent>
+            {/* Tabs dinámicos generados desde allCategories */}
+            {allCategories.map((category) => {
+              return (
+              <TabsContent key={category.id} value={category.id} className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-semibold text-gray-900">
+                    {category.name}
+                  </h2>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                      onClick={() => {
+                        setSelectedCategoryForSubcategory(category.id)
+                        setIsAddingSubcategory(true)
+                      }}
+                    >
+                      <Plus className="w-4 h-4 text-white" />
+                      <span className="text-white">Agregar Subcategoría</span>
+                    </Button>
+                    <Button 
+                      size="sm"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                      onClick={() => setIsAdding(category.id)}
+                    >
+                      <Plus className="w-4 h-4 text-white" />
+                      <span className="text-white">Agregar Producto</span>
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Mostrar productos de esta categoría si existen */}
+                {menuSections[category.id] && menuSections[category.id].length > 0 ? (
+                  menuSections[category.id].map((item) => renderMenuItem(item, category.id))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No hay productos en esta categoría aún.</p>
+                    <p className="text-sm">Haz clic en "Agregar Producto" para comenzar.</p>
+                  </div>
+                )}
+                
+                {/* Renderizar subcategorías dinámicas */}
+                {renderSubcategories(category.id)}
+              </TabsContent>
+            )
+            })}
 
                      {/* Tapeo */}
            <TabsContent value="tapeo" className="space-y-4">
@@ -2464,21 +2811,22 @@ export default function AdminPanel() {
                <div className="flex gap-2">
                  <Button 
                    size="sm"
-                   className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
+                   className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                    onClick={() => {
                      setSelectedCategoryForSubcategory("tapeo")
                      setIsAddingSubcategory(true)
                    }}
                  >
-                   <Plus className="w-4 h-4" />
-                   Agregar Subcategoría
+                   <Plus className="w-4 h-4 text-white" />
+                   <span className="text-white">Agregar Subcategoría</span>
                  </Button>
                  <Button 
-                   className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                   size="sm"
+                   className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                    onClick={() => setIsAdding("tapeo")}
                  >
-                   <Plus className="w-4 h-4" />
-                   Agregar Tapeo
+                   <Plus className="w-4 h-4 text-white" />
+                   <span className="text-white">Agregar Tapeo</span>
                  </Button>
                </div>
              </div>
@@ -2494,14 +2842,14 @@ export default function AdminPanel() {
                <h2 className="text-2xl font-semibold text-gray-900">Platos Principales</h2>
                <Button 
                  size="sm"
-                 className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
+                 className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                  onClick={() => {
                    setSelectedCategoryForSubcategory("principales")
                    setIsAddingSubcategory(true)
                  }}
                >
-                 <Plus className="w-4 h-4" />
-                 Agregar Subcategoría
+                 <Plus className="w-4 h-4 text-white" />
+                 <span className="text-white">Agregar Subcategoría</span>
                </Button>
              </div>
              
@@ -2515,14 +2863,14 @@ export default function AdminPanel() {
                <h2 className="text-2xl font-semibold text-gray-900">Cafetería y Pastelería</h2>
                <Button 
                  size="sm"
-                 className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
+                 className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                  onClick={() => {
                    setSelectedCategoryForSubcategory("cafeteria")
                    setIsAddingSubcategory(true)
                  }}
                >
-                 <Plus className="w-4 h-4" />
-                 Agregar Subcategoría
+                 <Plus className="w-4 h-4 text-white" />
+                 <span className="text-white">Agregar Subcategoría</span>
                </Button>
              </div>
              
@@ -2532,7 +2880,7 @@ export default function AdminPanel() {
                    <h3 className="text-xl font-semibold text-gray-900">Cafetería</h3>
                    <Button 
                      size="sm"
-                     className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("cafeteria")}
                    >
                      <Plus className="w-4 h-4" />
@@ -2547,7 +2895,7 @@ export default function AdminPanel() {
                    <h3 className="text-xl font-semibold text-gray-900">Pastelería</h3>
                    <Button 
                      size="sm"
-                     className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("pasteleria")}
                    >
                      <Plus className="w-4 h-4" />
@@ -2568,14 +2916,14 @@ export default function AdminPanel() {
                <h2 className="text-2xl font-semibold text-gray-900">Bebidas</h2>
                <Button 
                  size="sm"
-                 className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
+                 className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                  onClick={() => {
                    setSelectedCategoryForSubcategory("bebidas")
                    setIsAddingSubcategory(true)
                  }}
                >
-                 <Plus className="w-4 h-4" />
-                 Agregar Subcategoría
+                 <Plus className="w-4 h-4 text-white" />
+                 <span className="text-white">Agregar Subcategoría</span>
                </Button>
              </div>
              
@@ -2585,7 +2933,7 @@ export default function AdminPanel() {
                    <h3 className="text-xl font-semibold text-gray-900">Bebidas Sin Alcohol</h3>
                    <Button 
                      size="sm"
-                     className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("bebidasSinAlcohol")}
                    >
                      <Plus className="w-4 h-4" />
@@ -2600,7 +2948,7 @@ export default function AdminPanel() {
                    <h3 className="text-xl font-semibold text-gray-900">Cervezas</h3>
                    <Button 
                      size="sm"
-                     className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("cervezas")}
                    >
                      <Plus className="w-4 h-4" />
@@ -2621,7 +2969,7 @@ export default function AdminPanel() {
                        <h4 className="text-lg font-medium text-gray-900">Tintos</h4>
                        <Button 
                          size="sm"
-                         className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                         className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                          onClick={() => setIsAdding("vinos-tintos")}
                        >
                          <Plus className="w-3 h-3" />
@@ -2636,7 +2984,7 @@ export default function AdminPanel() {
                        <h4 className="text-lg font-medium text-gray-900">Blancos</h4>
                        <Button 
                          size="sm"
-                         className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                         className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                          onClick={() => setIsAdding("vinos-blancos")}
                        >
                          <Plus className="w-3 h-3" />
@@ -2651,7 +2999,7 @@ export default function AdminPanel() {
                        <h4 className="text-lg font-medium text-gray-900">Rosados</h4>
                        <Button 
                          size="sm"
-                         className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                         className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                          onClick={() => setIsAdding("vinos-rosados")}
                        >
                          <Plus className="w-3 h-3" />
@@ -2666,7 +3014,7 @@ export default function AdminPanel() {
                        <h4 className="text-lg font-medium text-gray-900">Copas</h4>
                        <Button 
                          size="sm"
-                         className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                         className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                          onClick={() => setIsAdding("vinos-copas")}
                        >
                          <Plus className="w-3 h-3" />
@@ -2683,7 +3031,7 @@ export default function AdminPanel() {
                    <h3 className="text-xl font-semibold text-gray-900">Botellas</h3>
                    <Button 
                      size="sm"
-                     className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("botellas")}
                    >
                      <Plus className="w-4 h-4" />
@@ -2704,14 +3052,14 @@ export default function AdminPanel() {
                <h2 className="text-2xl font-semibold text-gray-900">Tragos</h2>
                <Button 
                  size="sm"
-                 className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
+                 className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                  onClick={() => {
                    setSelectedCategoryForSubcategory("tragos")
                    setIsAddingSubcategory(true)
                  }}
                >
-                 <Plus className="w-4 h-4" />
-                 Agregar Subcategoría
+                 <Plus className="w-4 h-4 text-white" />
+                 <span className="text-white">Agregar Subcategoría</span>
                </Button>
              </div>
              
@@ -2721,7 +3069,7 @@ export default function AdminPanel() {
                    <h3 className="text-xl font-semibold text-gray-900">Tragos Clásicos</h3>
                    <Button 
                      size="sm"
-                     className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("tragosClasicos")}
                    >
                      <Plus className="w-4 h-4" />
@@ -2736,7 +3084,7 @@ export default function AdminPanel() {
                    <h3 className="text-xl font-semibold text-gray-900">Tragos Especiales</h3>
                    <Button 
                      size="sm"
-                     className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("tragosEspeciales")}
                    >
                      <Plus className="w-4 h-4" />
@@ -2751,7 +3099,7 @@ export default function AdminPanel() {
                    <h3 className="text-xl font-semibold text-gray-900">Tragos con Red Bull</h3>
                    <Button 
                      size="sm"
-                     className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("tragosRedBull")}
                    >
                      <Plus className="w-4 h-4" />
@@ -2772,14 +3120,14 @@ export default function AdminPanel() {
                 <h2 className="text-2xl font-semibold text-gray-900">Promociones</h2>
                 <Button 
                   size="sm"
-                  className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
+                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                   onClick={() => {
                     setSelectedCategoryForSubcategory("promociones")
                     setIsAddingSubcategory(true)
                   }}
                 >
-                  <Plus className="w-4 h-4" />
-                  Agregar Subcategoría
+                  <Plus className="w-4 h-4 text-white" />
+                  <span className="text-white">Agregar Subcategoría</span>
                 </Button>
               </div>
               
@@ -2790,7 +3138,7 @@ export default function AdminPanel() {
                     <h3 className="text-xl font-semibold text-gray-900">Café</h3>
                     <Button 
                       size="sm"
-                      className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                       onClick={() => setIsAdding("promociones-cafe")}
                     >
                       <Plus className="w-4 h-4" />
@@ -2805,7 +3153,7 @@ export default function AdminPanel() {
                     <h3 className="text-xl font-semibold text-gray-900">Tapeos</h3>
                     <Button 
                       size="sm"
-                      className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                       onClick={() => setIsAdding("promociones-tapeos")}
                     >
                       <Plus className="w-4 h-4" />
@@ -2820,7 +3168,7 @@ export default function AdminPanel() {
                     <h3 className="text-xl font-semibold text-gray-900">Bebidas</h3>
                     <Button 
                       size="sm"
-                      className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                       onClick={() => setIsAdding("promociones-bebidas")}
                     >
                       <Plus className="w-4 h-4" />
@@ -2835,57 +3183,6 @@ export default function AdminPanel() {
               {renderSubcategories("promociones")}
             </TabsContent>
 
-            {/* Contenido para categorías no estándar */}
-            {allCategories.filter(cat => !cat.isStandard).map((category) => {
-              // Debug: mostrar información de categorías personalizadas
-              if (process.env.NODE_ENV === 'development') {
-                console.log(`Renderizando categoría personalizada: ${category.id} - ${category.name}`)
-              }
-              
-              return (
-              <TabsContent key={category.id} value={category.id} className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-semibold text-gray-900">
-                    {category.name}
-                  </h2>
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm"
-                      className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
-                      onClick={() => {
-                        setSelectedCategoryForSubcategory(category.id)
-                        setIsAddingSubcategory(true)
-                      }}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar Subcategoría
-                    </Button>
-                    <Button 
-                      className="flex items-center gap-2 bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold admin-action-button"
-                      onClick={() => setIsAdding(category.id)}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar Producto
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Mostrar productos de esta categoría si existen */}
-                {menuSections[category.id] && menuSections[category.id].length > 0 ? (
-                  menuSections[category.id].map((item) => renderMenuItem(item, category.id))
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No hay productos en esta categoría aún.</p>
-                    <p className="text-sm">Haz clic en "Agregar Producto" para comenzar.</p>
-                  </div>
-                )}
-                
-                {/* Renderizar subcategorías dinámicas para categorías personalizadas */}
-                {renderSubcategories(category.id)}
-              </TabsContent>
-            )
-            })}
-
          </Tabs>
       </div>
 
@@ -2894,11 +3191,11 @@ export default function AdminPanel() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 w-11/12 max-w-6xl max-h-[90vh] overflow-y-auto admin-edit-categories">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-semibold">Editar Categorías</h3>
+              <h3 className="text-2xl font-semibold text-black">Editar Categorías</h3>
               <div className="flex gap-2">
                 <Button 
                   onClick={() => setIsAddingCategory(true)}
-                  className="flex items-center gap-2 bg-[#8bc34a] hover:bg-[#7cb342] text-white border-0 font-semibold admin-action-button"
+                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                 >
                   <Plus className="w-4 h-4" />
                   Agregar Categoría
@@ -2906,59 +3203,58 @@ export default function AdminPanel() {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsEditingCategories(false)}
-                  className="flex items-center gap-2 bg-gray-500 text-white border-gray-500 hover:bg-gray-600 hover:border-gray-600 font-semibold admin-close-button"
-                  style={{ backgroundColor: '#6b7280', color: 'white', borderColor: '#6b7280' }}
+                  className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-close-button"
                 >
-                  <X className="w-4 h-4" />
-                  Cerrar
+                  <X className="w-4 h-4 text-white" />
+                  <span className="text-white">Cerrar</span>
                 </Button>
               </div>
             </div>
             
             <div className="space-y-6">
               {allCategories.map((category) => (
-                <div key={category.id} className="border border-gray-200 rounded-lg p-6">
+                <div key={category.id} className="border-2 border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                      <h4 className="text-xl font-semibold text-gray-900 mb-2">
+                      <h4 className="text-xl font-bold text-black mb-2">
                         {category.name}
                       </h4>
                       <div className="space-y-1">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-700 font-medium">
                           ID: {category.id} • Tipo: {category.isStandard ? 'Estándar' : 'Personalizada'}
                         </p>
-                        {categories[category.id]?.description && (
-                          <p className="text-sm text-blue-600 font-medium">
-                            📝 Descripción: {categories[category.id].description}
-                          </p>
-                        )}
+                        {/* Descripción removida temporalmente */}
 
                         {/* Mostrar cantidad de productos */}
                         <div className="mt-2">
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-xs text-gray-700 bg-gray-200 px-3 py-1 rounded-full font-medium">
                             📦 {(() => {
-                              let count = 0
+                              let items: any[] = []
                               switch (category.id) {
-                                case "parrilla": count = parrilla.length; break
-                                case "guarniciones": count = guarniciones.length; break
-                                case "tapeo": count = tapeo.length; break
-                                case "milanesas": count = milanesas.length; break
-                                case "hamburguesas": count = hamburguesas.length; break
-                                case "ensaladas": count = ensaladas.length; break
-                                case "otros": count = otros.length; break
-                                case "postres": count = postres.length; break
-                                case "sandwicheria": count = sandwicheria.length; break
-                                case "cafeteria": count = cafeteria.length; break
-                                case "pasteleria": count = pasteleria.length; break
-                                case "bebidasSinAlcohol": count = bebidasSinAlcohol.length; break
-                                case "cervezas": count = cervezas.length; break
-                                case "tragosClasicos": count = tragosClasicos.length; break
-                                case "tragosEspeciales": count = tragosEspeciales.length; break
-                                case "tragosRedBull": count = tragosRedBull.length; break
-                                case "botellas": count = botellas.length; break
-                                default: count = (menuSections[category.id] || []).length
+                                case "parrilla": items = parrilla; break
+                                case "guarniciones": items = guarniciones; break
+                                case "tapeo": items = tapeo; break
+                                case "milanesas": items = milanesas; break
+                                case "hamburguesas": items = hamburguesas; break
+                                case "ensaladas": items = ensaladas; break
+                                case "otros": items = otros; break
+                                case "postres": items = postres; break
+                                case "sandwicheria": items = sandwicheria; break
+                                case "cafeteria": items = cafeteria; break
+                                case "pasteleria": items = pasteleria; break
+                                case "bebidasSinAlcohol": items = bebidasSinAlcohol; break
+                                case "cervezas": items = cervezas; break
+                                case "tragosClasicos": items = tragosClasicos; break
+                                case "tragosEspeciales": items = tragosEspeciales; break
+                                case "tragosRedBull": items = tragosRedBull; break
+                                case "botellas": items = botellas; break
+                                default: items = (menuSections[category.id] || [])
                               }
-                              return count === 1 ? '1 producto' : `${count} productos`
+                              
+                              const stats = getCategoryStats(items)
+                              if (stats.total === 0) return 'Sin productos'
+                              if (stats.hidden === 0) return `${stats.visible} visible${stats.visible !== 1 ? 's' : ''}`
+                              return `${stats.visible} visible${stats.visible !== 1 ? 's' : ''} • ${stats.hidden} oculto${stats.hidden !== 1 ? 's' : ''}`
                             })()}
                           </span>
                         </div>
@@ -2969,11 +3265,10 @@ export default function AdminPanel() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleEditCategory(category)}
-                        className="flex items-center gap-2 bg-blue-500 text-black border-blue-500 hover:bg-blue-600 hover:border-blue-600 font-semibold admin-edit-button"
-                        style={{ backgroundColor: '#3b82f6', color: 'black', borderColor: '#3b82f6' }}
+                        className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-edit-button"
                       >
-                        <Edit className="w-4 h-4" />
-                        <span style={{ color: "black" }}>Editar</span>
+                        <Edit className="w-4 h-4 text-white" />
+                        <span className="text-white">Editar</span>
                       </Button>
                       <Button 
                         variant="outline"
@@ -2984,21 +3279,19 @@ export default function AdminPanel() {
                             handleBulkPriceIncrease(category.id, parseFloat(percentage))
                           }
                         }}
-                        className="flex items-center gap-2 bg-green-500 border-green-500 hover:bg-green-600 hover:border-green-600 font-semibold"
-                        style={{ backgroundColor: '#10b981', color: 'black', borderColor: '#10b981' }}
+                        className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
                       >
-                        <Plus className="w-4 h-4" />
-                        <span style={{ color: "black" }}>Aumentar Precios</span>
+                        <Plus className="w-4 h-4 text-white" />
+                        <span className="text-white">Aumentar Precios</span>
                       </Button>
                       <Button 
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDeleteCategory(category.id)}
-                        className="flex items-center gap-2 bg-red-600 text-black border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold"
-                        style={{ color: 'black' }}
+                        className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
                       >
-                        <Trash2 className="w-4 h-4" />
-                        Eliminar
+                        <Trash2 className="w-4 h-4 text-white" />
+                        <span className="text-white">Eliminar</span>
                       </Button>
                     </div>
                   </div>
@@ -3012,9 +3305,9 @@ export default function AdminPanel() {
                       ).join(' ')
                       
                       return (
-                        <div key={subcatId} className="ml-6 mt-3 p-3 bg-gray-50 rounded border-l-4 border-gray-300">
+                        <div key={subcatId} className="ml-6 mt-3 p-4 bg-gray-100 rounded-lg border-l-4 border-black shadow-sm">
                           <div className="flex justify-between items-center">
-                            <span className="font-medium text-gray-700">{subcatName}</span>
+                            <span className="font-semibold text-black">{subcatName}</span>
                             <Button 
                               variant="outline"
                               size="sm"
@@ -3024,33 +3317,32 @@ export default function AdminPanel() {
                                   handleBulkPriceIncrease(subcatId, parseFloat(percentage))
                                 }
                               }}
-                              className="flex items-center gap-2 bg-green-500 text-black border-green-500 hover:bg-green-600 hover:border-green-600 font-semibold admin-increase-prices-button"
-                              style={{ backgroundColor: '#10b981', color: 'black', borderColor: '#10b981', letterSpacing: '0.07em' }}
+                              className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-increase-prices-button"
                             >
-                              <Plus className="w-3 h-3" style={{ color: 'black' }} />
-                              <span style={{ color: "black", letterSpacing: "0.07em" }}>Aumentar Precios</span>
+                              <Plus className="w-3 h-3 text-white" />
+                              <span className="text-white">Aumentar Precios</span>
                             </Button>
                             <Button 
                               variant="destructive"
                               size="sm"
                               onClick={() => handleDeleteSubcategory(subcatId)}
-                              className="flex items-center gap-2 bg-red-600 text-black border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold"
+                              className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
                             >
-                              <Trash2 className="w-3 h-3" />
-                              Eliminar
+                              <Trash2 className="w-3 h-3 text-white" />
+                              <span className="text-white">Eliminar</span>
                             </Button>
                           </div>
                         </div>
                       )
                     })}
-                </div>
+                  </div>
               ))}
 
               {/* Sección de categorías eliminadas */}
               {deletedCategories.length > 0 && (
-                <div className="mt-8 pt-6 border-t">
+                <div className="mt-8 pt-6 border-t-2 border-gray-300">
                   <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-semibold text-gray-900">🗑️ Categorías Eliminadas</h4>
+                    <h4 className="text-lg font-bold text-red-700">🗑️ Categorías Eliminadas</h4>
                     <Button 
                       variant="destructive"
                       size="sm"
@@ -3059,18 +3351,18 @@ export default function AdminPanel() {
                           setDeletedCategories([])
                         }
                       }}
-                      className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold"
+                      className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Limpiar Todo
+                      <Trash2 className="w-4 h-4 text-white" />
+                      <span className="text-white">Limpiar Todo</span>
                     </Button>
                   </div>
                   <div className="space-y-3">
                     {deletedCategories.map((deletedCategory) => (
-                      <div key={deletedCategory.id} className="flex justify-between items-center p-3 bg-red-50 border border-red-200 rounded">
+                      <div key={deletedCategory.id} className="flex justify-between items-center p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-sm">
                         <div>
-                          <span className="font-medium text-red-800">{deletedCategory.name}</span>
-                          <span className="text-sm text-red-600 ml-2">
+                          <span className="font-semibold text-black">{deletedCategory.name}</span>
+                          <span className="text-sm text-red-700 ml-2 font-medium">
                             (Eliminada el {new Date(deletedCategory.deletedAt).toLocaleDateString()})
                           </span>
                         </div>
@@ -3079,10 +3371,10 @@ export default function AdminPanel() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleRestoreCategory(deletedCategory)}
-                            className="flex items-center gap-2 bg-green-500 text-white border-green-500 hover:bg-green-600 hover:border-green-600 font-semibold"
+                            className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-restore-button"
                           >
-                            <Plus className="w-4 h-4" />
-                            Restaurar
+                            <Plus className="w-4 h-4 text-white" />
+                            <span className="text-white">Restaurar</span>
                           </Button>
                           <Button 
                             variant="destructive"
@@ -3092,10 +3384,10 @@ export default function AdminPanel() {
                                 setDeletedCategories(prev => prev.filter(cat => cat.id !== deletedCategory.id))
                               }
                             }}
-                            className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold"
+                            className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
                           >
-                            <Trash2 className="w-4 h-4" />
-                            Eliminar Permanentemente
+                            <Trash2 className="w-4 h-4 text-white" />
+                            <span className="text-white">Eliminar Permanentemente</span>
                           </Button>
                         </div>
                       </div>
@@ -3127,13 +3419,13 @@ export default function AdminPanel() {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsAddingCategory(false)}
-                  className="bg-gray-500 text-white border-gray-500 hover:bg-gray-600 hover:border-gray-600 font-semibold"
+                  className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
                 >
                   Cancelar
                 </Button>
                 <Button 
                   onClick={handleAddNewCategory}
-                  className="bg-blue-600 text-white hover:bg-blue-700 border-0 font-semibold"
+                  className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
                 >
                   Agregar
                 </Button>
@@ -3155,7 +3447,7 @@ export default function AdminPanel() {
                   setEditingCategory(null)
                   setEditingCategoryDescription("")
                 }}
-                className="flex items-center gap-2 bg-gray-500 text-white border-gray-500 hover:bg-gray-600 hover:border-gray-600 font-semibold"
+                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
               >
                 <X className="w-4 h-4" />
                 Cerrar
@@ -3222,7 +3514,7 @@ export default function AdminPanel() {
                                   handleBulkPriceIncrease(subcatId, parseFloat(percentage))
                                 }
                               }}
-                              className="flex items-center gap-2 bg-green-500 text-white border-green-500 hover:bg-green-600 hover:border-green-600 font-semibold"
+                              className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
                             >
                               <Plus className="w-3 h-3" />
                               Aumentar Precios
@@ -3231,9 +3523,9 @@ export default function AdminPanel() {
                               variant="destructive"
                               size="sm"
                               onClick={() => handleDeleteSubcategory(subcatId)}
-                              className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold"
+                              className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3 h-3 text-white" />
                               Eliminar
                             </Button>
                           </div>
@@ -3266,7 +3558,7 @@ export default function AdminPanel() {
                           handleAddNewSubcategory()
                         }
                       }}
-                      className="bg-blue-600 text-white hover:bg-blue-700 border-0 font-semibold"
+                      className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
@@ -3283,7 +3575,7 @@ export default function AdminPanel() {
                   setEditingCategory(null)
                   setEditingCategoryDescription("")
                 }}
-                className="bg-gray-500 text-white border-gray-500 hover:bg-gray-600 hover:border-gray-600 font-semibold"
+                className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
               >
                 Cancelar
               </Button>
@@ -3296,11 +3588,12 @@ export default function AdminPanel() {
                     handleSaveCategory({
                       ...editingCategory,
                       name,
+                      description: editingCategoryDescription,
                       hidden
                     })
                   }
                 }}
-                className="bg-blue-600 text-white hover:bg-blue-700 border-0 font-semibold"
+                className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
               >
                 Guardar Cambios
               </Button>
@@ -3328,13 +3621,13 @@ export default function AdminPanel() {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsAddingSubcategory(false)}
-                  className="bg-gray-500 text-white border-gray-500 hover:bg-gray-600 hover:border-gray-600 font-semibold"
+                  className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
                 >
                   Cancelar
                 </Button>
                 <Button 
                   onClick={handleAddNewSubcategory}
-                  className="bg-blue-600 text-white hover:bg-blue-700 border-0 font-semibold"
+                  className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
                 >
                   Agregar
                 </Button>
@@ -3353,6 +3646,83 @@ export default function AdminPanel() {
         currentStatus={selectedItem?.hidden ? 'hidden' : 'visible'}
         loading={hideModalLoading}
       />
+
+      {/* Modal para aumento porcentual de precios */}
+      {showPriceIncreaseModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4 text-black flex items-center gap-2">
+              <span className="text-2xl">📈</span>
+              Aumentar Precios de Toda la Carta
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="priceIncreasePercentage" className="text-black">
+                  Porcentaje de Aumento (%)
+                </Label>
+                <Input
+                  id="priceIncreasePercentage"
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={priceIncreasePercentage}
+                  onChange={(e) => setPriceIncreasePercentage(e.target.value)}
+                  placeholder="Ej: 10 para aumentar 10%"
+                  className="mt-1"
+                />
+                <p className="text-sm text-gray-600 mt-1">
+                  Ingresa el porcentaje que deseas aumentar en todos los precios
+                </p>
+              </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <span className="text-yellow-600 text-lg">⚠️</span>
+                  <div>
+                    <p className="text-yellow-800 font-medium text-sm">Advertencia Importante:</p>
+                    <ul className="text-yellow-700 text-xs mt-1 space-y-1">
+                      <li>• Esta acción afectará TODOS los productos de la carta</li>
+                      <li>• Los cambios NO se pueden deshacer</li>
+                      <li>• Se recomienda hacer una copia de seguridad antes</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={() => {
+                  setShowPriceIncreaseModal(false)
+                  setPriceIncreasePercentage("")
+                }}
+                variant="outline"
+                className="flex-1 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800"
+                disabled={isIncreasingPrices}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleIncreaseAllPrices}
+                className="flex-1 bg-black hover:bg-gray-800 text-white"
+                disabled={isIncreasingPrices || !priceIncreasePercentage}
+              >
+                {isIncreasingPrices ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg mr-1">📈</span>
+                    Aumentar Precios
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal para agregar productos */}
       {isAddingProduct && (
@@ -3413,7 +3783,11 @@ export default function AdminPanel() {
                             : [...prev.tags, tag]
                         }))
                       }}
-                      className="text-xs text-black"
+                      className={`text-xs transition-all duration-200 ${
+                        newProduct.tags.includes(tag) 
+                          ? "bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800" 
+                          : "bg-white text-black border-gray-300 hover:border-black hover:bg-gray-50"
+                      }`}
                     >
                       {tag === "vegan" && "🌱"}
                       {tag === "sin-tacc" && "🌾"}
@@ -3432,13 +3806,13 @@ export default function AdminPanel() {
                     setNewProduct({ name: "", description: "", price: "", tags: [] })
                     setSelectedSectionForProduct("")
                   }}
-                  className="bg-gray-500 text-white border-gray-500 hover:bg-gray-600 hover:border-gray-600 font-semibold"
+                  className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
                 >
                   Cancelar
                 </Button>
                 <Button 
                   onClick={handleAddNewProduct}
-                  className="bg-[#f4b942] hover:bg-[#e6a93a] text-black border-0 font-semibold"
+                  className="bg-black hover:bg-gray-800 text-white border-0 font-semibold"
                   disabled={!newProduct.name.trim() || !newProduct.price.trim()}
                 >
                   Agregar Producto
@@ -3450,6 +3824,30 @@ export default function AdminPanel() {
       )}
 
       {/* Estilos CSS personalizados para los botones */}
+      {/* Modal para reordenar categorías */}
+      {isReorderingCategories && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-black">Reordenar Categorías</h3>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsReorderingCategories(false)}
+                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+              >
+                <X className="w-4 h-4" />
+                Cerrar
+              </Button>
+            </div>
+            
+            <CategoryDragDrop
+              categories={allCategories}
+              onCategoriesReorder={handleCategoriesReorder}
+            />
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
 
         

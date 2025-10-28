@@ -14,7 +14,15 @@ export async function GET() {
     const categoriesData = fs.readFileSync(categoriesFilePath, 'utf-8')
     const categories = JSON.parse(categoriesData)
     
-    return NextResponse.json(categories)
+    // Convertir a array, ordenar por 'order' y volver a convertir a objeto
+    const sortedCategories = Object.entries(categories)
+      .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
+      .reduce((acc, [key, value]) => {
+        acc[key] = value
+        return acc
+      }, {} as any)
+    
+    return NextResponse.json(sortedCategories)
   } catch (error) {
     console.error('Error reading categories:', error)
     return NextResponse.json({ error: 'Error al leer las categorías' }, { status: 500 })

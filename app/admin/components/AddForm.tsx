@@ -92,6 +92,8 @@ export default function AddForm({ section, onAdd, onCancel }: AddFormProps) {
         return "Agregar Nuevo Pan"
       case "postres":
         return "Agregar Nuevo Postre"
+      case "empanadas":
+        return "Agregar Nueva Empanada"
       case "tragos":
         return "Agregar Nuevo Trago de Autor"
       case "clasicos":
@@ -293,7 +295,7 @@ export default function AddForm({ section, onAdd, onCancel }: AddFormProps) {
     if (section === "tapas" || section === "panes" || section === "postres" ||
         section === "parrilla" || section === "guarniciones" || section === "tapeo" ||
         section === "milanesas" || section === "hamburguesas" || section === "ensaladas" ||
-        section === "otros" || section === "sandwicheria") {
+        section === "otros" || section === "sandwicheria" || section === "empanadas") {
       return renderMenuItemForm()
     } else if (section === "tragos" || section === "tragosClasicos" || section === "tragosEspeciales" || section === "tragosRedBull") {
       return renderDrinkItemForm()
@@ -310,7 +312,7 @@ export default function AddForm({ section, onAdd, onCancel }: AddFormProps) {
             <Plus className="w-5 h-5" />
             {getSectionTitle()}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="bg-black hover:bg-gray-800 text-white">
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -320,10 +322,10 @@ export default function AddForm({ section, onAdd, onCancel }: AddFormProps) {
           {renderForm()}
           
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} className="bg-black hover:bg-gray-800 text-white border-black">
               Cancelar
             </Button>
-            <Button type="submit" className="flex items-center gap-2">
+            <Button type="submit" className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white">
               <Save className="w-4 h-4" />
               Agregar
             </Button>

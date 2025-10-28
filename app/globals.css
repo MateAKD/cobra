@@ -1129,159 +1129,297 @@ html {
   border-color: transparent !important;
 }
 
-/* ==================== EFECTO DE CARGA COBRA LOGO ==================== */
+/* ==================== CARRUSEL DE LOGOS INFINITO ==================== */
 
-/* Contenedor del logo de carga */
-.cobra-loading-container {
-  position: fixed;
-  top: 0;
-  left: 0;
+/* Contenedor principal del carrusel */
+.logos-carousel-container {
   width: 100%;
-  height: 100%;
-  background: #000000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  transition: opacity 0.5s ease-out;
+  overflow: hidden;
+  position: relative;
+  padding: 1rem 0;
 }
 
-.cobra-loading-container.fade-out {
-  opacity: 0;
+/* Carrusel con máscara de gradiente en los bordes */
+.logos-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Máscara de gradiente para efecto de desvanecimiento en los bordes */
+.logos-carousel::before,
+.logos-carousel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  z-index: 2;
   pointer-events: none;
 }
 
-/* Logo con efecto de relleno */
-.cobra-logo-fill {
-  width: 200px;
-  height: 200px;
-  position: relative;
-  background-image: url('/Logo cobra NEGRO.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  filter: brightness(0) saturate(100%);
-}
-
-/* Efecto de relleno */
-.cobra-logo-fill::before {
-  content: '';
-  position: absolute;
-  top: 0;
+.logos-carousel::before {
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('/Logo cobra NEGRO.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  filter: brightness(1.2) saturate(1.2);
-  clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%);
-  animation: fillLogo 3s ease-in-out forwards;
+  background: linear-gradient(to right, #EDE9DD, transparent);
 }
 
-/* Animación de relleno */
-@keyframes fillLogo {
+.logos-carousel::after {
+  right: 0;
+  background: linear-gradient(to left, #EDE9DD, transparent);
+}
+
+/* Pista de logos que se mueve */
+.logos-track {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  animation: scrollLogos 30s linear infinite;
+  width: fit-content;
+}
+
+/* Animación de scroll infinito */
+@keyframes scrollLogos {
   0% {
-    clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%);
-  }
-  20% {
-    clip-path: polygon(0 0, 20% 0, 20% 100%, 0% 100%);
-  }
-  40% {
-    clip-path: polygon(0 0, 40% 0, 40% 100%, 0% 100%);
-  }
-  60% {
-    clip-path: polygon(0 0, 60% 0, 60% 100%, 0% 100%);
-  }
-  80% {
-    clip-path: polygon(0 0, 80% 0, 80% 100%, 0% 100%);
+    transform: translateX(0);
   }
   100% {
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+    transform: translateX(-50%);
   }
 }
 
-/* Efecto de brillo adicional */
-.cobra-logo-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, transparent 30%, rgba(244, 185, 66, 0.3) 50%, transparent 70%);
-  animation: shimmer 2.5s ease-in-out infinite;
-  opacity: 0;
-  animation-delay: 1s;
+/* Pausa la animación al hacer hover */
+.logos-carousel:hover .logos-track {
+  animation-play-state: paused;
 }
 
-@keyframes shimmer {
-  0% {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
-/* Texto de carga */
-.cobra-loading-text {
-  position: absolute;
-  bottom: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #f4b942;
+/* Estilos individuales de cada logo */
+.logo-item {
+  flex-shrink: 0;
   font-family: var(--font-bebas);
-  font-size: 1.2rem;
-  letter-spacing: 0.2em;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  opacity: 0;
-  animation: fadeInText 0.5s ease-in-out forwards;
-  animation-delay: 1.5s;
+  color: #666666;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: default;
 }
 
-@keyframes fadeInText {
-  to {
-    opacity: 1;
-  }
+/* Efecto hover en los logos */
+.logo-item:hover {
+  opacity: 0.9;
+  color: #555555;
+  transform: scale(1.05);
 }
 
-/* Puntos de carga */
-.cobra-loading-dots::after {
-  content: '';
-  animation: loadingDots 1.5s infinite;
-}
-
-@keyframes loadingDots {
-  0%, 20% {
-    content: '';
-  }
-  40% {
-    content: '.';
-  }
-  60% {
-    content: '..';
-  }
-  80%, 100% {
-    content: '...';
-  }
-}
-
-/* Responsive */
+/* Responsive para móviles */
 @media (max-width: 640px) {
-  .cobra-logo-fill {
-    width: 150px;
-    height: 150px;
+  .logos-track {
+    gap: 2rem;
+    animation-duration: 25s;
   }
   
-  .cobra-loading-text {
+  .logo-item {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  .logos-carousel::before,
+  .logos-carousel::after {
+    width: 30px;
+  }
+}
+
+/* Responsive para tablets */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .logos-track {
+    gap: 2.5rem;
+    animation-duration: 28s;
+  }
+  
+  .logo-item {
+    font-size: 0.8rem;
+  }
+}
+
+/* Para pantallas grandes, hacer el carrusel más lento */
+@media (min-width: 1025px) {
+  .logos-track {
+    gap: 4rem;
+    animation-duration: 35s;
+  }
+  
+  .logo-item {
     font-size: 1rem;
-    bottom: -50px;
+    padding: 0.625rem 1.25rem;
+  }
+}
+
+/* ==================== CARRUSEL DE LOGOS GRANDE (VERSIÓN MEJORADA) ==================== */
+
+/* Contenedor principal del carrusel grande */
+.logos-carousel-container-large {
+  width: 100%;
+  max-width: 1200px;
+  overflow: hidden;
+  position: relative;
+  padding: 0.6rem 0;
+  margin: 0 auto;
+}
+
+/* Carrusel grande con máscara de gradiente en los bordes */
+.logos-carousel-large {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Máscara de gradiente para efecto de desvanecimiento en los bordes */
+.logos-carousel-large::before,
+.logos-carousel-large::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.logos-carousel-large::before {
+  left: 0;
+  background: linear-gradient(to right, #EDE9DD, transparent);
+}
+
+.logos-carousel-large::after {
+  right: 0;
+  background: linear-gradient(to left, #EDE9DD, transparent);
+}
+
+/* Pista de logos grande que se mueve */
+.logos-track-large {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  animation: scrollLogosLarge 40s linear infinite;
+  width: fit-content;
+}
+
+/* Animación de scroll infinito para carrusel grande */
+@keyframes scrollLogosLarge {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Pausa la animación al hacer hover */
+.logos-carousel-large:hover .logos-track-large {
+  animation-play-state: paused;
+}
+
+/* Estilos individuales de cada logo grande */
+.logo-item-large {
+  flex-shrink: 0;
+  height: 50px;
+  width: auto;
+  max-width: 100px;
+  object-fit: contain;
+  filter: grayscale(100%) brightness(0.4) contrast(2) saturate(0);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  user-select: none;
+  cursor: default;
+}
+
+/* Efecto hover en los logos grandes */
+.logo-item-large:hover {
+  opacity: 0.9;
+  filter: grayscale(100%) brightness(0.6) contrast(2) saturate(0);
+  transform: scale(1.1);
+}
+
+/* Logos con fondo que necesita ser removido */
+.logo-item-large.remove-background {
+  filter: grayscale(100%) brightness(0.4) contrast(2) saturate(0);
+  mix-blend-mode: multiply;
+  background: transparent;
+}
+
+.logo-item-large.remove-background:hover {
+  filter: grayscale(100%) brightness(0.6) contrast(2) saturate(0);
+  mix-blend-mode: multiply;
+}
+
+/* Responsive para móviles - carrusel grande */
+@media (max-width: 640px) {
+  .logos-carousel-container-large {
+    padding: 0.45rem 0;
+  }
+  
+  .logos-track-large {
+    gap: 3rem;
+    animation-duration: 30s;
+  }
+  
+  .logo-item-large {
+    height: 35px;
+    max-width: 70px;
+  }
+  
+  .logos-carousel-large::before,
+  .logos-carousel-large::after {
+    width: 50px;
+  }
+}
+
+/* Responsive para tablets - carrusel grande */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .logos-carousel-container-large {
+    padding: 0.525rem 0;
+  }
+  
+  .logos-track-large {
+    gap: 3.5rem;
+    animation-duration: 35s;
+  }
+  
+  .logo-item-large {
+    height: 40px;
+    max-width: 80px;
+  }
+  
+  .logos-carousel-large::before,
+  .logos-carousel-large::after {
+    width: 60px;
+  }
+}
+
+/* Para pantallas grandes - carrusel grande */
+@media (min-width: 1025px) {
+  .logos-carousel-container-large {
+    padding: 0.75rem 0;
+  }
+  
+  .logos-track-large {
+    gap: 5rem;
+    animation-duration: 45s;
+  }
+  
+  .logo-item-large {
+    height: 55px;
+    max-width: 110px;
+  }
+  
+  .logos-carousel-large::before,
+  .logos-carousel-large::after {
+    width: 100px;
   }
 }

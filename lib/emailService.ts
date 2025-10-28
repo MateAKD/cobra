@@ -1,13 +1,3 @@
-import emailjs from '@emailjs/browser'
-
-// Configuración de EmailJS
-const EMAIL_CONFIG = {
-  serviceId: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || 'YOUR_SERVICE_ID',
-  templateId: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || 'YOUR_TEMPLATE_ID',
-  publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || 'YOUR_PUBLIC_KEY',
-  recipientEmail: process.env.NEXT_PUBLIC_RECIPIENT_EMAIL || 'matepedace@gmail.com'
-}
-
 // Tipos de acciones para las notificaciones
 export type NotificationAction = 'AGREGAR' | 'EDITAR' | 'ELIMINAR' | 'OCULTAR' | 'MOSTRAR'
 
@@ -33,48 +23,27 @@ export const sendProductNotification = async (
   userInfo?: { ip?: string; userAgent?: string }
 ): Promise<boolean> => {
   try {
-    // Preparar los datos para la plantilla de email
-    const templateParams = {
-      action: action,
-      product_name: product.name,
-      product_description: product.description || 'Sin descripción',
-      product_price: product.price,
-      product_section: getSectionDisplayName(product.section),
-      product_tags: product.tags?.join(', ') || 'Sin etiquetas',
-      timestamp: new Date().toLocaleString('es-AR', {
-        timeZone: 'America/Argentina/Buenos_Aires',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }),
-      recipient_email: EMAIL_CONFIG.recipientEmail,
-      // Información adicional para tragos
-      ingredients: product.ingredients || '',
-      glass: product.glass || '',
-      technique: product.technique || '',
-      garnish: product.garnish || '',
-      // Información de ocultación/mostrar
-      reason: product.reason || '',
-      hidden_by: product.hiddenBy || '',
-      // Información del sistema
-      user_ip: userInfo?.ip || 'No disponible',
-      user_agent: userInfo?.userAgent || 'No disponible'
+    // Enviar la notificación a través de la API route
+    const response = await fetch('/api/send-notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action,
+        product,
+        userInfo
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    // Enviar el email usando EmailJS
-    const response = await emailjs.send(
-      EMAIL_CONFIG.serviceId,
-      EMAIL_CONFIG.templateId,
-      templateParams,
-      EMAIL_CONFIG.publicKey
-    )
-
+    const result = await response.json()
+    
     console.log('✅ Notificación enviada exitosamente:', {
-      status: response.status,
-      text: response.text,
+      messageId: result.messageId,
       action,
       product: product.name
     })
@@ -86,61 +55,10 @@ export const sendProductNotification = async (
   }
 }
 
-// Función para obtener el nombre legible de la sección
-const getSectionDisplayName = (section: string): string => {
-  const sectionNames: Record<string, string> = {
-    // Comidas
-    parrilla: 'Parrilla',
-    guarniciones: 'Guarniciones',
-    tapeo: 'Tapeo',
-    milanesas: 'Milanesas',
-    hamburguesas: 'Hamburguesas',
-    ensaladas: 'Ensaladas',
-    otros: 'Otros Platos',
-    sandwicheria: 'Sandwichería',
-    postres: 'Postres',
-    // Cafetería
-    cafeteria: 'Cafetería',
-    pasteleria: 'Pastelería',
-    // Bebidas
-    bebidasSinAlcohol: 'Bebidas Sin Alcohol',
-    cervezas: 'Cervezas',
-    botellas: 'Botellas',
-    // Tragos
-    tragosClasicos: 'Tragos Clásicos',
-    tragosEspeciales: 'Tragos Especiales',
-    tragosRedBull: 'Tragos con Red Bull',
-    // Vinos
-    'vinos-tintos': 'Vinos Tintos',
-    'vinos-blancos': 'Vinos Blancos',
-    'vinos-rosados': 'Vinos Rosados',
-    'vinos-copas': 'Copas de Vino',
-    // Promociones
-    'promociones-cafe': 'Promociones de Café',
-    'promociones-tapeos': 'Promociones de Tapeo',
-    'promociones-bebidas': 'Promociones de Bebidas',
-    // Secciones legacy
-    tapas: 'Tapas',
-    panes: 'Panes',
-    tragos: 'Tragos de Autor',
-    clasicos: 'Tragos Clásicos',
-    sinAlcohol: 'Sin Alcohol'
-  }
-
-  return sectionNames[section] || section
-}
-
-// Función para validar la configuración de EmailJS
+// Función para validar la configuración de Resend
 export const validateEmailConfig = (): boolean => {
-  const { serviceId, templateId, publicKey } = EMAIL_CONFIG
-  
-  if (serviceId === 'YOUR_SERVICE_ID' || 
-      templateId === 'YOUR_TEMPLATE_ID' || 
-      publicKey === 'YOUR_PUBLIC_KEY') {
-    console.warn('⚠️ EmailJS no está configurado correctamente. Por favor configura las variables de entorno.')
-    return false
-  }
-  
+  // Esta función ahora solo valida en el cliente
+  // La validación real se hace en el servidor
   return true
 }
 

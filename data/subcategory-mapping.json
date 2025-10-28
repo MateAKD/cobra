@@ -1,10 +1,6 @@
 {
-  "guarniciones": "parrilla",
-  "milanesas": "principales",
-  "hamburguesas": "principales",
-  "ensaladas": "principales",
-  "otros": "principales",
-  "cafe": "promociones",
-  "tapeos": "promociones",
-  "bebidas": "promociones"
+  "fritas": "empanadas",
+  "horno": "empanadas",
+  "chocolate": "tortas",
+  "carnes": "parrilla"
 }
