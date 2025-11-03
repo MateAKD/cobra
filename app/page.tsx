@@ -82,23 +82,23 @@ export default function HomePage() {
   }
 
   return (
-    <div className="h-screen cobra-snake-bg flex flex-col overflow-hidden">
-      {/* Header con logo - compacto para móvil */}
-      <header className="flex flex-col items-center pt-4 sm:pt-8 pb-2 sm:pb-3 px-4 flex-shrink-0">
+    <div className="h-screen cobra-snake-bg flex flex-col overflow-hidden justify-between">
+      {/* Header con logo - centrado */}
+      <header className="flex flex-col items-center pt-8 sm:pt-10 pb-3 sm:pb-4 px-4 flex-shrink-0">
         <div className="text-center">
           <img
             src="/Logo cobra NEGRO.png"
             alt="COBRA"
-            className="h-32 sm:h-44 md:h-52 lg:h-64 w-auto object-contain mx-auto mb-1 sm:mb-2"
+            className="h-36 sm:h-44 md:h-52 lg:h-64 w-auto object-contain mx-auto mb-2 sm:mb-3"
           />
-          <p className="text-[10px] sm:text-xs text-gray-700">
+          <p className="text-xs sm:text-sm text-gray-700">
             Bar & Lounge
           </p>
         </div>
       </header>
 
-      {/* Botonera principal - centrada y compacta */}
-      <main className="flex-1 flex flex-col justify-center px-3 sm:px-4 py-2 overflow-hidden">
+      {/* Botonera principal - centrada */}
+      <main className="flex-shrink-0 px-3 sm:px-4 pb-3">
         <div className="w-full max-w-xs sm:max-w-sm mx-auto space-y-2 sm:space-y-3">
           {/* Botón Menú */}
           <Link href="/menu" className="block">
@@ -224,30 +224,30 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer solo con copyright - compacto */}
-      <footer className="flex-shrink-0 pb-safe pt-2 sm:pt-3">
+      {/* Footer con copyright */}
+      <footer className="flex-shrink-0 pb-safe pt-3 sm:pt-4 pb-3 sm:pb-4">
         {/* Copyright y créditos */}
-        <div className="flex flex-col items-center pb-2 sm:pb-3 w-full">
-          <div className="text-center text-gray-500 text-[10px] sm:text-xs font-medium">
+        <div className="flex flex-col items-center w-full">
+          <div className="text-center text-gray-500 text-xs sm:text-sm font-medium">
             © 2025 COBRA Bar
           </div>
           {/* Créditos de desarrollo */}
-          <div className="flex justify-center items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
-            <p className="text-[9px] sm:text-[10px] text-gray-500">Dev by</p>
+          <div className="flex justify-center items-center gap-2 sm:gap-2.5 mt-1 sm:mt-1.5">
+            <p className="text-[10px] sm:text-xs text-gray-500">Dev by</p>
             <a 
               href="https://akdmiastudio.io/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-[9px] sm:text-[10px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
+              className="text-[10px] sm:text-xs text-gray-600 hover:text-gray-800 transition-colors duration-300"
             >
               AKDMIA
             </a>
-            <span className="text-[9px] sm:text-[10px] text-gray-400">•</span>
+            <span className="text-[10px] sm:text-xs text-gray-400">•</span>
             <a 
               href="https://livvvv.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-[9px] sm:text-[10px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
+              className="text-[10px] sm:text-xs text-gray-600 hover:text-gray-800 transition-colors duration-300"
             >
               Livv
             </a>
