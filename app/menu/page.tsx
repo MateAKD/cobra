@@ -167,6 +167,30 @@ export default function MenuPage() {
   useEffect(() => {
     let timeoutId: NodeJS.Timeout
 
+    const scrollCategoryBarToActive = (categoryKey: string) => {
+      const activeButton = document.querySelector(`[data-tab="${categoryKey}"]`)
+      if (activeButton) {
+        const categoryContainer = document.querySelector('.category-scroll-container')
+        if (categoryContainer) {
+          const containerRect = categoryContainer.getBoundingClientRect()
+          const buttonRect = activeButton.getBoundingClientRect()
+          
+          // Calcular la posición de scroll para centrar el botón
+          const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
+          const containerWidth = containerRect.width
+          const buttonWidth = buttonRect.width
+          
+          const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
+          
+          // Scroll suave hacia el botón activo
+          categoryContainer.scrollTo({
+            left: targetScrollLeft,
+            behavior: 'smooth'
+          })
+        }
+      }
+    }
+
     const detectActiveCategory = () => {
       if (timeoutId) {
         clearTimeout(timeoutId)
@@ -175,7 +199,8 @@ export default function MenuPage() {
       timeoutId = setTimeout(() => {
         const scrollTop = window.scrollY
         const windowHeight = window.innerHeight
-        const centerOfViewport = scrollTop + windowHeight / 2
+        // Usar la parte superior del viewport para detectar la categoría
+        const topOfViewport = scrollTop + 100 // Offset para el sticky header
         
         // Crear lista de todas las secciones con sus posiciones
         const sections: Array<{key: string, top: number, bottom: number}> = []
@@ -205,71 +230,40 @@ export default function MenuPage() {
         // Ordenar por posición vertical
         sections.sort((a, b) => a.top - b.top)
         
-        // Encontrar la sección activa
+        // Encontrar la sección activa basándose en la parte superior del viewport
         let activeSection = ''
         
-        // Buscar la sección que contiene el centro del viewport
-        for (const section of sections) {
-          if (centerOfViewport >= section.top && centerOfViewport <= section.bottom) {
-            activeSection = section.key
+        // Buscar la sección que está visible en la parte superior
+        for (let i = sections.length - 1; i >= 0; i--) {
+          if (topOfViewport >= sections[i].top) {
+            activeSection = sections[i].key
             break
           }
         }
         
-        // Si no encontramos ninguna, buscar la que está más cerca del centro
-        if (!activeSection) {
-          let minDistance = Infinity
-          for (const section of sections) {
-            const sectionCenter = (section.top + section.bottom) / 2
-            const distance = Math.abs(centerOfViewport - sectionCenter)
-            if (distance < minDistance) {
-              minDistance = distance
-              activeSection = section.key
-            }
-          }
+        // Si no encontramos ninguna y estamos al inicio, usar la primera
+        if (!activeSection && sections.length > 0) {
+          activeSection = sections[0].key
         }
         
-        // Actualizar si es diferente
+        // Actualizar solo si es diferente
         if (activeSection && activeSection !== activeTab) {
           setActiveTab(activeSection)
           
-          // Scroll automático de la barra de categorías
-          setTimeout(() => {
-            const activeButton = document.querySelector(`[data-tab="${activeSection}"]`)
-            if (activeButton) {
-              const categoryContainer = document.querySelector('.category-scroll-container')
-              if (categoryContainer) {
-                const containerRect = categoryContainer.getBoundingClientRect()
-                const buttonRect = activeButton.getBoundingClientRect()
-                
-                // Calcular si el botón está fuera de la vista
-                const isButtonVisible = buttonRect.left >= containerRect.left && 
-                                       buttonRect.right <= containerRect.right
-                
-                if (!isButtonVisible) {
-                  // Calcular la posición de scroll para centrar el botón
-                  const containerScrollLeft = categoryContainer.scrollLeft
-                  const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
-                  const containerWidth = containerRect.width
-                  const buttonWidth = buttonRect.width
-                  
-                  const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
-                  
-                  // Scroll suave hacia el botón activo
-                  categoryContainer.scrollTo({
-                    left: targetScrollLeft,
-                  behavior: 'smooth'
-                })
-              }
-            }
-          }
-        }, 150) // Pequeño delay para asegurar que el DOM se actualice
+          // Scroll automático de la barra de categorías con delay para asegurar que se actualice
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              scrollCategoryBarToActive(activeSection)
+            }, 50)
+          })
         }
-      }, 100)
+      }, 50) // Reducir el delay para una respuesta más rápida
     }
 
-    // Ejecutar al cargar
-    detectActiveCategory()
+    // Ejecutar al cargar y al montar el componente
+    const initialDetection = setTimeout(() => {
+      detectActiveCategory()
+    }, 300)
 
     // Listener de scroll
     window.addEventListener('scroll', detectActiveCategory, { passive: true })
@@ -278,9 +272,10 @@ export default function MenuPage() {
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
+      clearTimeout(initialDetection)
       window.removeEventListener('scroll', detectActiveCategory)
     }
-  }, [activeTab])
+  }, [activeTab, categories])
   
   if (loading || subcategoryLoading) {
     return (
@@ -770,66 +765,62 @@ export default function MenuPage() {
     return null;
   };
 
-      const scrollToSection = (sectionKey: string) => {
-      setActiveTab(sectionKey)
-      
-      // Pequeño delay para asegurar que el estado se actualice
-      setTimeout(() => {
-        // Primero intentar con las referencias existentes
-        if (sectionKey in sectionRefs) {
-          const element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current
-          if (element) {
-            element.scrollIntoView({ 
-              behavior: "smooth", 
-              block: "start",
-              inline: "nearest"
-            })
-            return
-          }
-        }
+  const scrollCategoryBarToButton = (sectionKey: string) => {
+    const activeButton = document.querySelector(`[data-tab="${sectionKey}"]`)
+    if (activeButton) {
+      const categoryContainer = document.querySelector('.category-scroll-container')
+      if (categoryContainer) {
+        const containerRect = categoryContainer.getBoundingClientRect()
+        const buttonRect = activeButton.getBoundingClientRect()
         
-        // Si no hay referencia, buscar por data-category (para todas las categorías)
-        const section = document.querySelector(`[data-category="${sectionKey}"]`)
-        if (section) {
-          section.scrollIntoView({ 
+        // Calcular la posición de scroll para centrar el botón
+        const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
+        const containerWidth = containerRect.width
+        const buttonWidth = buttonRect.width
+        
+        const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
+        
+        // Scroll suave hacia el botón activo
+        categoryContainer.scrollTo({
+          left: targetScrollLeft,
+          behavior: 'smooth'
+        })
+      }
+    }
+  }
+
+  const scrollToSection = (sectionKey: string) => {
+    setActiveTab(sectionKey)
+    
+    // Scroll de la barra de categorías primero
+    scrollCategoryBarToButton(sectionKey)
+    
+    // Pequeño delay para asegurar que el estado se actualice
+    setTimeout(() => {
+      // Primero intentar con las referencias existentes
+      if (sectionKey in sectionRefs) {
+        const element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current
+        if (element) {
+          element.scrollIntoView({ 
             behavior: "smooth", 
             block: "start",
             inline: "nearest"
           })
+          return
         }
-        
-        // Scroll automático de la barra de categorías al botón activo
-        setTimeout(() => {
-          const activeButton = document.querySelector(`[data-tab="${sectionKey}"]`)
-          if (activeButton) {
-            const categoryContainer = document.querySelector('.category-scroll-container')
-            if (categoryContainer) {
-              const containerRect = categoryContainer.getBoundingClientRect()
-              const buttonRect = activeButton.getBoundingClientRect()
-              
-              // Calcular si el botón está fuera de la vista
-              const isButtonVisible = buttonRect.left >= containerRect.left && 
-                                     buttonRect.right <= containerRect.right
-              
-              if (!isButtonVisible) {
-                // Calcular la posición de scroll para centrar el botón
-                const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
-                const containerWidth = containerRect.width
-                const buttonWidth = buttonRect.width
-                
-                const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
-                
-                // Scroll suave hacia el botón activo
-                categoryContainer.scrollTo({
-                  left: targetScrollLeft,
-                  behavior: 'smooth'
-                })
-              }
-            }
-          }
-        }, 300)
-      }, 100)
-    }
+      }
+      
+      // Si no hay referencia, buscar por data-category (para todas las categorías)
+      const section = document.querySelector(`[data-category="${sectionKey}"]`)
+      if (section) {
+        section.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "start",
+          inline: "nearest"
+        })
+      }
+    }, 100)
+  }
 
     // Función para encontrar la primera categoría visible y desplazarse a ella
     const scrollToFirstVisibleCategory = () => {
