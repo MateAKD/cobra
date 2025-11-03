@@ -8,10 +8,10 @@
       "tags": [
         "picante"
       ],
-      "hidden": true,
-      "hiddenReason": "falta de stock",
+      "hidden": false,
+      "hiddenReason": "stock",
       "hiddenBy": "Mateo",
-      "hiddenAt": "2025-10-22T23:57:57.216Z"
+      "hiddenAt": "2025-11-03T22:39:33.507Z"
     }
   ],
   "horno": [

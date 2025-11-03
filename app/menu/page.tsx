@@ -144,10 +144,37 @@ const DrinkItemComponent = ({ item }: { item: DrinkItem }) => (
 )
 
 export default function MenuPage() {
-  const [activeTab, setActiveTab] = useState("parrilla")
   const { menuData, loading, error } = useMenuData()
   const { categories } = useCategories()
   const { subcategoryMapping, loading: subcategoryLoading } = useSubcategoryMapping()
+  
+  // Filtrar categorías para incluir solo las que están en menuData (visibles por horario)
+  const visibleCategories = menuData 
+    ? Object.fromEntries(
+        Object.entries(categories).filter(([key]) => key in menuData)
+      )
+    : categories
+  
+  // Obtener la primera categoría visible para el estado inicial
+  const getFirstVisibleCategory = () => {
+    if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
+      return "parrilla"
+    }
+    const sortedKeys = Object.entries(visibleCategories)
+      .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
+      .map(([key]) => key)
+    return sortedKeys[0] || "parrilla"
+  }
+  
+  const [activeTab, setActiveTab] = useState(getFirstVisibleCategory())
+  
+  // Actualizar el activeTab cuando cambien las categorías visibles
+  useEffect(() => {
+    const firstVisible = getFirstVisibleCategory()
+    if (firstVisible && firstVisible !== activeTab) {
+      setActiveTab(firstVisible)
+    }
+  }, [visibleCategories])
   
   // Definir todos los hooks al principio, antes de cualquier lógica condicional
   const sectionRefs = {
@@ -275,7 +302,7 @@ export default function MenuPage() {
       clearTimeout(initialDetection)
       window.removeEventListener('scroll', detectActiveCategory)
     }
-  }, [activeTab, categories])
+  }, [activeTab, visibleCategories])
   
   if (loading || subcategoryLoading) {
     return (
@@ -397,14 +424,14 @@ export default function MenuPage() {
            !Object.keys(subcategoryMapping).includes(key) // Excluir subcategorías
   )
 
-  // Función para generar el layout dinámico basado en el orden de las categorías
+  // Función para generar el layout dinámico basado en el orden de las categorías visibles
   const generateDynamicLayout = () => {
-    if (!categories || Object.keys(categories).length === 0) {
+    if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
       return null
     }
 
-    // Convertir categorías a array y ordenar por 'order'
-    const sortedCategories = Object.entries(categories)
+    // Convertir categorías visibles a array y ordenar por 'order'
+    const sortedCategories = Object.entries(visibleCategories)
       .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
       .map(([key]) => key)
 
@@ -419,7 +446,7 @@ export default function MenuPage() {
     return columns.map((columnCategories, columnIndex) => (
       <div key={columnIndex}>
         {columnCategories.map((categoryId) => {
-          const category = categories[categoryId]
+          const category = visibleCategories[categoryId]
           if (!category) return null
 
           return (
@@ -824,23 +851,17 @@ export default function MenuPage() {
 
     // Función para encontrar la primera categoría visible y desplazarse a ella
     const scrollToFirstVisibleCategory = () => {
-      // Lista de todas las categorías en orden de aparición
-      const allCategories = [
-        "parrilla",
-        "tapeo", 
-        "principales",
-        "sandwicheria",
-        "cafeteria",
-        "postres",
-        "bebidas",
-        "tragos",
-        "vinos",
-        "promociones",
-        ...customCategoryNames
-      ]
+      // Obtener categorías visibles ordenadas
+      if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
+        return
+      }
+      
+      const sortedVisibleCategories = Object.entries(visibleCategories)
+        .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
+        .map(([key]) => key)
 
-      // Buscar la primera categoría que tenga contenido visible
-      for (const categoryKey of allCategories) {
+      // Buscar la primera categoría visible
+      for (const categoryKey of sortedVisibleCategories) {
         let element: HTMLElement | null = null
         
         // Primero intentar con las referencias existentes
@@ -854,20 +875,10 @@ export default function MenuPage() {
         }
 
         if (element) {
-          // Verificar si la categoría tiene contenido visible (no está vacía)
-          const hasVisibleContent = element.querySelector('.menu-item-hover') || 
-                                   element.querySelector('.neon-subcategory-container') ||
-                                   element.querySelector('.bebas-title-subcategory')
-          
-          if (hasVisibleContent) {
-            scrollToSection(categoryKey)
-            return
-          }
+          scrollToSection(categoryKey)
+          return
         }
       }
-      
-      // Si no se encuentra ninguna categoría visible, desplazarse a la primera por defecto
-      scrollToSection("parrilla")
     }
 
   return (
@@ -982,13 +993,13 @@ export default function MenuPage() {
         <div className="sticky top-0 z-50 mobile-tabs mb-6 lg:hidden">
           <div className="flex overflow-x-auto category-scroll-container">
             {(() => {
-              // Generar las categorías del menú deslizable basándose en las categorías reales y su orden
-              if (!categories || Object.keys(categories).length === 0) {
+              // Generar las categorías del menú deslizable basándose en las categorías visibles y su orden
+              if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
                 return null
               }
 
-              // Convertir categorías a array y ordenar por 'order'
-              const sortedCategories = Object.entries(categories)
+              // Convertir categorías visibles a array y ordenar por 'order'
+              const sortedCategories = Object.entries(visibleCategories)
                 .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
                 .map(([key, category]) => ({
                   key,

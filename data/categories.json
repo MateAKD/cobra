@@ -2,16 +2,23 @@
   "empanadas": {
     "name": "Empanadas",
     "description": "Deliciosas empanadas caseras",
-    "order": 1
+    "order": 1,
+    "timeRestricted": true,
+    "startTime": "19:30",
+    "endTime": "20:00"
   },
   "tortas": {
     "name": "Tortas",
     "description": "12 a 16",
-    "order": 2
+    "order": 2,
+    "timeRestricted": true,
+    "startTime": "11:11",
+    "endTime": "12:12"
   },
   "parrilla": {
     "name": "PARRILLA",
     "description": "",
-    "order": 3
+    "order": 3,
+    "timeRestricted": false
   }
 }

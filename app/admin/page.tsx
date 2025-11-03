@@ -23,15 +23,18 @@ import {
   Lock,
   Eye,
   EyeOff,
-  GripVertical
+  GripVertical,
+  Clock
 } from "lucide-react"
 import EditForm from "./components/EditForm"
 import AddForm from "./components/AddForm"
 import HideItemModal from "./components/HideItemModal"
+import TimeRangeModal, { TimeRangeData } from "./components/TimeRangeModal"
 import CategoryDragDrop from "./components/CategoryDragDrop"
 import { sendProductNotification, getUserInfo, validateEmailConfig, type NotificationAction } from "@/lib/emailService"
 import { useAdminMenuData } from "@/hooks/use-admin-menu-data"
 import { useCategories } from "@/hooks/use-categories"
+import { isCategoryVisible } from "@/lib/menuUtils"
 
 interface MenuItem {
   id: string
@@ -101,6 +104,11 @@ export default function AdminPanel() {
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [selectedSection, setSelectedSection] = useState<string>("")
   const [hideModalLoading, setHideModalLoading] = useState(false)
+  
+  // Estados para configurar horarios de categorías
+  const [timeRangeModalOpen, setTimeRangeModalOpen] = useState(false)
+  const [selectedCategoryForTime, setSelectedCategoryForTime] = useState<string>("")
+  const [selectedCategoryTimeData, setSelectedCategoryTimeData] = useState<TimeRangeData | undefined>(undefined)
   
   // Estado para el modo de reordenamiento de categorías
   const [isReorderingCategories, setIsReorderingCategories] = useState(false)
@@ -975,6 +983,56 @@ export default function AdminPanel() {
       alert("Error al actualizar la visibilidad del producto")
     } finally {
       setHideModalLoading(false)
+    }
+  }
+
+  // Función para abrir el modal de configuración de horarios
+  const handleOpenTimeRangeModal = (categoryId: string) => {
+    const category = categories[categoryId]
+    if (category) {
+      setSelectedCategoryForTime(categoryId)
+      setSelectedCategoryTimeData({
+        timeRestricted: category.timeRestricted || false,
+        startTime: category.startTime,
+        endTime: category.endTime,
+      })
+      setTimeRangeModalOpen(true)
+    }
+  }
+
+  // Función para guardar la configuración de horarios
+  const handleSaveTimeRange = async (data: TimeRangeData) => {
+    try {
+      setSaving(true)
+      setNotificationStatus("Guardando configuración de horarios...")
+      
+      const categoryName = categories[selectedCategoryForTime]?.name || ""
+      
+      // Actualizar la categoría con los datos de horario
+      await updateCategory(selectedCategoryForTime, {
+        timeRestricted: data.timeRestricted,
+        startTime: data.startTime,
+        endTime: data.endTime,
+      })
+      
+      setNotificationStatus("✅ Configuración de horarios guardada")
+      
+      let message = `Configuración de horarios actualizada para "${categoryName}": `
+      if (data.timeRestricted && data.startTime && data.endTime) {
+        message += `Se mostrará de ${data.startTime} a ${data.endTime}`
+      } else {
+        message += "Sin restricción horaria"
+      }
+      
+      alert(message)
+      
+      setTimeout(() => setNotificationStatus(""), 3000)
+      
+    } catch (error) {
+      console.error("Error updating time range:", error)
+      alert("Error al actualizar la configuración de horarios")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -2726,6 +2784,18 @@ export default function AdminPanel() {
                 <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
                   {allCategories.filter(cat => !cat.isStandard).length} personalizada{allCategories.filter(cat => !cat.isStandard).length !== 1 ? 's' : ''}
                 </span>
+                {(() => {
+                  const outOfTimeCount = allCategories.filter(cat => 
+                    categories[cat.id]?.timeRestricted && !isCategoryVisible(cat.id, categories)
+                  ).length
+                  
+                  return outOfTimeCount > 0 ? (
+                    <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {outOfTimeCount} fuera de horario
+                    </span>
+                  ) : null
+                })()}
               </div>
             </div>
             <TabsList className="grid w-full gap-2 grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
@@ -2735,17 +2805,28 @@ export default function AdminPanel() {
                 .filter(([subcatId, parentId]) => parentId === category.id)
                 .length
               
+              // Verificar si la categoría está visible según su horario
+              const isVisible = isCategoryVisible(category.id, categories)
+              
               return (
                 <TabsTrigger 
                   key={category.id} 
                   value={category.id} 
                   className={`relative transition-all duration-300 text-xs sm:text-sm ${
                     category.id === activeTab ? 'scale-105' : ''
+                  } ${
+                    !isVisible ? 'opacity-50 text-gray-400' : ''
                   }`}
+                  title={!isVisible ? 'Categoría fuera de horario' : ''}
                 >
                   {category.name}
+                  {!isVisible && (
+                    <span className="ml-1 text-[10px]">🕐</span>
+                  )}
                   {subcategoryCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                    <span className={`absolute -top-1 -right-1 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold ${
+                      !isVisible ? 'bg-gray-400' : 'bg-black'
+                    }`}>
                       {subcategoryCount}
                     </span>
                   )}
@@ -2759,13 +2840,42 @@ export default function AdminPanel() {
 
             {/* Tabs dinámicos generados desde allCategories */}
             {allCategories.map((category) => {
+              // Verificar si la categoría está visible según su horario
+              const isCategoryVisibleNow = isCategoryVisible(category.id, categories)
+              
               return (
               <TabsContent key={category.id} value={category.id} className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-semibold text-gray-900">
-                    {category.name}
-                  </h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className={`text-2xl font-semibold ${isCategoryVisibleNow ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {category.name}
+                    </h2>
+                    {categories[category.id]?.timeRestricted && (
+                      <Badge variant="outline" className={`flex items-center gap-1 ${
+                        isCategoryVisibleNow 
+                          ? 'bg-blue-50 text-blue-700 border-blue-300' 
+                          : 'bg-gray-50 text-gray-500 border-gray-300'
+                      }`}>
+                        <Clock className="w-3 h-3" />
+                        {categories[category.id]?.startTime} - {categories[category.id]?.endTime}
+                      </Badge>
+                    )}
+                    {!isCategoryVisibleNow && categories[category.id]?.timeRestricted && (
+                      <Badge variant="outline" className="flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-300">
+                        Fuera de horario
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex gap-2">
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      onClick={() => handleOpenTimeRangeModal(category.id)}
+                    >
+                      <Clock className="w-4 h-4" />
+                      <span>Horario</span>
+                    </Button>
                     <Button 
                       size="sm"
                       className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
@@ -3645,6 +3755,15 @@ export default function AdminPanel() {
         itemName={selectedItem?.name || ""}
         currentStatus={selectedItem?.hidden ? 'hidden' : 'visible'}
         loading={hideModalLoading}
+      />
+
+      {/* Modal para configurar horarios de categorías */}
+      <TimeRangeModal
+        isOpen={timeRangeModalOpen}
+        onClose={() => setTimeRangeModalOpen(false)}
+        onSave={handleSaveTimeRange}
+        categoryName={categories[selectedCategoryForTime]?.name || ""}
+        currentData={selectedCategoryTimeData}
       />
 
       {/* Modal para aumento porcentual de precios */}

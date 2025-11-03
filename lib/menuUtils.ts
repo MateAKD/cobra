@@ -1,5 +1,14 @@
 // Utilidades compartidas para el manejo de datos del menú
 
+interface Category {
+  name: string
+  description: string
+  order: number
+  timeRestricted?: boolean
+  startTime?: string
+  endTime?: string
+}
+
 interface MenuItem {
   id: string
   name: string
@@ -99,4 +108,80 @@ export function countVisibleItems(items: (MenuItem | DrinkItem | WineItem)[]): n
 // Función para contar productos totales en una categoría
 export function countTotalItems(items: (MenuItem | DrinkItem | WineItem)[]): number {
   return items.length
+}
+
+// Función para verificar si una hora está dentro de un rango horario
+export function isTimeInRange(startTime: string, endTime: string): boolean {
+  const now = new Date()
+  const currentHour = now.getHours()
+  const currentMinute = now.getMinutes()
+  const currentTimeInMinutes = currentHour * 60 + currentMinute
+  
+  // Parsear hora de inicio
+  const [startHour, startMinute] = startTime.split(':').map(Number)
+  const startTimeInMinutes = startHour * 60 + startMinute
+  
+  // Parsear hora de fin
+  const [endHour, endMinute] = endTime.split(':').map(Number)
+  const endTimeInMinutes = endHour * 60 + endMinute
+  
+  // Si el rango cruza la medianoche (ej: 22:00 a 02:00)
+  if (startTimeInMinutes > endTimeInMinutes) {
+    return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes <= endTimeInMinutes
+  }
+  
+  // Rango normal dentro del mismo día
+  return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes
+}
+
+// Función para verificar si una categoría debe mostrarse según su horario
+export function isCategoryVisible(categoryId: string, categories: Record<string, Category>): boolean {
+  const category = categories[categoryId]
+  
+  // Si la categoría no existe o no tiene restricción horaria, mostrarla
+  if (!category || !category.timeRestricted) {
+    return true
+  }
+  
+  // Si tiene restricción horaria pero no tiene horarios configurados, ocultarla por seguridad
+  if (!category.startTime || !category.endTime) {
+    return false
+  }
+  
+  // Verificar si la hora actual está dentro del rango
+  return isTimeInRange(category.startTime, category.endTime)
+}
+
+// Función para filtrar categorías según su horario
+export function filterCategoriesByTime(menuData: any, categories: Record<string, Category>): any {
+  if (!menuData || !categories) return menuData
+  
+  const filteredData: any = {}
+  
+  Object.keys(menuData).forEach(key => {
+    // Verificar si la categoría debe mostrarse según su horario
+    if (isCategoryVisible(key, categories)) {
+      filteredData[key] = menuData[key]
+    }
+  })
+  
+  return filteredData
+}
+
+// Función para obtener categorías
+export async function fetchCategories(): Promise<Record<string, Category>> {
+  try {
+    const response = await fetch("/api/categories", {
+      cache: "no-store",
+    })
+    
+    if (!response.ok) {
+      throw new Error("Error al cargar las categorías")
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error("Error fetching categories:", error)
+    return {}
+  }
 }

@@ -4,6 +4,9 @@ interface Category {
   name: string
   description: string
   order: number
+  timeRestricted?: boolean
+  startTime?: string
+  endTime?: string
 }
 
 interface Categories {
