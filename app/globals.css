@@ -721,6 +721,41 @@ html {
   }
 }
 
+/* Optimizaciones adicionales para móviles */
+@media (max-width: 640px) {
+  /* Prevenir scroll horizontal */
+  body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Asegurar que el contenido principal no se superponga con el footer */
+  main {
+    padding-bottom: 18rem !important;
+  }
+  
+  /* Altura segura para footer en móviles */
+  footer.pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Para dispositivos iPhone con notch */
+@supports (padding: max(0px)) {
+  footer.pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevenir zoom en inputs en móviles */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* ==================== FLECHA GRAFITI ==================== */
 
 /* Flecha grafiti para abajo */
