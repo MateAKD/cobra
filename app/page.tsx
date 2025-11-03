@@ -202,52 +202,50 @@ export default function HomePage() {
             </a>
           </div>
 
-          {/* Botón de Instagram */}
-          <div className="flex justify-center">
-            <a 
-              href="https://www.instagram.com/cobra.ba"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-black rounded-full py-1.5 sm:py-2 px-4 sm:px-5 flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-gray-800 transition-colors min-h-[36px] sm:min-h-[40px] text-white"
-            >
-              {/* Logo de Instagram - Icono blanco */}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="sm:w-4 sm:h-4">
-                <rect x="2" y="2" width="20" height="20" rx="6" fill="#fff"/>
-                <rect x="2.75" y="2.75" width="18.5" height="18.5" rx="5.25" stroke="#fff" strokeWidth="1.5"/>
-                <circle cx="12" cy="12" r="5" stroke="#000" strokeWidth="1.5" fill="none"/>
-                <circle cx="12" cy="12" r="3" fill="#000"/>
-                <circle cx="17.1" cy="6.9" r="1" fill="#000"/>
-              </svg>
-              <span className="text-xs sm:text-sm font-medium" style={{ color: '#FFFFFF' }}>Instagram</span>
-            </a>
-          </div>
+          {/* Botón de Instagram - mismo ancho que los otros */}
+          <a 
+            href="https://www.instagram.com/cobra.ba"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-black rounded-full py-1.5 sm:py-2 px-2.5 sm:px-3 flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-gray-800 transition-colors min-h-[36px] sm:min-h-[40px] text-white"
+          >
+            {/* Logo de Instagram - Icono blanco */}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="sm:w-4 sm:h-4">
+              <rect x="2" y="2" width="20" height="20" rx="6" fill="#fff"/>
+              <rect x="2.75" y="2.75" width="18.5" height="18.5" rx="5.25" stroke="#fff" strokeWidth="1.5"/>
+              <circle cx="12" cy="12" r="5" stroke="#000" strokeWidth="1.5" fill="none"/>
+              <circle cx="12" cy="12" r="3" fill="#000"/>
+              <circle cx="17.1" cy="6.9" r="1" fill="#000"/>
+            </svg>
+            <span className="text-[11px] sm:text-xs font-medium" style={{ color: '#FFFFFF' }}>Instagram</span>
+          </a>
         </div>
       </main>
 
-      {/* Footer con copyright */}
-      <footer className="flex-shrink-0 pb-safe pt-3 sm:pt-4 pb-3 sm:pb-4">
+      {/* Footer con copyright - MÁS VISIBLE */}
+      <footer className="flex-shrink-0 pb-safe bg-gradient-to-t from-[#EDE9DD] via-[#EDE9DD]/95 to-transparent pt-4 sm:pt-5 pb-4 sm:pb-5">
         {/* Copyright y créditos */}
         <div className="flex flex-col items-center w-full">
-          <div className="text-center text-gray-500 text-xs sm:text-sm font-medium">
+          <div className="text-center text-gray-700 text-sm sm:text-base font-semibold">
             © 2025 COBRA Bar
           </div>
           {/* Créditos de desarrollo */}
-          <div className="flex justify-center items-center gap-2 sm:gap-2.5 mt-1 sm:mt-1.5">
-            <p className="text-[10px] sm:text-xs text-gray-500">Dev by</p>
+          <div className="flex justify-center items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2">
+            <p className="text-xs sm:text-sm text-gray-600 font-medium">Dev by</p>
             <a 
               href="https://akdmiastudio.io/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-[10px] sm:text-xs text-gray-600 hover:text-gray-800 transition-colors duration-300"
+              className="text-xs sm:text-sm text-gray-700 hover:text-gray-900 transition-colors duration-300 font-medium"
             >
               AKDMIA
             </a>
-            <span className="text-[10px] sm:text-xs text-gray-400">•</span>
+            <span className="text-xs sm:text-sm text-gray-500">•</span>
             <a 
               href="https://livvvv.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-[10px] sm:text-xs text-gray-600 hover:text-gray-800 transition-colors duration-300"
+              className="text-xs sm:text-sm text-gray-700 hover:text-gray-900 transition-colors duration-300 font-medium"
             >
               Livv
             </a>
