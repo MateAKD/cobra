@@ -225,9 +225,8 @@ export default function MenuPage() {
       
       timeoutId = setTimeout(() => {
         const scrollTop = window.scrollY
-        const windowHeight = window.innerHeight
-        // Usar la parte superior del viewport para detectar la categoría
-        const topOfViewport = scrollTop + 100 // Offset para el sticky header
+        const headerOffset = 150 // Offset para el sticky header + margen
+        const detectionPoint = scrollTop + headerOffset
         
         // Crear lista de todas las secciones con sus posiciones
         const sections: Array<{key: string, top: number, bottom: number}> = []
@@ -257,18 +256,35 @@ export default function MenuPage() {
         // Ordenar por posición vertical
         sections.sort((a, b) => a.top - b.top)
         
-        // Encontrar la sección activa basándose en la parte superior del viewport
+        // Encontrar la sección activa - la que el usuario está viendo
         let activeSection = ''
         
-        // Buscar la sección que está visible en la parte superior
-        for (let i = sections.length - 1; i >= 0; i--) {
-          if (topOfViewport >= sections[i].top) {
-            activeSection = sections[i].key
+        // Buscar la sección que está actualmente visible en el punto de detección
+        for (let i = 0; i < sections.length; i++) {
+          const section = sections[i]
+          
+          // Si el punto de detección está dentro de esta sección
+          if (detectionPoint >= section.top && detectionPoint < section.bottom) {
+            activeSection = section.key
+            break
+          }
+          
+          // Si estamos entre secciones, usar la siguiente
+          if (i < sections.length - 1 && detectionPoint >= section.bottom && detectionPoint < sections[i + 1].top) {
+            activeSection = sections[i + 1].key
             break
           }
         }
         
-        // Si no encontramos ninguna y estamos al inicio, usar la primera
+        // Si estamos al final del documento, usar la última sección
+        if (!activeSection && sections.length > 0) {
+          const lastSection = sections[sections.length - 1]
+          if (detectionPoint >= lastSection.top) {
+            activeSection = lastSection.key
+          }
+        }
+        
+        // Si aún no hay activa y estamos al inicio, usar la primera
         if (!activeSection && sections.length > 0) {
           activeSection = sections[0].key
         }
@@ -277,14 +293,14 @@ export default function MenuPage() {
         if (activeSection && activeSection !== activeTab) {
           setActiveTab(activeSection)
           
-          // Scroll automático de la barra de categorías con delay para asegurar que se actualice
+          // Scroll automático de la barra de categorías
           requestAnimationFrame(() => {
             setTimeout(() => {
               scrollCategoryBarToActive(activeSection)
             }, 50)
           })
         }
-      }, 50) // Reducir el delay para una respuesta más rápida
+      }, 100) // Delay para evitar actualizaciones excesivas
     }
 
     // Ejecutar al cargar y al montar el componente
@@ -824,26 +840,27 @@ export default function MenuPage() {
     
     // Pequeño delay para asegurar que el estado se actualice
     setTimeout(() => {
+      let element: HTMLElement | null = null
+      
       // Primero intentar con las referencias existentes
       if (sectionKey in sectionRefs) {
-        const element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current
-        if (element) {
-          element.scrollIntoView({ 
-            behavior: "smooth", 
-            block: "start",
-            inline: "nearest"
-          })
-          return
-        }
+        element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current
       }
       
       // Si no hay referencia, buscar por data-category (para todas las categorías)
-      const section = document.querySelector(`[data-category="${sectionKey}"]`)
-      if (section) {
-        section.scrollIntoView({ 
-          behavior: "smooth", 
-          block: "start",
-          inline: "nearest"
+      if (!element) {
+        element = document.querySelector(`[data-category="${sectionKey}"]`) as HTMLElement
+      }
+      
+      if (element) {
+        // Calcular la posición considerando el header sticky
+        const headerOffset = 120 // Altura del header sticky + margen
+        const elementPosition = element.getBoundingClientRect().top + window.scrollY
+        const offsetPosition = elementPosition - headerOffset
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
         })
       }
     }, 100)
@@ -860,24 +877,9 @@ export default function MenuPage() {
         .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
         .map(([key]) => key)
 
-      // Buscar la primera categoría visible
-      for (const categoryKey of sortedVisibleCategories) {
-        let element: HTMLElement | null = null
-        
-        // Primero intentar con las referencias existentes
-        if (categoryKey in sectionRefs) {
-          element = sectionRefs[categoryKey as keyof typeof sectionRefs]?.current || null
-        }
-        
-        // Si no hay referencia, buscar por data-category
-        if (!element) {
-          element = document.querySelector(`[data-category="${categoryKey}"]`) as HTMLElement
-        }
-
-        if (element) {
-          scrollToSection(categoryKey)
-          return
-        }
+      // Usar la primera categoría visible
+      if (sortedVisibleCategories.length > 0) {
+        scrollToSection(sortedVisibleCategories[0])
       }
     }
 
