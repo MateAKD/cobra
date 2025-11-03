@@ -82,24 +82,24 @@ export default function HomePage() {
   }
 
   return (
-    <div className="h-screen cobra-snake-bg flex flex-col overflow-hidden">
-      {/* Header con logo - más arriba */}
-      <header className="flex flex-col items-center pt-4 sm:pt-6 pb-2 sm:pb-3 px-4 flex-shrink-0">
+    <div className="min-h-screen cobra-snake-bg flex flex-col justify-between py-6 sm:py-8">
+      {/* Header con logo - grande y centrado */}
+      <header className="flex flex-col items-center px-4 flex-shrink-0">
         <div className="text-center">
           <img
             src="/Logo cobra NEGRO.png"
             alt="COBRA"
-            className="h-28 sm:h-36 md:h-44 lg:h-52 w-auto object-contain mx-auto mb-1 sm:mb-2"
+            className="h-40 sm:h-48 md:h-56 lg:h-64 w-auto object-contain mx-auto mb-2 sm:mb-3"
           />
-          <p className="text-[10px] sm:text-xs text-gray-700">
+          <p className="text-xs sm:text-sm text-gray-700 font-medium">
             Bar & Lounge
           </p>
         </div>
       </header>
 
-      {/* Botonera principal - más arriba */}
-      <main className="flex-1 flex flex-col justify-center px-3 sm:px-4 pb-2">
-        <div className="w-full max-w-xs sm:max-w-sm mx-auto space-y-2 sm:space-y-3">
+      {/* Botonera principal - centrada */}
+      <main className="flex-shrink-0 px-4 sm:px-6">
+        <div className="w-full max-w-sm mx-auto space-y-2.5 sm:space-y-3">
           {/* Botón Menú */}
           <Link href="/menu" className="block">
             <div className="bg-transparent rounded-2xl shadow-sm border border-gray-200 py-3 sm:py-4 px-4 sm:px-5 flex items-center justify-between hover:bg-gray-100/20 transition-colors cursor-pointer min-h-[56px] sm:min-h-[64px]">
@@ -164,7 +164,7 @@ export default function HomePage() {
         </div>
 
         {/* Botones negros - parte de la botonera principal */}
-        <div className="w-full max-w-xs sm:max-w-sm mx-auto mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
+        <div className="w-full max-w-sm mx-auto mt-3 sm:mt-4 space-y-2">
           {/* Fila de botones Calificanos y Playlists */}
           <div className="flex gap-1.5 sm:gap-2">
             <a 
@@ -222,15 +222,15 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer con copyright - MÁS VISIBLE Y ARRIBA */}
-      <footer className="flex-shrink-0 pb-safe bg-gradient-to-t from-[#EDE9DD] via-[#EDE9DD]/95 to-transparent pt-2 sm:pt-3 pb-2 sm:pb-3">
+      {/* Footer con copyright - SIEMPRE VISIBLE */}
+      <footer className="flex-shrink-0 pb-safe pt-3 sm:pt-4 px-4">
         {/* Copyright y créditos */}
         <div className="flex flex-col items-center w-full">
           <div className="text-center text-gray-700 text-sm sm:text-base font-semibold">
             © 2025 COBRA Bar
           </div>
           {/* Créditos de desarrollo */}
-          <div className="flex justify-center items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2">
+          <div className="flex justify-center items-center gap-2 sm:gap-2.5 mt-1 sm:mt-1.5">
             <p className="text-xs sm:text-sm text-gray-600 font-medium">Dev by</p>
             <a 
               href="https://akdmiastudio.io/" 
