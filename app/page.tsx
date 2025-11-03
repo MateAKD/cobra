@@ -83,23 +83,23 @@ export default function HomePage() {
 
   return (
     <div className="h-screen cobra-snake-bg flex flex-col overflow-hidden">
-      {/* Header con logo - compacto */}
-      <header className="flex flex-col items-center pt-4 sm:pt-6 md:pt-8 pb-2 px-4 flex-shrink-0">
+      {/* Header con logo - muy compacto */}
+      <header className="flex flex-col items-center pt-3 sm:pt-4 md:pt-6 pb-1 px-4 flex-shrink-0">
         <div className="text-center">
           <img
             src="/Logo cobra NEGRO.png"
             alt="COBRA"
-            className="h-32 sm:h-40 md:h-48 lg:h-56 w-auto object-contain mx-auto mb-1 sm:mb-2"
+            className="h-28 sm:h-36 md:h-44 lg:h-52 w-auto object-contain mx-auto mb-0.5 sm:mb-1"
           />
-          <p className="text-xs sm:text-sm text-gray-700">
+          <p className="text-[10px] sm:text-xs text-gray-700">
             Bar & Lounge
           </p>
         </div>
       </header>
 
-      {/* Botonera principal - centrada en el espacio disponible */}
-      <main className="flex-1 flex flex-col justify-center px-3 sm:px-4 overflow-y-auto">
-        <div className="w-full max-w-xs sm:max-w-sm mx-auto space-y-3 py-4">
+      {/* Botonera principal - centrada y compacta */}
+      <main className="flex-1 flex flex-col justify-center px-3 sm:px-4 py-2 overflow-hidden">
+        <div className="w-full max-w-xs sm:max-w-sm mx-auto space-y-2.5 sm:space-y-3">
           {/* Botón Menú */}
           <Link href="/menu" className="block">
             <div className="bg-transparent rounded-2xl shadow-sm border border-gray-200 py-4 px-5 flex items-center justify-between hover:bg-gray-100/20 transition-colors cursor-pointer min-h-[64px]">
@@ -164,14 +164,14 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer con botones - compacto y visible */}
-      <footer className="flex-shrink-0 pb-safe bg-gradient-to-t from-[#EDE9DD] via-[#EDE9DD]/98 to-transparent pt-2 sm:pt-3">
-        <div className="flex gap-2 sm:gap-2.5 w-full max-w-xs sm:max-w-sm mx-auto px-3">
+      {/* Footer con botones - ultra compacto */}
+      <footer className="flex-shrink-0 pb-safe bg-gradient-to-t from-[#EDE9DD] via-[#EDE9DD]/98 to-transparent pt-1 sm:pt-1.5">
+        <div className="flex gap-1.5 sm:gap-2 w-full max-w-xs sm:max-w-sm mx-auto px-3">
           <a 
             href="https://www.google.com/maps/place/Cobra/@-34.5697932,-58.4208744,17z/data=!4m8!3m7!1s0x95bcb5b39404dffd:0xd617e2d1cc5078b1!8m2!3d-34.5697932!4d-58.4208744!9m1!1b1!16s%2Fg%2F11nryyz8vs?entry=ttu&g_ep=EgoyMDI1MTAyNi4wIKXMDSoASAFQAw%3D%3D"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 bg-black rounded-full py-2 sm:py-2.5 px-3 sm:px-4 flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-gray-800 transition-colors min-h-[40px] sm:min-h-[44px] text-white"
+            className="flex-1 bg-black rounded-full py-1.5 sm:py-2 px-2.5 sm:px-3 flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-gray-800 transition-colors min-h-[36px] sm:min-h-[40px] text-white"
           >
             {/* Icono de estrella blanca vacía */}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" className="sm:w-3.5 sm:h-3.5">
@@ -188,7 +188,7 @@ export default function HomePage() {
             href="https://open.spotify.com/playlist/46Z7tRbqn9KIrMDxSjJ83p?si=911e7ba94e7d4bc9&nd=1&dlsi=8fc4256299314a50"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 bg-black rounded-full py-2 sm:py-2.5 px-3 sm:px-4 flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-gray-800 transition-colors min-h-[40px] sm:min-h-[44px] text-white"
+            className="flex-1 bg-black rounded-full py-1.5 sm:py-2 px-2.5 sm:px-3 flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-gray-800 transition-colors min-h-[36px] sm:min-h-[40px] text-white"
           >
             {/* Icono de Spotify blanco */}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="sm:w-3.5 sm:h-3.5">
@@ -203,12 +203,12 @@ export default function HomePage() {
         </div>
 
         {/* Botón de Instagram centrado */}
-        <div className="flex justify-center w-full max-w-xs sm:max-w-sm mx-auto px-3 mt-1 sm:mt-1.5">
+        <div className="flex justify-center w-full max-w-xs sm:max-w-sm mx-auto px-3 mt-1 sm:mt-1">
           <a 
             href="https://www.instagram.com/cobra.ba"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-black rounded-full py-2 sm:py-2.5 px-5 sm:px-6 flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-gray-800 transition-colors min-h-[40px] sm:min-h-[44px] text-white"
+            className="bg-black rounded-full py-1.5 sm:py-2 px-4 sm:px-5 flex items-center justify-center gap-1 sm:gap-1.5 hover:bg-gray-800 transition-colors min-h-[36px] sm:min-h-[40px] text-white"
           >
             {/* Logo de Instagram - Icono blanco */}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFFFFF" className="sm:w-3.5 sm:h-3.5">
@@ -219,27 +219,27 @@ export default function HomePage() {
         </div>
 
         {/* Copyright y créditos ultra compactos */}
-        <div className="flex flex-col items-center pb-1.5 sm:pb-2 mt-1.5 sm:mt-2 w-full">
-          <div className="text-center text-gray-500 text-[9px] sm:text-[10px]">
+        <div className="flex flex-col items-center pb-1 sm:pb-1.5 mt-1 sm:mt-1.5 w-full">
+          <div className="text-center text-gray-500 text-[8px] sm:text-[9px]">
             © 2025 COBRA Bar
           </div>
           {/* Créditos de desarrollo en una sola línea */}
-          <div className="flex justify-center items-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1">
-            <p className="text-[8px] sm:text-[9px] text-gray-500">Dev by</p>
+          <div className="flex justify-center items-center gap-1 sm:gap-1.5 mt-0.5">
+            <p className="text-[7px] sm:text-[8px] text-gray-500">Dev by</p>
             <a 
               href="https://akdmiastudio.io/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-[8px] sm:text-[9px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
+              className="text-[7px] sm:text-[8px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
             >
               AKDMIA
             </a>
-            <span className="text-[8px] sm:text-[9px] text-gray-500">•</span>
+            <span className="text-[7px] sm:text-[8px] text-gray-500">•</span>
             <a 
               href="https://livvvv.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-[8px] sm:text-[9px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
+              className="text-[7px] sm:text-[8px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
             >
               Livv
             </a>
