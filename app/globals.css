@@ -714,14 +714,19 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Asegurar que el viewport height sea correcto en móviles */
+/* Asegurar que el viewport height sea correcto en móviles - 100vh dinámico */
+.h-screen {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height - mejor soporte móvil */
+}
+
 @supports (-webkit-touch-callout: none) {
-  .min-h-screen {
-    min-height: -webkit-fill-available;
+  .h-screen {
+    height: -webkit-fill-available;
   }
 }
 
-/* Optimizaciones adicionales para móviles */
+/* Optimizaciones para layout de pantalla completa */
 @media (max-width: 640px) {
   /* Prevenir scroll horizontal */
   body {
@@ -729,21 +734,22 @@ html {
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Asegurar que el contenido principal no se superponga con el footer */
-  main {
-    padding-bottom: 18rem !important;
+  /* Asegurar altura correcta del contenedor principal */
+  .h-screen {
+    height: 100vh;
+    height: 100dvh;
   }
   
   /* Altura segura para footer en móviles */
   footer.pb-safe {
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
   }
 }
 
 /* Para dispositivos iPhone con notch */
 @supports (padding: max(0px)) {
   footer.pb-safe {
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
   }
 }
 

@@ -82,24 +82,24 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen cobra-snake-bg flex flex-col">
-      {/* Header con logo */}
-      <header className="flex flex-col items-center pt-8 sm:pt-12 md:pt-16 pb-2 sm:pb-3 px-4">
+    <div className="h-screen cobra-snake-bg flex flex-col overflow-hidden">
+      {/* Header con logo - compacto */}
+      <header className="flex flex-col items-center pt-4 sm:pt-6 md:pt-8 pb-2 px-4 flex-shrink-0">
         <div className="text-center">
           <img
             src="/Logo cobra NEGRO.png"
             alt="COBRA"
-            className="h-40 sm:h-48 md:h-56 lg:h-64 w-auto object-contain mx-auto mb-2 sm:mb-3"
+            className="h-32 sm:h-40 md:h-48 lg:h-56 w-auto object-contain mx-auto mb-1 sm:mb-2"
           />
-          <p className="text-sm sm:text-base text-gray-700">
+          <p className="text-xs sm:text-sm text-gray-700">
             Bar & Lounge
           </p>
         </div>
       </header>
 
-      {/* Botonera principal */}
-      <main className="flex-1 flex flex-col justify-start px-2 sm:px-3 py-3 pb-72 sm:pb-64">
-        <div className="w-full max-w-xs sm:max-w-sm mx-auto space-y-3">
+      {/* Botonera principal - centrada en el espacio disponible */}
+      <main className="flex-1 flex flex-col justify-center px-3 sm:px-4 overflow-y-auto">
+        <div className="w-full max-w-xs sm:max-w-sm mx-auto space-y-3 py-4">
           {/* Botón Menú */}
           <Link href="/menu" className="block">
             <div className="bg-transparent rounded-2xl shadow-sm border border-gray-200 py-4 px-5 flex items-center justify-between hover:bg-gray-100/20 transition-colors cursor-pointer min-h-[64px]">
@@ -164,9 +164,9 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer con botones de Google y Playlists */}
-      <footer className="fixed bottom-0 left-0 right-0 pb-safe bg-gradient-to-t from-[#EDE9DD] via-[#EDE9DD]/95 to-transparent pt-4">
-        <div className="flex gap-2 sm:gap-3 w-full max-w-xs sm:max-w-sm mx-auto px-3">
+      {/* Footer con botones - compacto y visible */}
+      <footer className="flex-shrink-0 pb-safe bg-gradient-to-t from-[#EDE9DD] via-[#EDE9DD]/98 to-transparent pt-2 sm:pt-3">
+        <div className="flex gap-2 sm:gap-2.5 w-full max-w-xs sm:max-w-sm mx-auto px-3">
           <a 
             href="https://www.google.com/maps/place/Cobra/@-34.5697932,-58.4208744,17z/data=!4m8!3m7!1s0x95bcb5b39404dffd:0xd617e2d1cc5078b1!8m2!3d-34.5697932!4d-58.4208744!9m1!1b1!16s%2Fg%2F11nryyz8vs?entry=ttu&g_ep=EgoyMDI1MTAyNi4wIKXMDSoASAFQAw%3D%3D"
             target="_blank"
@@ -203,7 +203,7 @@ export default function HomePage() {
         </div>
 
         {/* Botón de Instagram centrado */}
-        <div className="flex justify-center w-full max-w-xs sm:max-w-sm mx-auto px-3 mt-1.5 sm:mt-2">
+        <div className="flex justify-center w-full max-w-xs sm:max-w-sm mx-auto px-3 mt-1 sm:mt-1.5">
           <a 
             href="https://www.instagram.com/cobra.ba"
             target="_blank"
@@ -218,33 +218,31 @@ export default function HomePage() {
           </a>
         </div>
 
-        {/* Copyright y créditos más compactos */}
-        <div className="flex flex-col items-center pb-2 sm:pb-3 mt-2 sm:mt-3 w-full">
-          <div className="text-center text-gray-500 text-[10px] sm:text-xs">
+        {/* Copyright y créditos ultra compactos */}
+        <div className="flex flex-col items-center pb-1.5 sm:pb-2 mt-1.5 sm:mt-2 w-full">
+          <div className="text-center text-gray-500 text-[9px] sm:text-[10px]">
             © 2025 COBRA Bar
           </div>
-          {/* Créditos de desarrollo */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 mt-1 sm:mt-1.5">
-            <p className="text-[9px] sm:text-[10px] text-gray-500">Desarrollado por</p>
-            <div className="flex gap-2 sm:gap-3">
-              <a 
-                href="https://akdmiastudio.io/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-[9px] sm:text-[10px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
-              >
-                AKDMIA Studio
-              </a>
-              <span className="text-[9px] sm:text-[10px] text-gray-500">•</span>
-              <a 
-                href="https://livvvv.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-[9px] sm:text-[10px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
-              >
-                Livv Studio
-              </a>
-            </div>
+          {/* Créditos de desarrollo en una sola línea */}
+          <div className="flex justify-center items-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1">
+            <p className="text-[8px] sm:text-[9px] text-gray-500">Dev by</p>
+            <a 
+              href="https://akdmiastudio.io/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[8px] sm:text-[9px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
+            >
+              AKDMIA
+            </a>
+            <span className="text-[8px] sm:text-[9px] text-gray-500">•</span>
+            <a 
+              href="https://livvvv.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[8px] sm:text-[9px] text-gray-600 hover:text-gray-800 transition-colors duration-300"
+            >
+              Livv
+            </a>
           </div>
         </div>
       </footer>
