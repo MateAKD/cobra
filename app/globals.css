@@ -714,14 +714,8 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Eliminar scroll completamente y fijar viewport */
-html, body {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  -webkit-overflow-scrolling: touch;
-}
+/* Eliminar scroll solo en la página principal (no en /menu) */
+/* No aplicar globalmente - se aplicará específicamente donde se necesite */
 
 /* Asegurar que el viewport height sea correcto en móviles - 100vh dinámico */
 .h-screen {
@@ -748,21 +742,10 @@ html, body {
 
 /* Optimizaciones para layout de pantalla completa */
 @media (max-width: 640px) {
-  /* Prevenir cualquier tipo de scroll */
+  /* Permitir scroll en toda la app por defecto */
   html, body {
-    overflow: hidden !important;
-    position: fixed !important;
-    width: 100% !important;
-    height: 100% !important;
-  }
-  
-  /* Asegurar altura correcta del contenedor principal */
-  .h-screen {
-    height: 100vh !important;
-    height: 100dvh !important;
-    max-height: 100vh !important;
-    max-height: 100dvh !important;
-    overflow: hidden !important;
+    overflow-x: hidden; /* Solo prevenir scroll horizontal */
+    -webkit-overflow-scrolling: touch;
   }
   
   /* Altura segura para footer en móviles */
@@ -787,12 +770,10 @@ html, body {
   }
 }
 
-/* Fix adicional para iOS Safari - prevenir bouncing */
+/* Fix adicional para iOS Safari - smooth scrolling */
 @supports (-webkit-touch-callout: none) {
   body {
-    position: fixed;
-    overflow: hidden;
-    -webkit-overflow-scrolling: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

@@ -882,7 +882,7 @@ export default function MenuPage() {
   return (
     <>
       <CobraLoadingScreen isLoading={loading} />
-      <div className="min-h-screen cobra-snake-bg">
+      <div className="cobra-snake-bg">
       {/* Carátula full-screen minimalista */}
       <header className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden pt-8 sm:pt-12">
         
@@ -1053,7 +1053,7 @@ export default function MenuPage() {
           </div>
         </div>
 
-        <footer className="mt-16 sm:mt-20 lg:mt-24 pt-8 sm:pt-10 lg:pt-12">
+        <footer className="pt-8 sm:pt-10 lg:pt-12 pb-8" style={{ backgroundColor: '#d4cfc0' }}>
           {/* Divisor superior con estilo de la página */}
           <div className="flex justify-center mb-8">
             <div className="neon-category-divider"></div>
@@ -1065,34 +1065,32 @@ export default function MenuPage() {
             <div className="mb-6">
               <div className="flex justify-center items-center mb-4">
                 <img 
-                  src="/Logo cobra sf.png" 
+                  src="/Logo cobra NEGRO.png" 
                   alt="Cobra Bar Logo" 
-                  className="h-12 w-auto logo-no-bg"
+                  className="h-20 w-auto"
                 />
               </div>
-              <h3 className="bebas-title-category text-2xl sm:text-3xl mb-2" style={{ color: '#FFFFFF' }}>
-                COBRA BAR
-              </h3>
-              <p className="text-sm sm:text-base podium-text" style={{ color: '#FFFFFF' }}>
+              
+              <p className="text-sm sm:text-base podium-text text-gray-700">
                 Experiencia gastronómica única
               </p>
             </div>
             
             {/* Información de copyright */}
             <div className="mb-6">
-              <p className="text-xs sm:text-sm podium-text" style={{ color: '#FFFFFF' }}>
+              <p className="text-xs sm:text-sm podium-text text-gray-700">
                 © 2025 COBRA BAR - TODOS LOS DERECHOS RESERVADOS
               </p>
             </div>
             
             {/* Divisor medio */}
-            <div className="flex justify-center mb-6">
-              <div className="minimal-divider w-32"></div>
+            <div className="flex justify-center mb-8">
+              <div className="neon-category-divider"></div>
             </div>
             
             {/* Créditos de desarrollo */}
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
-              <p className="text-xs podium-text" style={{ color: '#FFFFFF' }}>
+              <p className="text-xs podium-text text-gray-700">
                 Desarrollado con ❤️ por
               </p>
               <div className="flex gap-4">
@@ -1100,16 +1098,18 @@ export default function MenuPage() {
                   href="https://akdmiastudio.io/" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-xs podium-text text-gold hover:text-coral transition-colors duration-300 border-b border-transparent hover:border-gold pb-1"
+                  className="text-xs podium-text hover:text-coral transition-colors duration-300 border-b border-transparent hover:border-gray-900 pb-1"
+                  style={{ color: '#231F20' }}
                 >
                   AKDMIA Studio
                 </a>
-                <span className="text-xs podium-text" style={{ color: '#FFFFFF' }}>•</span>
+                <span className="text-xs podium-text text-gray-700">•</span>
                 <a 
                   href="https://livvvv.com" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-xs podium-text text-gold hover:text-coral transition-colors duration-300 border-b border-transparent hover:border-gold pb-1"
+                  className="text-xs podium-text hover:text-coral transition-colors duration-300 border-b border-transparent hover:border-gray-900 pb-1"
+                  style={{ color: '#231F20' }}
                 >
                   Livv Studio
                 </a>

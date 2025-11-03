@@ -82,23 +82,25 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen cobra-snake-bg flex flex-col justify-between py-6 sm:py-8">
-      {/* Header con logo - grande y centrado */}
-      <header className="flex flex-col items-center px-4 flex-shrink-0">
-        <div className="text-center">
-          <img
-            src="/Logo cobra NEGRO.png"
-            alt="COBRA"
-            className="h-40 sm:h-48 md:h-56 lg:h-64 w-auto object-contain mx-auto mb-2 sm:mb-3"
-          />
-          <p className="text-xs sm:text-sm text-gray-700 font-medium">
-            Bar & Lounge
-          </p>
-        </div>
-      </header>
+    <div className="min-h-screen max-h-screen overflow-hidden cobra-snake-bg flex flex-col justify-center items-center py-4 sm:py-6">
+      {/* Contenedor principal con todas las secciones juntas */}
+      <div className="flex flex-col items-center gap-4 sm:gap-6 w-full px-4">
+        {/* Header con logo - grande y centrado */}
+        <header className="flex flex-col items-center flex-shrink-0">
+          <div className="text-center">
+            <img
+              src="/Logo cobra NEGRO.png"
+              alt="COBRA"
+              className="h-40 sm:h-48 md:h-56 lg:h-64 w-auto object-contain mx-auto mb-2 sm:mb-3"
+            />
+            <p className="text-xs sm:text-sm text-gray-700 font-medium">
+              Bar & Lounge
+            </p>
+          </div>
+        </header>
 
-      {/* Botonera principal - centrada */}
-      <main className="flex-shrink-0 px-4 sm:px-6">
+        {/* Botonera principal - centrada */}
+        <main className="flex-shrink-0 w-full">
         <div className="w-full max-w-sm mx-auto space-y-2.5 sm:space-y-3">
           {/* Botón Menú */}
           <Link href="/menu" className="block">
@@ -220,10 +222,10 @@ export default function HomePage() {
             <span className="text-[11px] sm:text-xs font-medium" style={{ color: '#FFFFFF' }}>Instagram</span>
           </a>
         </div>
-      </main>
+        </main>
 
-      {/* Footer con copyright - SIEMPRE VISIBLE */}
-      <footer className="flex-shrink-0 pb-safe pt-3 sm:pt-4 px-4">
+        {/* Footer con copyright - SIEMPRE VISIBLE */}
+        <footer className="flex-shrink-0 pb-safe w-full">
         {/* Copyright y créditos */}
         <div className="flex flex-col items-center w-full">
           <div className="text-center text-gray-700 text-sm sm:text-base font-semibold">
@@ -251,7 +253,8 @@ export default function HomePage() {
             </a>
           </div>
         </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   )
 }
