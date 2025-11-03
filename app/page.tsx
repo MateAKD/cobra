@@ -82,23 +82,23 @@ export default function HomePage() {
   }
 
   return (
-    <div className="h-screen cobra-snake-bg flex flex-col overflow-hidden justify-between">
-      {/* Header con logo - centrado */}
-      <header className="flex flex-col items-center pt-8 sm:pt-10 pb-3 sm:pb-4 px-4 flex-shrink-0">
+    <div className="h-screen cobra-snake-bg flex flex-col overflow-hidden">
+      {/* Header con logo - más arriba */}
+      <header className="flex flex-col items-center pt-4 sm:pt-6 pb-2 sm:pb-3 px-4 flex-shrink-0">
         <div className="text-center">
           <img
             src="/Logo cobra NEGRO.png"
             alt="COBRA"
-            className="h-36 sm:h-44 md:h-52 lg:h-64 w-auto object-contain mx-auto mb-2 sm:mb-3"
+            className="h-28 sm:h-36 md:h-44 lg:h-52 w-auto object-contain mx-auto mb-1 sm:mb-2"
           />
-          <p className="text-xs sm:text-sm text-gray-700">
+          <p className="text-[10px] sm:text-xs text-gray-700">
             Bar & Lounge
           </p>
         </div>
       </header>
 
-      {/* Botonera principal - centrada */}
-      <main className="flex-shrink-0 px-3 sm:px-4 pb-3">
+      {/* Botonera principal - más arriba */}
+      <main className="flex-1 flex flex-col justify-center px-3 sm:px-4 pb-2">
         <div className="w-full max-w-xs sm:max-w-sm mx-auto space-y-2 sm:space-y-3">
           {/* Botón Menú */}
           <Link href="/menu" className="block">
@@ -222,8 +222,8 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer con copyright - MÁS VISIBLE */}
-      <footer className="flex-shrink-0 pb-safe bg-gradient-to-t from-[#EDE9DD] via-[#EDE9DD]/95 to-transparent pt-4 sm:pt-5 pb-4 sm:pb-5">
+      {/* Footer con copyright - MÁS VISIBLE Y ARRIBA */}
+      <footer className="flex-shrink-0 pb-safe bg-gradient-to-t from-[#EDE9DD] via-[#EDE9DD]/95 to-transparent pt-2 sm:pt-3 pb-2 sm:pb-3">
         {/* Copyright y créditos */}
         <div className="flex flex-col items-center w-full">
           <div className="text-center text-gray-700 text-sm sm:text-base font-semibold">
