@@ -21,6 +21,12 @@ export const metadata: Metadata = {
   title: "Cobra - Menú 2025",
   description: "Menú gastronómico elegante y moderno - Bar Restaurante Cobra",
   generator: "v0.app",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 }
 
 export default function RootLayout({
@@ -30,7 +36,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${bebasNeue.variable} ${inter.variable} antialiased`}>
-      <body className="dark">{children}</body>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+      </head>
+      <body>{children}</body>
     </html>
   )
 }
