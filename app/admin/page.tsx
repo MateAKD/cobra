@@ -1260,6 +1260,12 @@ export default function AdminPanel() {
         isStandard: false 
       }])
       
+      // Inicializar menuSections con un array vacío para la nueva categoría
+      setMenuSections(prev => ({
+        ...prev,
+        [categoryId]: []
+      }))
+      
       // Cambiar a la nueva categoría
       setActiveTab(categoryId)
       
