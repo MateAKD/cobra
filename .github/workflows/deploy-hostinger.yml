@@ -1,0 +1,48 @@
+name: Deploy to Hostinger VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🚀 Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            echo "🐍 Desplegando COBRA..."
+            
+            cd /var/www/cobra
+            
+            echo "📥 Descargando cambios..."
+            git pull origin main
+            
+            echo "📦 Instalando dependencias..."
+            pnpm install
+            
+            echo "🏗️  Compilando..."
+            pnpm build
+            
+            echo "🔄 Reiniciando aplicación..."
+            pm2 restart cobra-app
+            
+            echo "✅ Deploy completado!"
+            pm2 status cobra-app
+      
+      - name: ✅ Deployment Status
+        if: success()
+        run: echo "🎉 Deployment successful!"
+      
+      - name: ❌ Deployment Failed
+        if: failure()
+        run: echo "💥 Deployment failed!"
+
