@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Bebas_Neue, Inter } from "next/font/google"
 import "./globals.css"
 
@@ -21,12 +21,13 @@ export const metadata: Metadata = {
   title: "Cobra - Menú 2025",
   description: "Menú gastronómico elegante y moderno - Bar Restaurante Cobra",
   generator: "v0.app",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
