@@ -568,34 +568,7 @@ export default function MenuPage() {
           </>
         )
       case 'vinos':
-        return (
-          <div className="space-y-6 sm:space-y-8">
-            <div>
-              <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">TINTOS</h3>
-              {vinos?.tintos?.map((vino, index) => (
-                <MenuItemComponent key={vino.id || index} item={{...vino, description: ''}} />
-              ))}
-            </div>
-            <div>
-              <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">BLANCOS</h3>
-              {vinos?.blancos?.map((vino, index) => (
-                <MenuItemComponent key={vino.id || index} item={{...vino, description: ''}} />
-              ))}
-            </div>
-            <div>
-              <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">ROSADOS</h3>
-              {vinos?.rosados?.map((vino, index) => (
-                <MenuItemComponent key={vino.id || index} item={{...vino, description: ''}} />
-              ))}
-            </div>
-            <div>
-              <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light">BOTELLAS</h3>
-              {botellas?.map((item, index) => (
-                <MenuItemComponent key={item.id || index} item={{...item, description: ''}} />
-              ))}
-            </div>
-          </div>
-        )
+        return renderSubcategoriesInCategory('vinos')
       case 'promociones':
         return (
           <>
@@ -617,7 +590,15 @@ export default function MenuPage() {
           {Object.entries(subcategoryMapping)
             .filter(([subcatId, parentId]) => parentId === 'parrilla')
             .map(([subcatId]) => {
-              const subcatData = (customCategories as any)[subcatId] || []
+              const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
+              const subcatData = (customCategories as any)[subcatId]
+                || (customCategories as any)[altId]
+                || ((menuData as any)?.['parrilla']?.[subcatId])
+                || ((menuData as any)?.['parrilla']?.[altId])
+                || ((menuData as any)?.[subcatId])
+                || ((menuData as any)?.[altId])
+                || []
+              if (!Array.isArray(subcatData) || subcatData.length === 0) return null
               const subcatName = subcatId.split('-').map(word => 
                 word.charAt(0).toUpperCase() + word.slice(1)
               ).join(' ')
@@ -652,7 +633,15 @@ export default function MenuPage() {
           {Object.entries(subcategoryMapping)
             .filter(([subcatId, parentId]) => parentId === 'principales')
             .map(([subcatId]) => {
-              const subcatData = (customCategories as any)[subcatId] || []
+              const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
+              const subcatData = (customCategories as any)[subcatId]
+                || (customCategories as any)[altId]
+                || ((menuData as any)?.['principales']?.[subcatId])
+                || ((menuData as any)?.['principales']?.[altId])
+                || ((menuData as any)?.[subcatId])
+                || ((menuData as any)?.[altId])
+                || []
+              if (!Array.isArray(subcatData) || subcatData.length === 0) return null
               const subcatName = subcatId.split('-').map(word => 
                 word.charAt(0).toUpperCase() + word.slice(1)
               ).join(' ')
@@ -717,7 +706,15 @@ export default function MenuPage() {
           {Object.entries(subcategoryMapping)
             .filter(([subcatId, parentId]) => parentId === 'promociones')
             .map(([subcatId]) => {
-              const subcatData = (customCategories as any)[subcatId] || []
+              const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
+              const subcatData = (customCategories as any)[subcatId]
+                || (customCategories as any)[altId]
+                || ((promociones as any)?.[subcatId])
+                || ((promociones as any)?.[altId])
+                || ((menuData as any)?.[subcatId])
+                || ((menuData as any)?.[altId])
+                || []
+              if (!Array.isArray(subcatData) || subcatData.length === 0) return null
               const subcatName = subcatId.split('-').map(word => 
                 word.charAt(0).toUpperCase() + word.slice(1)
               ).join(' ')
@@ -769,7 +766,15 @@ export default function MenuPage() {
     const dynamicSubcategories = Object.entries(subcategoryMapping)
       .filter(([subcatId, parentId]) => parentId === categoryName)
       .map(([subcatId]) => {
-        const subcatData = (customCategories as any)[subcatId] || []
+        const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
+        const subcatData = (customCategories as any)[subcatId]
+          || (customCategories as any)[altId]
+          || ((menuData as any)?.[categoryName]?.[subcatId])
+          || ((menuData as any)?.[categoryName]?.[altId])
+          || ((menuData as any)?.[subcatId])
+          || ((menuData as any)?.[altId])
+          || []
+        if (!Array.isArray(subcatData) || subcatData.length === 0) return null
         const subcatName = subcatId.split('-').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ')
@@ -784,8 +789,8 @@ export default function MenuPage() {
       })
     
     // Obtener productos directos de la categoría principal
-    const categoryData = (customCategories as any)[categoryName]
-    const directProducts = categoryData && Array.isArray(categoryData) ? categoryData : []
+    const categoryData = (customCategories as any)[categoryName] ?? (menuData as any)?.[categoryName]
+    const directProducts = Array.isArray(categoryData) ? categoryData : []
     
     // Si hay productos directos o subcategorías, renderizarlos
     if (directProducts.length > 0 || dynamicSubcategories.length > 0) {

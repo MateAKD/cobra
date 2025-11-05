@@ -89,7 +89,7 @@ export default function AdminPanel() {
   const { menuData: adminMenuData, loading: adminMenuLoading, refetch: refetchAdminMenu, getCategoryStats } = useAdminMenuData()
   
   // Hook para gestionar categorías
-  const { categories, updateCategory } = useCategories()
+  const { categories, updateCategory, loadCategories } = useCategories()
   
   const [activeTab, setActiveTab] = useState("parrilla")
   const [isEditing, setIsEditing] = useState<string | null>(null)
@@ -165,6 +165,10 @@ export default function AdminPanel() {
   const [isAddingSubcategory, setIsAddingSubcategory] = useState(false)
   const [isEditingCategories, setIsEditingCategories] = useState(false)
   const [editingCategory, setEditingCategory] = useState<any>(null)
+  // Edición inline de subcategorías dentro de "Editar Categorías"
+  const [inlineEditingSubcatId, setInlineEditingSubcatId] = useState<string | null>(null)
+  const [inlineEditingSubcatName, setInlineEditingSubcatName] = useState<string>("")
+  const [inlineEditingSubcatParent, setInlineEditingSubcatParent] = useState<string>("")
   const [deletedCategories, setDeletedCategories] = useState<any[]>([])
   const [editingCategoryDescription, setEditingCategoryDescription] = useState<string>("")
   const [newCategoryName, setNewCategoryName] = useState("")
@@ -242,6 +246,8 @@ export default function AdminPanel() {
       })
       
       if (response.ok) {
+        // Refrescar categorías desde categories.json para asegurar orden persistido
+        await loadCategories()
         setNotificationStatus("✅ Orden de categorías actualizado correctamente")
         setTimeout(() => setNotificationStatus(""), 3000)
       } else {
@@ -342,14 +348,9 @@ export default function AdminPanel() {
         
         if (isArray || isObjectWithSubcategories) {
           // Determinar si es una categoría estándar o personalizada
-          const standardCategories = [
-            'parrilla', 'guarniciones', 'tapeo', 'milanesas', 'hamburguesas', 
-            'ensaladas', 'otros', 'postres', 'sandwicheria', 'cafeteria', 
-            'pasteleria', 'bebidasSinAlcohol', 'cervezas', 'tragosClasicos', 
-            'tragosEspeciales', 'tragosRedBull', 'vinos', 'botellas', 'promociones'
-          ]
+          const standardCategories: string[] = []
           
-          const isStandard = standardCategories.includes(key)
+          const isStandard = false
           
           // EXCLUIR SUBCATEGORÍAS: No agregar si esta clave es una subcategoría
           const isSubcategory = Object.keys(currentSubcategoryMapping).includes(key)
@@ -362,6 +363,12 @@ export default function AdminPanel() {
             })
           }
         }
+      })
+      // Ordenar según el 'order' persistido en categories.json (vía hook useCategories)
+      jsonCategories.sort((a, b) => {
+        const aOrder = (categories as any)?.[a.id]?.order ?? Number.MAX_SAFE_INTEGER
+        const bOrder = (categories as any)?.[b.id]?.order ?? Number.MAX_SAFE_INTEGER
+        return aOrder - bOrder
       })
       return jsonCategories
     })
@@ -448,16 +455,11 @@ export default function AdminPanel() {
       }
 
       // Cargar categorías personalizadas desde el archivo JSON
-      const standardCategories = [
-        'parrilla', 'guarniciones', 'tapeo', 'milanesas', 'hamburguesas', 
-        'ensaladas', 'otros', 'postres', 'sandwicheria', 'cafeteria', 
-        'pasteleria', 'bebidasSinAlcohol', 'cervezas', 'tragosClasicos', 
-        'tragosEspeciales', 'tragosRedBull', 'vinos', 'botellas', 'promociones'
-      ]
+      const standardCategories: string[] = []
       
       const customCategories: any[] = []
       Object.keys(data).forEach(key => {
-        if (!standardCategories.includes(key) && Array.isArray(data[key])) {
+        if (Array.isArray(data[key])) {
           // EXCLUIR SUBCATEGORÍAS: No agregar si esta clave es una subcategoría
           const isSubcategory = Object.keys(subcategoryMapping).includes(key)
           
@@ -501,16 +503,11 @@ export default function AdminPanel() {
   // Función para migrar categorías con IDs numéricos a nombres descriptivos
   const migrateNumericCategories = async (data: any) => {
     try {
-      const standardCategories = [
-        'parrilla', 'guarniciones', 'tapeo', 'milanesas', 'hamburguesas', 
-        'ensaladas', 'otros', 'postres', 'sandwicheria', 'cafeteria', 
-        'pasteleria', 'bebidasSinAlcohol', 'cervezas', 'tragosClasicos', 
-        'tragosEspeciales', 'tragosRedBull', 'vinos', 'botellas', 'promociones'
-      ]
+    const standardCategories: string[] = []
       
       // Identificar categorías con IDs numéricos (timestamps)
       const numericCategories = Object.keys(data).filter(key => {
-        if (standardCategories.includes(key)) return false
+      
         if (!Array.isArray(data[key])) return false
         // Verificar si es un timestamp (número de 13 dígitos)
         return /^\d{13}$/.test(key)
@@ -2069,7 +2066,7 @@ export default function AdminPanel() {
       await refetchAdminMenu()
       
       // Limpiar mapeos inválidos (subcategorías que apuntan a categorías inexistentes)
-      const validCategories = allCategories.map(cat => cat.id)
+      const validCategories = (allCategories || []).map(cat => cat.id)
       const invalidMappings = Object.entries(subcategoryMapping).filter(
         ([subcatId, parentId]) => !validCategories.includes(parentId)
       )
@@ -2356,7 +2353,8 @@ export default function AdminPanel() {
         </div>
         
         {subcategories.map(subcatId => {
-          const subcatData = menuSections[subcatId] || []
+          // Asegurar que subcatData siempre sea un array válido
+          const subcatData = Array.isArray(menuSections[subcatId]) ? menuSections[subcatId] : []
           const subcatName = subcatId.split('-').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' ')
@@ -2376,7 +2374,19 @@ export default function AdminPanel() {
                     ({subcatData.length} producto{subcatData.length !== 1 ? 's' : ''})
                   </span>
                 </h4>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <select
+                    className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                    defaultValue="none"
+                    onChange={(e) => applySortToSection(subcatId, e.target.value as any)}
+                    aria-label="Ordenar subcategoría"
+                  >
+                    <option value="none">Orden original</option>
+                    <option value="priceDesc">Precio ↓</option>
+                    <option value="priceAsc">Precio ↑</option>
+                    <option value="nameAsc">A-Z</option>
+                    <option value="nameDesc">Z-A</option>
+                  </select>
                   <Button 
                     size="sm"
                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold"
@@ -2390,17 +2400,18 @@ export default function AdminPanel() {
                   </Button>
                   <Button 
                     size="sm"
-                    variant="outline"
-                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white border-red-600 font-semibold admin-delete-button"
+                    variant="destructive"
+                    className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                    style={{ color: "#fff", letterSpacing: "0.04em" }}
                     onClick={() => handleDeleteSubcategory(subcatId)}
                   >
                     <Trash2 className="w-4 h-4 text-white" />
-                    Eliminar
+                    <span style={{ color: "#fff", letterSpacing: "0.04em" }}>Eliminar</span>
                   </Button>
                 </div>
               </div>
               
-              {subcatData.length > 0 ? (
+              {Array.isArray(subcatData) && subcatData.length > 0 ? (
                 <div className="space-y-3">
                   {subcatData.map((item) => renderMenuItem(item, subcatId))}
                 </div>
@@ -2415,6 +2426,153 @@ export default function AdminPanel() {
         })}
       </div>
     )
+  }
+
+  // Helpers para edición de subcategorías en el panel "Editar Categorías"
+  const slugifyId = (name: string) =>
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+
+  const startEditSubcategory = (subcatId: string) => {
+    setInlineEditingSubcatId(subcatId)
+    setInlineEditingSubcatName(
+      subcatId
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ")
+    )
+    setInlineEditingSubcatParent(subcategoryMapping[subcatId] || "")
+  }
+
+  const cancelEditSubcategory = () => {
+    setInlineEditingSubcatId(null)
+    setInlineEditingSubcatName("")
+    setInlineEditingSubcatParent("")
+  }
+
+  const saveEditSubcategory = async () => {
+    if (!inlineEditingSubcatId || !inlineEditingSubcatName.trim()) return
+    const oldId = inlineEditingSubcatId
+    const newId = slugifyId(inlineEditingSubcatName)
+    const newParent = inlineEditingSubcatParent || subcategoryMapping[oldId]
+
+    if (newId !== oldId && subcategoryMapping[newId]) {
+      alert("Ya existe una subcategoría con ese nombre")
+      return
+    }
+
+    setSaving(true)
+    try {
+      // Intentar renombrar la sección en menu.json si existe
+      try {
+        const getResp = await fetch(`/api/menu/${oldId}`)
+        if (getResp.ok) {
+          const items = await getResp.json()
+          if (newId !== oldId) {
+            await fetch(`/api/menu/${newId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(items),
+            })
+            await fetch(`/api/menu/${oldId}`, { method: "DELETE" })
+          }
+        } else if (newId !== oldId) {
+          // Si no existía sección, no hay nada que copiar; solo asegurar eliminación por si acaso
+          await fetch(`/api/menu/${oldId}`, { method: "DELETE" }).catch(() => {})
+        }
+      } catch (e) {
+        console.warn("No se pudo renombrar sección en menú:", e)
+      }
+
+      // Actualizar mapeo
+      const updatedMapping: any = { ...subcategoryMapping }
+      delete updatedMapping[oldId]
+      updatedMapping[newId] = newParent
+      const mappingResp = await fetch("/api/admin/subcategory-mapping", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMapping),
+      })
+      if (!mappingResp.ok) throw new Error("Error guardando mapeo")
+      setSubcategoryMapping(updatedMapping)
+
+      // Actualizar estados locales de secciones
+      setMenuSections((prev) => {
+        const next = { ...prev }
+        if (newId !== oldId) {
+          next[newId] = next[oldId] || []
+          delete next[oldId]
+        }
+        return next
+      })
+
+      setNotificationStatus("✅ Subcategoría actualizada")
+      setTimeout(() => setNotificationStatus(""), 2500)
+      cancelEditSubcategory()
+    } catch (error) {
+      console.error("Error editando subcategoría:", error)
+      setNotificationStatus("❌ Error al actualizar la subcategoría")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Utilidades de ordenamiento para categorías/subcategorías en admin
+  type SortCriterion = 'none' | 'priceDesc' | 'priceAsc' | 'nameAsc' | 'nameDesc'
+
+  const parsePriceToNumber = (price: any): number => {
+    if (price == null) return 0
+    const str = String(price)
+    const cleaned = str.replace(/[^0-9.,-]/g, '').replace(/,(?=\d{3}\b)/g, '').replace(',', '.')
+    const num = parseFloat(cleaned)
+    return isNaN(num) ? 0 : num
+  }
+
+  const sortItemsBy = (items: any[], criterion: SortCriterion): any[] => {
+    const arr = [...items]
+    switch (criterion) {
+      case 'priceDesc':
+        return arr.sort((a, b) => parsePriceToNumber(b.price) - parsePriceToNumber(a.price))
+      case 'priceAsc':
+        return arr.sort((a, b) => parsePriceToNumber(a.price) - parsePriceToNumber(b.price))
+      case 'nameAsc':
+        return arr.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }))
+      case 'nameDesc':
+        return arr.sort((a, b) => String(b.name || '').localeCompare(String(a.name || ''), 'es', { sensitivity: 'base' }))
+      default:
+        return items
+    }
+  }
+
+  const applySortToSection = async (sectionKey: string, criterion: SortCriterion) => {
+    try {
+      // Tomar datos actuales de la sección desde menuSections
+      const currentItems = Array.isArray(menuSections[sectionKey]) ? menuSections[sectionKey] : []
+      const sorted = sortItemsBy(currentItems, criterion)
+
+      // Actualizar estado local inmediatamente
+      setMenuSections(prev => ({ ...prev, [sectionKey]: sorted }))
+
+      // Persistir en el servidor
+      const response = await fetch(`/api/menu/${sectionKey}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sorted),
+      })
+
+      if (!response.ok) throw new Error('Error al guardar el orden')
+      setNotificationStatus('✅ Orden actualizado')
+      setTimeout(() => setNotificationStatus(''), 2000)
+    } catch (error) {
+      console.error('Error aplicando orden:', error)
+      setNotificationStatus('❌ Error al actualizar el orden')
+      setTimeout(() => setNotificationStatus(''), 2500)
+    }
   }
 
   const renderMenuItem = (item: MenuItem, section: string) => (
@@ -2473,14 +2631,19 @@ export default function AdminPanel() {
             </div>
             {item.tags && (
               <div className="flex gap-1 mt-2">
-                {item.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag === "vegan" && "🌱"}
-                    {tag === "sin-tacc" && "🌾"}
-                    {tag === "picante" && "🔥"}
-                    {tag}
-                  </Badge>
-                ))}
+                {item.tags.map((tag) => {
+                  const badgeClasses = tag === "vegan"
+                    ? "bg-green-100 text-green-800 border-green-300"
+                    : tag === "sin-tacc"
+                      ? "bg-purple-100 text-purple-800 border-purple-300"
+                      : "bg-red-100 text-red-800 border-red-300"
+                  return (
+                    <Badge key={tag} variant="secondary" className={`text-xs border ${badgeClasses}`}>
+                      <span className="mr-1">{tag === "vegan" ? "🌱" : tag === "sin-tacc" ? "🌾" : "🔥"}</span>
+                      {tag}
+                    </Badge>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -2805,7 +2968,7 @@ export default function AdminPanel() {
               </div>
             </div>
             <TabsList className="grid w-full gap-2 grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
-            {allCategories.map((category) => {
+            {(allCategories || []).map((category) => {
               // Contar subcategorías para esta categoría
               const subcategoryCount = Object.entries(subcategoryMapping)
                 .filter(([subcatId, parentId]) => parentId === category.id)
@@ -2845,7 +3008,7 @@ export default function AdminPanel() {
 
 
             {/* Tabs dinámicos generados desde allCategories */}
-            {allCategories.map((category) => {
+            {(allCategories || []).map((category) => {
               // Verificar si la categoría está visible según su horario
               const isCategoryVisibleNow = isCategoryVisible(category.id, categories)
               
@@ -2872,7 +3035,19 @@ export default function AdminPanel() {
                       </Badge>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    <select
+                      className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                      defaultValue="none"
+                      onChange={(e) => applySortToSection(category.id, e.target.value as any)}
+                      aria-label="Ordenar categoría"
+                    >
+                      <option value="none">Orden original</option>
+                      <option value="priceDesc">Precio ↓</option>
+                      <option value="priceAsc">Precio ↑</option>
+                      <option value="nameAsc">A-Z</option>
+                      <option value="nameDesc">Z-A</option>
+                    </select>
                     <Button 
                       size="sm"
                       variant="outline"
@@ -2893,25 +3068,29 @@ export default function AdminPanel() {
                       <Plus className="w-4 h-4 text-white" />
                       <span className="text-white">Agregar Subcategoría</span>
                     </Button>
-                    <Button 
-                      size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => setIsAdding(category.id)}
-                    >
-                      <Plus className="w-4 h-4 text-white" />
-                      <span className="text-white">Agregar Producto</span>
-                    </Button>
+                    {(!Object.values(subcategoryMapping).includes(category.id)) && (
+                      <Button 
+                        size="sm"
+                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                        onClick={() => setIsAdding(category.id)}
+                      >
+                        <Plus className="w-4 h-4 text-white" />
+                        <span className="text-white">Agregar Producto</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
                 
-                {/* Mostrar productos de esta categoría si existen */}
-                {menuSections[category.id] && menuSections[category.id].length > 0 ? (
+                {/* Mostrar productos de esta categoría si existen (solo si no tiene subcategorías) */}
+                {Array.isArray(menuSections[category.id]) && menuSections[category.id].length > 0 ? (
                   menuSections[category.id].map((item) => renderMenuItem(item, category.id))
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No hay productos en esta categoría aún.</p>
-                    <p className="text-sm">Haz clic en "Agregar Producto" para comenzar.</p>
-                  </div>
+                  !Object.values(subcategoryMapping).includes(category.id) ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No hay productos en esta categoría aún.</p>
+                      <p className="text-sm">Haz clic en "Agregar Producto" para comenzar.</p>
+                    </div>
+                  ) : null
                 )}
                 
                 {/* Renderizar subcategorías dinámicas */}
@@ -2924,7 +3103,19 @@ export default function AdminPanel() {
            <TabsContent value="tapeo" className="space-y-4">
              <div className="flex justify-between items-center">
                <h2 className="text-2xl font-semibold text-gray-900">Tapeo</h2>
-               <div className="flex gap-2">
+               <div className="flex gap-2 items-center">
+                 <select
+                   className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                   defaultValue="none"
+                   onChange={(e) => applySortToSection('tapeo', e.target.value as any)}
+                   aria-label="Ordenar Tapeo"
+                 >
+                   <option value="none">Orden original</option>
+                   <option value="priceDesc">Precio ↓</option>
+                   <option value="priceAsc">Precio ↑</option>
+                   <option value="nameAsc">A-Z</option>
+                   <option value="nameDesc">Z-A</option>
+                 </select>
                  <Button 
                    size="sm"
                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
@@ -2946,7 +3137,7 @@ export default function AdminPanel() {
                  </Button>
                </div>
              </div>
-             {tapeo.map((item) => renderMenuItem(item, "tapeo"))}
+             {Array.isArray(tapeo) && tapeo.map((item) => renderMenuItem(item, "tapeo"))}
              
              {/* Renderizar subcategorías dinámicamente */}
              {renderSubcategories("tapeo")}
@@ -2994,7 +3185,20 @@ export default function AdminPanel() {
                <div>
                  <div className="flex justify-between items-center mb-4">
                    <h3 className="text-xl font-semibold text-gray-900">Cafetería</h3>
-                   <Button 
+                   <div className="flex gap-2 items-center">
+                     <select
+                       className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                       defaultValue="none"
+                       onChange={(e) => applySortToSection('cafeteria', e.target.value as any)}
+                       aria-label="Ordenar Cafetería"
+                     >
+                       <option value="none">Orden original</option>
+                       <option value="priceDesc">Precio ↓</option>
+                       <option value="priceAsc">Precio ↑</option>
+                       <option value="nameAsc">A-Z</option>
+                       <option value="nameDesc">Z-A</option>
+                     </select>
+                     <Button 
                      size="sm"
                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("cafeteria")}
@@ -3002,14 +3206,28 @@ export default function AdminPanel() {
                      <Plus className="w-4 h-4" />
                      Agregar
                    </Button>
+                   </div>
                  </div>
-                 {cafeteria.map((item) => renderWineItem(item, "cafeteria"))}
+                 {Array.isArray(cafeteria) && cafeteria.map((item) => renderWineItem(item, "cafeteria"))}
                </div>
                
                <div>
                  <div className="flex justify-between items-center mb-4">
                    <h3 className="text-xl font-semibold text-gray-900">Pastelería</h3>
-                   <Button 
+                   <div className="flex gap-2 items-center">
+                     <select
+                       className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                       defaultValue="none"
+                       onChange={(e) => applySortToSection('pasteleria', e.target.value as any)}
+                       aria-label="Ordenar Pastelería"
+                     >
+                       <option value="none">Orden original</option>
+                       <option value="priceDesc">Precio ↓</option>
+                       <option value="priceAsc">Precio ↑</option>
+                       <option value="nameAsc">A-Z</option>
+                       <option value="nameDesc">Z-A</option>
+                     </select>
+                     <Button 
                      size="sm"
                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                      onClick={() => setIsAdding("pasteleria")}
@@ -3017,8 +3235,9 @@ export default function AdminPanel() {
                      <Plus className="w-4 h-4" />
                      Agregar
                    </Button>
+                   </div>
                  </div>
-                 {pasteleria.map((item) => renderWineItem(item, "pasteleria"))}
+                 {Array.isArray(pasteleria) && pasteleria.map((item) => renderWineItem(item, "pasteleria"))}
                </div>
              </div>
              
@@ -3056,7 +3275,7 @@ export default function AdminPanel() {
                      Agregar
                    </Button>
                  </div>
-                 {bebidasSinAlcohol.map((item) => renderWineItem(item, "bebidasSinAlcohol"))}
+                 {Array.isArray(bebidasSinAlcohol) && bebidasSinAlcohol.map((item) => renderWineItem(item, "bebidasSinAlcohol"))}
                </div>
                
                <div>
@@ -3071,7 +3290,7 @@ export default function AdminPanel() {
                      Agregar
                    </Button>
                  </div>
-                 {cervezas.map((item) => renderWineItem(item, "cervezas"))}
+                 {Array.isArray(cervezas) && cervezas.map((item) => renderWineItem(item, "cervezas"))}
                </div>
                
                <div>
@@ -3092,7 +3311,7 @@ export default function AdminPanel() {
                          Agregar
                        </Button>
                      </div>
-                     {vinos.tintos.map((item) => renderWineItem(item, "vinos-tintos"))}
+                     {Array.isArray(vinos?.tintos) && vinos.tintos.map((item: any) => renderWineItem(item, "vinos-tintos"))}
                    </div>
                    
                    <div>
@@ -3107,7 +3326,7 @@ export default function AdminPanel() {
                          Agregar
                        </Button>
                      </div>
-                     {vinos.blancos.map((item) => renderWineItem(item, "vinos-blancos"))}
+                     {Array.isArray(vinos?.blancos) && vinos.blancos.map((item: any) => renderWineItem(item, "vinos-blancos"))}
                    </div>
                    
                    <div>
@@ -3122,7 +3341,7 @@ export default function AdminPanel() {
                          Agregar
                        </Button>
                      </div>
-                     {vinos.rosados.map((item) => renderWineItem(item, "vinos-rosados"))}
+                     {Array.isArray(vinos?.rosados) && vinos.rosados.map((item: any) => renderWineItem(item, "vinos-rosados"))}
                    </div>
                    
                    <div>
@@ -3137,7 +3356,7 @@ export default function AdminPanel() {
                          Agregar
                        </Button>
                      </div>
-                     {vinos.copas.map((item) => renderWineItem(item, "vinos-copas"))}
+                     {Array.isArray(vinos?.copas) && vinos.copas.map((item: any) => renderWineItem(item, "vinos-copas"))}
                    </div>
                  </div>
                </div>
@@ -3154,7 +3373,7 @@ export default function AdminPanel() {
                      Agregar
                    </Button>
                  </div>
-                 {botellas.map((item) => renderWineItem(item, "botellas"))}
+                 {Array.isArray(botellas) && botellas.map((item) => renderWineItem(item, "botellas"))}
                </div>
              </div>
              
@@ -3192,7 +3411,7 @@ export default function AdminPanel() {
                      Agregar
                    </Button>
                  </div>
-                 {tragosClasicos.map((item) => renderWineItem(item, "tragosClasicos"))}
+                 {Array.isArray(tragosClasicos) && tragosClasicos.map((item) => renderWineItem(item, "tragosClasicos"))}
                </div>
                
                <div>
@@ -3207,7 +3426,7 @@ export default function AdminPanel() {
                      Agregar
                    </Button>
                  </div>
-                 {tragosEspeciales.map((item) => renderWineItem(item, "tragosEspeciales"))}
+                 {Array.isArray(tragosEspeciales) && tragosEspeciales.map((item) => renderWineItem(item, "tragosEspeciales"))}
                </div>
                
                <div>
@@ -3222,7 +3441,7 @@ export default function AdminPanel() {
                      Agregar
                    </Button>
                  </div>
-                 {tragosRedBull.map((item) => renderWineItem(item, "tragosRedBull"))}
+                 {Array.isArray(tragosRedBull) && tragosRedBull.map((item) => renderWineItem(item, "tragosRedBull"))}
                </div>
              </div>
              
@@ -3261,7 +3480,7 @@ export default function AdminPanel() {
                       Agregar
                     </Button>
                   </div>
-                  {promociones.cafe.map((item) => renderMenuItem(item, "promociones-cafe"))}
+                  {Array.isArray(promociones?.cafe) && promociones.cafe.map((item: any) => renderMenuItem(item, "promociones-cafe"))}
                 </div>
                 
                 <div>
@@ -3276,7 +3495,7 @@ export default function AdminPanel() {
                       Agregar
                     </Button>
                   </div>
-                  {promociones.tapeos.map((item) => renderMenuItem(item, "promociones-tapeos"))}
+                  {Array.isArray(promociones?.tapeos) && promociones.tapeos.map((item: any) => renderMenuItem(item, "promociones-tapeos"))}
                 </div>
                 
                 <div>
@@ -3291,7 +3510,7 @@ export default function AdminPanel() {
                       Agregar
                     </Button>
                   </div>
-                  {promociones.bebidas.map((item) => renderMenuItem(item, "promociones-bebidas"))}
+                  {Array.isArray(promociones?.bebidas) && promociones.bebidas.map((item: any) => renderMenuItem(item, "promociones-bebidas"))}
                 </div>
               </div>
               
@@ -3328,7 +3547,7 @@ export default function AdminPanel() {
             </div>
             
             <div className="space-y-6">
-              {allCategories.map((category) => (
+              {(allCategories || []).map((category) => (
                 <div key={category.id} className="border-2 border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
@@ -3422,32 +3641,76 @@ export default function AdminPanel() {
                       
                       return (
                         <div key={subcatId} className="ml-6 mt-3 p-4 bg-gray-100 rounded-lg border-l-4 border-black shadow-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold text-black">{subcatName}</span>
-                            <Button 
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
-                                if (percentage && !isNaN(parseFloat(percentage))) {
-                                  handleBulkPriceIncrease(subcatId, parseFloat(percentage))
-                                }
-                              }}
-                              className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-increase-prices-button"
-                            >
-                              <Plus className="w-3 h-3 text-white" />
-                              <span className="text-white">Aumentar Precios</span>
-                            </Button>
-                            <Button 
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteSubcategory(subcatId)}
-                              className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
-                            >
-                              <Trash2 className="w-3 h-3 text-white" />
-                              <span className="text-white">Eliminar</span>
-                            </Button>
-                          </div>
+                          {inlineEditingSubcatId === subcatId ? (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-black">Nombre de Subcategoría</Label>
+                                  <Input
+                                    value={inlineEditingSubcatName}
+                                    onChange={(e) => setInlineEditingSubcatName(e.target.value)}
+                                    placeholder="Ej: Tinto"
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-black">Categoría Padre</Label>
+                                  <select
+                                    className="w-full border rounded-md px-2 py-2 text-gray-800 bg-white"
+                                    value={inlineEditingSubcatParent}
+                                    onChange={(e) => setInlineEditingSubcatParent(e.target.value)}
+                                  >
+                                    {(allCategories || [])
+                                      .filter((c) => !Object.keys(subcategoryMapping).includes(c.id))
+                                      .map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                      ))}
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 justify-end">
+                                <Button onClick={saveEditSubcategory} className="bg-black text-white border-0 hover:bg-gray-800">Guardar</Button>
+                                <Button variant="outline" onClick={cancelEditSubcategory} className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800">Cancelar</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between items-center">
+                              <span className="font-semibold text-black">{subcatName}</span>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => startEditSubcategory(subcatId)}
+                                  className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                                >
+                                  <Edit className="w-3 h-3 text-white" />
+                                  <span className="text-white">Editar</span>
+                                </Button>
+                                <Button 
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
+                                    if (percentage && !isNaN(parseFloat(percentage))) {
+                                      handleBulkPriceIncrease(subcatId, parseFloat(percentage))
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-increase-prices-button"
+                                >
+                                  <Plus className="w-3 h-3 text-white" />
+                                  <span className="text-white">Aumentar Precios</span>
+                                </Button>
+                                <Button 
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDeleteSubcategory(subcatId)}
+                                  className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                                >
+                                  <Trash2 className="w-3 h-3 text-white" />
+                                  <span className="text-white">Eliminar</span>
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -3808,7 +4071,6 @@ export default function AdminPanel() {
                     <ul className="text-yellow-700 text-xs mt-1 space-y-1">
                       <li>• Esta acción afectará TODOS los productos de la carta</li>
                       <li>• Los cambios NO se pueden deshacer</li>
-                      <li>• Se recomienda hacer una copia de seguridad antes</li>
                     </ul>
                   </div>
                 </div>
@@ -3898,8 +4160,8 @@ export default function AdminPanel() {
                     <Button
                       key={tag}
                       type="button"
-                      variant={newProduct.tags.includes(tag) ? "default" : "outline"}
                       size="sm"
+                      aria-pressed={newProduct.tags.includes(tag)}
                       onClick={() => {
                         setNewProduct(prev => ({
                           ...prev,
@@ -3908,16 +4170,23 @@ export default function AdminPanel() {
                             : [...prev.tags, tag]
                         }))
                       }}
-                      className={`text-xs transition-all duration-200 ${
-                        newProduct.tags.includes(tag) 
-                          ? "bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800" 
-                          : "bg-white text-black border-gray-300 hover:border-black hover:bg-gray-50"
+                      className={`text-xs transition-all duration-200 border ${
+                        newProduct.tags.includes(tag)
+                          ? (tag === "vegan"
+                              ? "bg-green-600 text-white border-green-600 ring-2 ring-green-300 ring-offset-1"
+                              : tag === "sin-tacc"
+                                ? "bg-purple-600 text-white border-purple-600 ring-2 ring-purple-300 ring-offset-1"
+                                : "bg-red-600 text-white border-red-600 ring-2 ring-red-300 ring-offset-1")
+                          : (tag === "vegan"
+                              ? "bg-white text-green-700 border-green-600 hover:bg-green-50 opacity-80"
+                              : tag === "sin-tacc"
+                                ? "bg-white text-purple-700 border-purple-600 hover:bg-purple-50 opacity-80"
+                                : "bg-white text-red-700 border-red-600 hover:bg-red-50 opacity-80")
                       }`}
                     >
-                      {tag === "vegan" && "🌱"}
-                      {tag === "sin-tacc" && "🌾"}
-                      {tag === "picante" && "🔥"}
+                      <span className="mr-1">{tag === "vegan" ? "🌱" : tag === "sin-tacc" ? "🌾" : "🔥"}</span>
                       {tag}
+                      {newProduct.tags.includes(tag) && <span className="ml-1">✓</span>}
                     </Button>
                   ))}
                 </div>

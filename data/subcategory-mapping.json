@@ -1,6 +1,10 @@
 {
+  "chocolate": "tortas",
+  "carnes": "parrilla",
+  "tinto": "vinos",
+  "blancos": "vinos",
+  "botellas": "vinos",
   "fritas": "empanadas",
   "horno": "empanadas",
-  "chocolate": "tortas",
-  "carnes": "parrilla"
+  "achurass": "parrilla"
 }

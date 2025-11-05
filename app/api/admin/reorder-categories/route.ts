@@ -17,13 +17,13 @@ export async function POST(request: NextRequest) {
     const categoriesPath = path.join(process.cwd(), 'data', 'categories.json')
     const categoriesData = JSON.parse(fs.readFileSync(categoriesPath, 'utf8'))
     
-    // Crear un nuevo objeto con el orden actualizado
-    const reorderedCategories: { [key: string]: any } = {}
+    // Crear un nuevo objeto preservando categorías existentes y actualizando solo el 'order'
+    const reorderedCategories: { [key: string]: any } = { ...categoriesData }
     
     categories.forEach((category: any, index: number) => {
-      if (categoriesData[category.id]) {
+      if (reorderedCategories[category.id]) {
         reorderedCategories[category.id] = {
-          ...categoriesData[category.id],
+          ...reorderedCategories[category.id],
           order: index + 1
         }
       }
