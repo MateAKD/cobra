@@ -224,8 +224,18 @@ export default function MenuPage() {
         clearTimeout(timeoutId)
       }
       
+      // No ejecutar si hay una selección manual reciente
+      if (isManualSelection) {
+        return
+      }
+      
       timeoutId = setTimeout(() => {
-        const scrollTop = window.scrollY
+        // Verificar nuevamente si hay selección manual
+        if (isManualSelection) {
+          return
+        }
+
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
         // Ajustar offset según dispositivo (móvil vs desktop)
         const isMobileDevice = window.innerWidth < 1024
         const headerOffset = isMobileDevice ? 200 : 150 // Más espacio en móvil para la barra sticky
@@ -234,27 +244,40 @@ export default function MenuPage() {
         // Crear lista de todas las secciones con sus posiciones
         const sections: Array<{key: string, top: number, bottom: number}> = []
         
-        // Agregar secciones estándar
+        // Agregar secciones estándar desde refs
         Object.entries(sectionRefs).forEach(([key, ref]) => {
-          if (ref.current) {
+          if (ref.current && ref.current.offsetParent !== null) {
             const rect = ref.current.getBoundingClientRect()
             const top = rect.top + scrollTop
             const bottom = top + rect.height
-            sections.push({ key, top, bottom })
+            if (rect.height > 0) { // Solo agregar si el elemento es visible
+              sections.push({ key, top, bottom })
+            }
           }
         })
         
-        // Agregar categorías personalizadas
+        // Agregar categorías personalizadas desde data-category
         const customSections = document.querySelectorAll('[data-category]')
         customSections.forEach(section => {
-          const rect = section.getBoundingClientRect()
-          const top = rect.top + scrollTop
-          const bottom = top + rect.height
-          const key = section.getAttribute('data-category') || ''
-          if (key) {
-            sections.push({ key, top, bottom })
+          const htmlSection = section as HTMLElement
+          if (htmlSection.offsetParent !== null) {
+            const rect = htmlSection.getBoundingClientRect()
+            const top = rect.top + scrollTop
+            const bottom = top + rect.height
+            const key = section.getAttribute('data-category') || ''
+            if (key && rect.height > 0) { // Solo agregar si el elemento es visible
+              // Evitar duplicados
+              if (!sections.find(s => s.key === key)) {
+                sections.push({ key, top, bottom })
+              }
+            }
           }
         })
+        
+        // Si no hay secciones disponibles, salir
+        if (sections.length === 0) {
+          return
+        }
         
         // Ordenar por posición vertical
         sections.sort((a, b) => a.top - b.top)
@@ -303,23 +326,42 @@ export default function MenuPage() {
             }, 50)
           })
         }
-      }, window.innerWidth < 1024 ? 150 : 100) // Delay ligeramente mayor en móvil para mejor rendimiento
+      }, window.innerWidth < 1024 ? 200 : 150) // Delay mayor para mejor estabilidad
     }
 
-    // Ejecutar al cargar y al montar el componente
+    // Ejecutar al cargar y al montar el componente - delay mayor para asegurar que todo esté renderizado
     const initialDetection = setTimeout(() => {
       detectActiveCategory()
-    }, 300)
+    }, 500)
 
-    // Listener de scroll
-    window.addEventListener('scroll', detectActiveCategory, { passive: true })
+    // Listener de scroll con throttling mejorado
+    let scrollTimeout: NodeJS.Timeout | null = null
+    const handleScroll = () => {
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
+      }
+      scrollTimeout = setTimeout(() => {
+        detectActiveCategory()
+      }, 50)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    
+    // También ejecutar cuando cambien las categorías visibles
+    const categoriesChangeDetection = setTimeout(() => {
+      detectActiveCategory()
+    }, 600)
 
     return () => {
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
+      }
       clearTimeout(initialDetection)
-      window.removeEventListener('scroll', detectActiveCategory)
+      clearTimeout(categoriesChangeDetection)
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [activeTab, visibleCategories, isManualSelection])
   
@@ -854,69 +896,79 @@ export default function MenuPage() {
     // Scroll de la barra de categorías primero
     scrollCategoryBarToButton(sectionKey)
     
-    // Usar requestAnimationFrame para asegurar que el DOM esté actualizado
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        let element: HTMLElement | null = null
+    // Función para encontrar y hacer scroll al elemento
+    const findAndScroll = (attempts = 0) => {
+      if (attempts > 10) {
+        console.warn(`No se pudo encontrar la sección después de ${attempts} intentos: ${sectionKey}`)
+        setIsManualSelection(false)
+        return
+      }
+
+      let element: HTMLElement | null = null
+      
+      // Primero buscar por data-category (más confiable para todas las categorías)
+      element = document.querySelector(`[data-category="${sectionKey}"]`) as HTMLElement
+      
+      // Si no se encuentra, intentar con las referencias existentes
+      if (!element && sectionKey in sectionRefs) {
+        element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current || null
+      }
+      
+      // Si aún no se encuentra, buscar cualquier elemento con el atributo data-category que coincida
+      if (!element) {
+        const allSections = document.querySelectorAll('[data-category]')
+        allSections.forEach(section => {
+          if (section.getAttribute('data-category') === sectionKey) {
+            element = section as HTMLElement
+          }
+        })
+      }
+      
+      if (element && element.offsetParent !== null) {
+        // Calcular la posición considerando el header sticky
+        const isMobile = window.innerWidth < 1024
+        const headerOffset = isMobile ? 200 : 150
         
-        // Primero buscar por data-category (más confiable para todas las categorías)
-        element = document.querySelector(`[data-category="${sectionKey}"]`) as HTMLElement
-        
-        // Si no se encuentra, intentar con las referencias existentes
-        if (!element && sectionKey in sectionRefs) {
-          element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current || null
-        }
-        
-        // Si aún no se encuentra, buscar cualquier elemento con el atributo data-category que coincida
-        if (!element) {
-          const allSections = document.querySelectorAll('[data-category]')
-          allSections.forEach(section => {
-            if (section.getAttribute('data-category') === sectionKey) {
-              element = section as HTMLElement
-            }
+        // Usar un método más confiable para móvil
+        if (isMobile) {
+          // Calcular posición absoluta
+          const rect = element.getBoundingClientRect()
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+          const elementTop = rect.top + scrollTop
+          const targetPosition = elementTop - headerOffset
+          
+          // Usar scrollTo con posición calculada (más confiable que scrollIntoView)
+          window.scrollTo({
+            top: Math.max(0, targetPosition),
+            behavior: 'smooth'
           })
-        }
-        
-        if (element) {
-          // Calcular la posición considerando el header sticky
-          // En móvil, usar un offset mayor para la barra de categorías sticky
-          const isMobile = window.innerWidth < 1024
-          const headerOffset = isMobile ? 180 : 150 // Más espacio en móvil para la barra sticky
+        } else {
           const elementPosition = element.getBoundingClientRect().top + window.scrollY
           const offsetPosition = elementPosition - headerOffset
           
-          // En móvil, usar scrollIntoView para mejor compatibilidad
-          if (isMobile) {
-            element.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-            })
-            // Ajustar manualmente después del scroll para compensar el offset
-            setTimeout(() => {
-              window.scrollBy({
-                top: -headerOffset,
-                behavior: 'smooth'
-              })
-            }, 100)
-          } else {
-            window.scrollTo({
-              top: Math.max(0, offsetPosition),
-              behavior: "smooth"
-            })
-          }
-          
-          // Después de completar el scroll, permitir la detección automática nuevamente
-          setTimeout(() => {
-            setIsManualSelection(false)
-          }, 1200) // Aumentar el tiempo en móvil para evitar conflictos
-        } else {
-          console.warn(`No se encontró la sección para la categoría: ${sectionKey}`)
-          // Si no se encuentra el elemento, permitir detección automática después de un delay
-          setTimeout(() => {
-            setIsManualSelection(false)
-          }, 500)
+          window.scrollTo({
+            top: Math.max(0, offsetPosition),
+            behavior: "smooth"
+          })
         }
-      }, 150)
+        
+        // Después de completar el scroll, permitir la detección automática nuevamente
+        setTimeout(() => {
+          setIsManualSelection(false)
+        }, 1500)
+      } else {
+        // Si el elemento no está disponible aún, reintentar después de un delay
+        setTimeout(() => {
+          findAndScroll(attempts + 1)
+        }, 100)
+      }
+    }
+    
+    // Iniciar búsqueda después de asegurar que el DOM esté listo
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        findAndScroll()
+      }, 50)
     })
   }
 
@@ -1066,10 +1118,22 @@ export default function MenuPage() {
                 <button
                   key={tab.key}
                   data-tab={tab.key}
-                  onClick={() => scrollToSection(tab.key)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    scrollToSection(tab.key)
+                  }}
+                  onTouchStart={(e) => {
+                    // Prevenir el comportamiento por defecto en móvil
+                    e.currentTarget.style.opacity = '0.8'
+                  }}
+                  onTouchEnd={(e) => {
+                    e.currentTarget.style.opacity = '1'
+                  }}
                   className={`flex-shrink-0 bebas-title-category-bar category-button ${
                     activeTab === tab.key ? "active" : ""
                   }`}
+                  type="button"
                 >
                   {tab.label}
                 </button>
