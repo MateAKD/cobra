@@ -247,7 +247,7 @@ export default function MenuPage() {
       }
       
       timeoutId = setTimeout(() => {
-        // Verificar nuevamente si hay selección manual
+        // Verificar nuevamente si hay selección manual (con doble verificación)
         if (isManualSelection) {
           return
         }
@@ -971,9 +971,10 @@ export default function MenuPage() {
           }
           
           // Después de completar el scroll, permitir la detección automática nuevamente
+          // Aumentar el tiempo para asegurar que el título coincida con la categoría seleccionada
           setTimeout(() => {
             setIsManualSelection(false)
-          }, isMobile ? 1500 : 2000) // Tiempo ajustado para móvil
+          }, isMobile ? 2500 : 3000) // Tiempo aumentado para móvil y desktop
         } else {
           // Si el elemento no es visible aún, reintentar
           setTimeout(() => {

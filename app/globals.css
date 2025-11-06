@@ -762,10 +762,11 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  mix-blend-mode: lighten; /* Modo de fusión aclarar como en Figma */
-  opacity: 0.68; /* 68% de opacidad */
+  mix-blend-mode: overlay; /* Cambiar a overlay para mejor integración */
+  opacity: 0.15; /* Reducir opacidad para que se vea más sutil */
   z-index: 1;
   pointer-events: none; /* Permitir interacción con el contenido */
+  filter: blur(0.5px); /* Ligero blur para suavizar el patrón */
 }
 
 /* En móvil, mantener fixed para que el fondo siempre se vea */
@@ -776,6 +777,8 @@
     height: 100dvh; /* Dynamic viewport height para mejor soporte móvil */
     background-size: cover;
     background-attachment: fixed; /* Mantener fijo durante el scroll */
+    opacity: 0.1; /* Opacidad aún más baja en móvil */
+    filter: blur(1px); /* Más blur en móvil para suavizar */
   }
   
   /* Fondo del menú en móvil: EXACTAMENTE igual a la botonera, pero fijo para verse en todo el menú */
