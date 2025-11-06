@@ -502,10 +502,14 @@
   /* Mejorar el scroll automático */
   scroll-padding-left: 1rem;
   scroll-padding-right: 1rem;
-  /* Mejorar scroll táctil en móvil */
+  /* Mejorar scroll táctil en móvil - prevenir conflictos */
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
   overscroll-behavior-x: contain;
+  /* Prevenir que el scroll del contenedor interfiera con el scroll de la página */
+  will-change: scroll-position;
+  /* Asegurar que el contenedor no bloquee eventos táctiles */
+  pointer-events: auto;
 }
 
 .category-scroll-container::-webkit-scrollbar {
@@ -764,10 +768,14 @@
   pointer-events: none; /* Permitir interacción con el contenido */
 }
 
-/* En móvil, cambiar a absolute para mejor rendimiento */
+/* En móvil, mantener fixed para que el fondo siempre se vea */
 @media (max-width: 1023px) {
   .cobra-snake-bg::before {
-    position: absolute; /* Absolute en móvil para mejor rendimiento */
+    position: fixed; /* Fixed también en móvil para que siempre se vea */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height para mejor soporte móvil */
+    background-size: cover;
+    background-attachment: fixed; /* Mantener fijo durante el scroll */
   }
   
   /* Fondo del menú en móvil: EXACTAMENTE igual a la botonera, pero fijo para verse en todo el menú */
@@ -781,7 +789,8 @@
     /* Usar cover igual que la botonera - se escalará al tamaño del viewport */
     background-size: cover;
     background-position: center;
-    background-repeat: repeat-y; /* Repetir verticalmente manteniendo el mismo tamaño */
+    background-attachment: fixed; /* Mantener fijo durante el scroll */
+    background-repeat: no-repeat; /* No repetir, usar cover */
   }
 }
 

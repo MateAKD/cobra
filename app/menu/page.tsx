@@ -255,7 +255,8 @@ export default function MenuPage() {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
         // Ajustar offset según dispositivo (móvil vs desktop)
         const isMobileDevice = window.innerWidth < 1024
-        const headerOffset = isMobileDevice ? 200 : 150 // Más espacio en móvil para la barra sticky
+        // En móvil, usar un offset más preciso considerando la altura de la barra sticky
+        const headerOffset = isMobileDevice ? 180 : 150
         const detectionPoint = scrollTop + headerOffset
         
         // Crear lista de todas las secciones con sus posiciones
@@ -303,8 +304,30 @@ export default function MenuPage() {
         let activeSection = ''
         
         // Buscar la sección que está actualmente visible en el punto de detección
+        // En móvil, usar un método más preciso que considere el área visible
+        const viewportHeight = window.innerHeight
+        const visibleAreaTop = scrollTop
+        const visibleAreaBottom = scrollTop + viewportHeight
+        
         for (let i = 0; i < sections.length; i++) {
           const section = sections[i]
+          
+          // Calcular cuánto de la sección está visible
+          const sectionVisibleTop = Math.max(section.top, visibleAreaTop)
+          const sectionVisibleBottom = Math.min(section.bottom, visibleAreaBottom)
+          const sectionVisibleHeight = Math.max(0, sectionVisibleBottom - sectionVisibleTop)
+          
+          // Si una parte significativa de la sección está visible, considerarla activa
+          const sectionHeight = section.bottom - section.top
+          const visibilityRatio = sectionVisibleHeight / sectionHeight
+          
+          // En móvil, ser más estricto con la visibilidad
+          const minVisibilityRatio = isMobileDevice ? 0.3 : 0.2
+          
+          if (visibilityRatio >= minVisibilityRatio && detectionPoint >= section.top && detectionPoint < section.bottom) {
+            activeSection = section.key
+            break
+          }
           
           // Si el punto de detección está dentro de esta sección
           if (detectionPoint >= section.top && detectionPoint < section.bottom) {
@@ -336,14 +359,14 @@ export default function MenuPage() {
         if (activeSection && activeSection !== activeTab && !isManualSelection) {
           setActiveTab(activeSection)
           
-          // Scroll automático de la barra de categorías
+          // Scroll automático de la barra de categorías con mejor manejo en móvil
           requestAnimationFrame(() => {
             setTimeout(() => {
               scrollCategoryBarToActive(activeSection)
-            }, 50)
+            }, 100) // Delay mayor para móvil
           })
         }
-      }, window.innerWidth < 1024 ? 200 : 150) // Delay mayor para mejor estabilidad
+      }, window.innerWidth < 1024 ? 100 : 150) // Delay reducido para mejor respuesta en móvil
     }
 
     // Ejecutar al cargar y al montar el componente - delay mayor para asegurar que todo esté renderizado
@@ -351,15 +374,17 @@ export default function MenuPage() {
       detectActiveCategory()
     }, 500)
 
-    // Listener de scroll con throttling mejorado
+    // Listener de scroll con throttling mejorado para móvil
     let scrollTimeout: NodeJS.Timeout | null = null
     const handleScroll = () => {
       if (scrollTimeout) {
         clearTimeout(scrollTimeout)
       }
+      // Throttling más agresivo en móvil para mejor rendimiento
+      const throttleDelay = window.innerWidth < 1024 ? 100 : 50
       scrollTimeout = setTimeout(() => {
         detectActiveCategory()
-      }, 50)
+      }, throttleDelay)
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -915,28 +940,29 @@ export default function MenuPage() {
         if (isVisible) {
           // Calcular la posición considerando el header sticky
           const isMobile = window.innerWidth < 1024
-          const headerOffset = isMobile ? 220 : 150 // Aumentar offset en móvil
+          const headerOffset = isMobile ? 180 : 150 // Offset ajustado para móvil
           
           // Calcular posición absoluta de manera más precisa
           const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
           const elementTop = rect.top + scrollTop
           const targetPosition = elementTop - headerOffset
           
-          // En móvil, usar un método más directo
+          // En móvil, usar un método más directo y confiable
           if (isMobile) {
-            // Forzar scroll inmediato primero
-            window.scrollTo({
-              top: Math.max(0, targetPosition),
-              behavior: 'auto' // Primero sin animación para asegurar que funcione
+            // Usar scrollIntoView que es más confiable en móvil
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
             })
             
-            // Luego hacer scroll suave
+            // Ajuste adicional después del scroll
             setTimeout(() => {
+              const finalPosition = elementTop - headerOffset
               window.scrollTo({
-                top: Math.max(0, targetPosition),
-                behavior: 'smooth'
+                top: Math.max(0, finalPosition),
+                behavior: 'auto'
               })
-            }, 10)
+            }, 500)
           } else {
             window.scrollTo({
               top: Math.max(0, targetPosition),
@@ -947,7 +973,7 @@ export default function MenuPage() {
           // Después de completar el scroll, permitir la detección automática nuevamente
           setTimeout(() => {
             setIsManualSelection(false)
-          }, 2000) // Aumentar tiempo para móvil
+          }, isMobile ? 1500 : 2000) // Tiempo ajustado para móvil
         } else {
           // Si el elemento no es visible aún, reintentar
           setTimeout(() => {
@@ -1121,17 +1147,26 @@ export default function MenuPage() {
                   // En móvil, prevenir el scroll del contenedor cuando se toca un botón
                   const container = document.querySelector('.category-scroll-container') as HTMLElement
                   if (container) {
+                    // Prevenir scroll del contenedor durante la navegación
+                    container.style.overflow = 'hidden'
                     container.style.scrollBehavior = 'auto'
                   }
                   
+                  // Scroll a la sección
                   scrollToSection(tab.key)
+                  
+                  // Scroll de la barra de categorías después de un pequeño delay
+                  setTimeout(() => {
+                    scrollCategoryBarToButton(tab.key)
+                  }, 50)
                   
                   // Restaurar scroll suave después de un delay
                   setTimeout(() => {
                     if (container) {
+                      container.style.overflow = 'auto'
                       container.style.scrollBehavior = 'smooth'
                     }
-                  }, 100)
+                  }, 300)
                 }
 
                 return (
@@ -1140,17 +1175,33 @@ export default function MenuPage() {
                     data-tab={tab.key}
                     onClick={handleCategoryClick}
                     onTouchEnd={(e) => {
-                      // Manejar touch end para móvil
+                      // Manejar touch end para móvil - prevenir propagación
+                      e.preventDefault()
+                      e.stopPropagation()
                       handleCategoryClick(e)
                       e.currentTarget.style.opacity = '1'
                     }}
                     onTouchStart={(e) => {
-                      // Feedback visual inmediato
+                      // Feedback visual inmediato - prevenir scroll del contenedor
+                      e.stopPropagation()
                       e.currentTarget.style.opacity = '0.7'
                     }}
                     onTouchCancel={(e) => {
                       // Restaurar opacidad si se cancela el touch
                       e.currentTarget.style.opacity = '1'
+                    }}
+                    onTouchMove={(e) => {
+                      // Prevenir scroll del contenedor cuando el usuario está tocando un botón
+                      const container = document.querySelector('.category-scroll-container') as HTMLElement
+                      if (container && e.touches.length > 0) {
+                        const touch = e.touches[0]
+                        const buttonRect = e.currentTarget.getBoundingClientRect()
+                        // Si el touch está dentro del botón, prevenir scroll del contenedor
+                        if (touch.clientX >= buttonRect.left && touch.clientX <= buttonRect.right &&
+                            touch.clientY >= buttonRect.top && touch.clientY <= buttonRect.bottom) {
+                          e.stopPropagation()
+                        }
+                      }
                     }}
                     className={`flex-shrink-0 bebas-title-category-bar category-button ${
                       activeTab === tab.key ? "active" : ""
