@@ -780,71 +780,38 @@
 
 /* ==================== ANIMACIÓN DE CARGA DEL LOGO ==================== */
 
-/* Animación de llenado del logo - compatible con navegadores móviles */
+/* Animación de llenado del logo */
 @keyframes logo-fill {
   0% {
-    transform: translateY(100%);
     clip-path: inset(100% 0 0 0);
-    -webkit-clip-path: inset(100% 0 0 0);
     opacity: 1;
   }
-  50% {
-    transform: translateY(20%);
+  20% {
+    clip-path: inset(80% 0 0 0);
+    opacity: 1;
+  }
+  40% {
+    clip-path: inset(60% 0 0 0);
+    opacity: 1;
+  }
+  60% {
+    clip-path: inset(40% 0 0 0);
+    opacity: 1;
+  }
+  80% {
     clip-path: inset(20% 0 0 0);
-    -webkit-clip-path: inset(20% 0 0 0);
     opacity: 1;
   }
   100% {
-    transform: translateY(0);
     clip-path: inset(0 0 0 0);
-    -webkit-clip-path: inset(0 0 0 0);
-    opacity: 1;
-  }
-}
-
-@-webkit-keyframes logo-fill {
-  0% {
-    transform: translateY(100%);
-    -webkit-transform: translateY(100%);
-    clip-path: inset(100% 0 0 0);
-    -webkit-clip-path: inset(100% 0 0 0);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(20%);
-    -webkit-transform: translateY(20%);
-    clip-path: inset(20% 0 0 0);
-    -webkit-clip-path: inset(20% 0 0 0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(0);
-    -webkit-transform: translateY(0);
-    clip-path: inset(0 0 0 0);
-    -webkit-clip-path: inset(0 0 0 0);
     opacity: 1;
   }
 }
 
 .animate-logo-fill {
-  transform: translateY(100%);
-  clip-path: inset(100% 0 0 0);
-  -webkit-clip-path: inset(100% 0 0 0);
   animation: logo-fill 3s ease-in-out forwards;
+  will-change: clip-path;
   -webkit-animation: logo-fill 3s ease-in-out forwards;
-  will-change: transform, clip-path;
-}
-
-/* Fondo específico para la página de menú */
-.menu-snake-bg::before {
-  background-repeat: repeat-y;
-  background-position: center top;
-}
-
-@media (max-width: 1023px) {
-  .menu-snake-bg::before {
-    background-repeat: repeat-y;
-  }
 }
 
 /* ==================== EFECTOS MINIMALISTAS PARA LA CARÁTULA ==================== */
@@ -1631,5 +1598,18 @@ html {
   .logos-carousel-large::before,
   .logos-carousel-large::after {
     width: 100px;
+  }
+}
+
+/* Fondo específico para la página de menú: mantener escala idéntica a la botonera */
+.menu-snake-bg::before {
+  background-size: 100vw auto;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 1023px) {
+  .menu-snake-bg::before {
+    background-size: 100vw auto;
   }
 }
