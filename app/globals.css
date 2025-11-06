@@ -745,22 +745,31 @@
   position: relative;
 }
 
-/* Imagen de fondo con modo de fusión aclarar */
+/* Imagen de fondo con modo de fusión aclarar para el efecto de escamas */
 .cobra-snake-bg::before {
   content: '';
-  position: absolute;
+  position: fixed; /* Fixed para efecto parallax en desktop */
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100%;
+  height: 100%;
   background-image: url('/Fondo sutil.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
   mix-blend-mode: lighten; /* Modo de fusión aclarar como en Figma */
   opacity: 0.68; /* 68% de opacidad */
   z-index: 1;
+  pointer-events: none; /* Permitir interacción con el contenido */
+}
+
+/* En móvil, cambiar a absolute para mejor rendimiento */
+@media (max-width: 1023px) {
+  .cobra-snake-bg::before {
+    position: absolute; /* Absolute en móvil para mejor rendimiento */
+  }
 }
 
 /* Asegurar que el contenido esté por encima del overlay */
