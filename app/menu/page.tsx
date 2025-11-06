@@ -167,11 +167,12 @@ export default function MenuPage() {
   }
   
   const [activeTab, setActiveTab] = useState(getFirstVisibleCategory())
+  const [isManualSelection, setIsManualSelection] = useState(false)
   
   // Actualizar el activeTab cuando cambien las categorías visibles
   useEffect(() => {
     const firstVisible = getFirstVisibleCategory()
-    if (firstVisible && firstVisible !== activeTab) {
+    if (firstVisible && firstVisible !== activeTab && !isManualSelection) {
       setActiveTab(firstVisible)
     }
   }, [visibleCategories])
@@ -225,7 +226,9 @@ export default function MenuPage() {
       
       timeoutId = setTimeout(() => {
         const scrollTop = window.scrollY
-        const headerOffset = 150 // Offset para el sticky header + margen
+        // Ajustar offset según dispositivo (móvil vs desktop)
+        const isMobileDevice = window.innerWidth < 1024
+        const headerOffset = isMobileDevice ? 200 : 150 // Más espacio en móvil para la barra sticky
         const detectionPoint = scrollTop + headerOffset
         
         // Crear lista de todas las secciones con sus posiciones
@@ -289,8 +292,8 @@ export default function MenuPage() {
           activeSection = sections[0].key
         }
         
-        // Actualizar solo si es diferente
-        if (activeSection && activeSection !== activeTab) {
+        // Actualizar solo si es diferente y no hay una selección manual reciente
+        if (activeSection && activeSection !== activeTab && !isManualSelection) {
           setActiveTab(activeSection)
           
           // Scroll automático de la barra de categorías
@@ -300,7 +303,7 @@ export default function MenuPage() {
             }, 50)
           })
         }
-      }, 100) // Delay para evitar actualizaciones excesivas
+      }, window.innerWidth < 1024 ? 150 : 100) // Delay ligeramente mayor en móvil para mejor rendimiento
     }
 
     // Ejecutar al cargar y al montar el componente
@@ -318,7 +321,7 @@ export default function MenuPage() {
       clearTimeout(initialDetection)
       window.removeEventListener('scroll', detectActiveCategory)
     }
-  }, [activeTab, visibleCategories])
+  }, [activeTab, visibleCategories, isManualSelection])
   
   if (loading || subcategoryLoading) {
     return (
@@ -466,7 +469,11 @@ export default function MenuPage() {
           if (!category) return null
 
           return (
-            <div key={categoryId} ref={sectionRefs[categoryId as keyof typeof sectionRefs]} data-category={categoryId}>
+            <div 
+              key={categoryId} 
+              ref={sectionRefs[categoryId as keyof typeof sectionRefs] || undefined} 
+              data-category={categoryId}
+            >
               <MenuSection 
                 title={category.name}
                 description={category.description}
@@ -838,37 +845,79 @@ export default function MenuPage() {
   }
 
   const scrollToSection = (sectionKey: string) => {
+    // Marcar como selección manual
+    setIsManualSelection(true)
+    
+    // Actualizar el estado activo inmediatamente
     setActiveTab(sectionKey)
     
     // Scroll de la barra de categorías primero
     scrollCategoryBarToButton(sectionKey)
     
-    // Pequeño delay para asegurar que el estado se actualice
-    setTimeout(() => {
-      let element: HTMLElement | null = null
-      
-      // Primero intentar con las referencias existentes
-      if (sectionKey in sectionRefs) {
-        element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current
-      }
-      
-      // Si no hay referencia, buscar por data-category (para todas las categorías)
-      if (!element) {
-        element = document.querySelector(`[data-category="${sectionKey}"]`) as HTMLElement
-      }
-      
-      if (element) {
-        // Calcular la posición considerando el header sticky
-        const headerOffset = 120 // Altura del header sticky + margen
-        const elementPosition = element.getBoundingClientRect().top + window.scrollY
-        const offsetPosition = elementPosition - headerOffset
+    // Usar requestAnimationFrame para asegurar que el DOM esté actualizado
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        let element: HTMLElement | null = null
         
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth"
-        })
-      }
-    }, 100)
+        // Primero buscar por data-category (más confiable para todas las categorías)
+        element = document.querySelector(`[data-category="${sectionKey}"]`) as HTMLElement
+        
+        // Si no se encuentra, intentar con las referencias existentes
+        if (!element && sectionKey in sectionRefs) {
+          element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current || null
+        }
+        
+        // Si aún no se encuentra, buscar cualquier elemento con el atributo data-category que coincida
+        if (!element) {
+          const allSections = document.querySelectorAll('[data-category]')
+          allSections.forEach(section => {
+            if (section.getAttribute('data-category') === sectionKey) {
+              element = section as HTMLElement
+            }
+          })
+        }
+        
+        if (element) {
+          // Calcular la posición considerando el header sticky
+          // En móvil, usar un offset mayor para la barra de categorías sticky
+          const isMobile = window.innerWidth < 1024
+          const headerOffset = isMobile ? 180 : 150 // Más espacio en móvil para la barra sticky
+          const elementPosition = element.getBoundingClientRect().top + window.scrollY
+          const offsetPosition = elementPosition - headerOffset
+          
+          // En móvil, usar scrollIntoView para mejor compatibilidad
+          if (isMobile) {
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            })
+            // Ajustar manualmente después del scroll para compensar el offset
+            setTimeout(() => {
+              window.scrollBy({
+                top: -headerOffset,
+                behavior: 'smooth'
+              })
+            }, 100)
+          } else {
+            window.scrollTo({
+              top: Math.max(0, offsetPosition),
+              behavior: "smooth"
+            })
+          }
+          
+          // Después de completar el scroll, permitir la detección automática nuevamente
+          setTimeout(() => {
+            setIsManualSelection(false)
+          }, 1200) // Aumentar el tiempo en móvil para evitar conflictos
+        } else {
+          console.warn(`No se encontró la sección para la categoría: ${sectionKey}`)
+          // Si no se encuentra el elemento, permitir detección automática después de un delay
+          setTimeout(() => {
+            setIsManualSelection(false)
+          }, 500)
+        }
+      }, 150)
+    })
   }
 
     // Función para encontrar la primera categoría visible y desplazarse a ella
