@@ -778,6 +778,42 @@
   z-index: 2;
 }
 
+/* ==================== ANIMACIÓN DE CARGA DEL LOGO ==================== */
+
+/* Animación de llenado del logo */
+@keyframes logo-fill {
+  0% {
+    clip-path: inset(100% 0 0 0);
+    opacity: 1;
+  }
+  20% {
+    clip-path: inset(80% 0 0 0);
+    opacity: 1;
+  }
+  40% {
+    clip-path: inset(60% 0 0 0);
+    opacity: 1;
+  }
+  60% {
+    clip-path: inset(40% 0 0 0);
+    opacity: 1;
+  }
+  80% {
+    clip-path: inset(20% 0 0 0);
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+.animate-logo-fill {
+  animation: logo-fill 3s ease-in-out forwards;
+  will-change: clip-path;
+  -webkit-animation: logo-fill 3s ease-in-out forwards;
+}
+
 /* ==================== EFECTOS MINIMALISTAS PARA LA CARÁTULA ==================== */
 
 /* Smooth scroll behavior */
