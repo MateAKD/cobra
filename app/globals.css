@@ -770,6 +770,14 @@
   .cobra-snake-bg::before {
     position: absolute; /* Absolute en móvil para mejor rendimiento */
   }
+  
+  /* Fondo del menú en móvil: exactamente igual al de la botonera */
+  .menu-snake-bg::before {
+    position: absolute; /* Igual que la botonera en móvil */
+    background-size: cover; /* Igual que la botonera */
+    background-position: center; /* Igual que la botonera */
+    background-repeat: no-repeat; /* Igual que la botonera */
+  }
 }
 
 /* Asegurar que el contenido esté por encima del overlay */
@@ -1601,9 +1609,3 @@ html {
   }
 }
 
-/* Fondo específico para la página de menú: exactamente igual a la botonera */
-.menu-snake-bg::before {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
