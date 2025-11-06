@@ -951,7 +951,7 @@ export default function MenuPage() {
     
     // Función para encontrar y hacer scroll al elemento
     const findAndScroll = (attempts = 0) => {
-      if (attempts > 10) {
+      if (attempts > 15) {
         console.warn(`No se pudo encontrar la sección después de ${attempts} intentos: ${sectionKey}`)
         setIsManualSelection(false)
         return
@@ -977,51 +977,67 @@ export default function MenuPage() {
         })
       }
       
-      if (element && element.offsetParent !== null) {
-        // Calcular la posición considerando el header sticky
-        const isMobile = window.innerWidth < 1024
-        const headerOffset = isMobile ? 200 : 150
+      if (element) {
+        // Verificar que el elemento sea visible
+        const rect = element.getBoundingClientRect()
+        const isVisible = rect.width > 0 && rect.height > 0
         
-        // Usar un método más confiable para móvil
-        if (isMobile) {
-          // Calcular posición absoluta
-          const rect = element.getBoundingClientRect()
-          const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+        if (isVisible) {
+          // Calcular la posición considerando el header sticky
+          const isMobile = window.innerWidth < 1024
+          const headerOffset = isMobile ? 220 : 150 // Aumentar offset en móvil
+          
+          // Calcular posición absoluta de manera más precisa
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
           const elementTop = rect.top + scrollTop
           const targetPosition = elementTop - headerOffset
           
-          // Usar scrollTo con posición calculada (más confiable que scrollIntoView)
-          window.scrollTo({
-            top: Math.max(0, targetPosition),
-            behavior: 'smooth'
-          })
-        } else {
-          const elementPosition = element.getBoundingClientRect().top + window.scrollY
-          const offsetPosition = elementPosition - headerOffset
+          // En móvil, usar un método más directo
+          if (isMobile) {
+            // Forzar scroll inmediato primero
+            window.scrollTo({
+              top: Math.max(0, targetPosition),
+              behavior: 'auto' // Primero sin animación para asegurar que funcione
+            })
+            
+            // Luego hacer scroll suave
+            setTimeout(() => {
+              window.scrollTo({
+                top: Math.max(0, targetPosition),
+                behavior: 'smooth'
+              })
+            }, 10)
+          } else {
+            window.scrollTo({
+              top: Math.max(0, targetPosition),
+              behavior: "smooth"
+            })
+          }
           
-          window.scrollTo({
-            top: Math.max(0, offsetPosition),
-            behavior: "smooth"
-          })
+          // Después de completar el scroll, permitir la detección automática nuevamente
+          setTimeout(() => {
+            setIsManualSelection(false)
+          }, 2000) // Aumentar tiempo para móvil
+        } else {
+          // Si el elemento no es visible aún, reintentar
+          setTimeout(() => {
+            findAndScroll(attempts + 1)
+          }, 150)
         }
-        
-        // Después de completar el scroll, permitir la detección automática nuevamente
-        setTimeout(() => {
-          setIsManualSelection(false)
-        }, 1500)
       } else {
         // Si el elemento no está disponible aún, reintentar después de un delay
         setTimeout(() => {
           findAndScroll(attempts + 1)
-        }, 100)
+        }, 150)
       }
     }
     
-    // Iniciar búsqueda después de asegurar que el DOM esté listo
+    // Iniciar búsqueda inmediatamente y también después de un delay para asegurar que el DOM esté listo
+    findAndScroll()
     requestAnimationFrame(() => {
       setTimeout(() => {
         findAndScroll()
-      }, 50)
+      }, 100)
     })
   }
 
@@ -1167,30 +1183,54 @@ export default function MenuPage() {
                   label: category.name || key.toUpperCase()
                 }))
 
-              return sortedCategories.map((tab) => (
-                <button
-                  key={tab.key}
-                  data-tab={tab.key}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    scrollToSection(tab.key)
-                  }}
-                  onTouchStart={(e) => {
-                    // Prevenir el comportamiento por defecto en móvil
-                    e.currentTarget.style.opacity = '0.8'
-                  }}
-                  onTouchEnd={(e) => {
-                    e.currentTarget.style.opacity = '1'
-                  }}
-                  className={`flex-shrink-0 bebas-title-category-bar category-button ${
-                    activeTab === tab.key ? "active" : ""
-                  }`}
-                  type="button"
-                >
-                  {tab.label}
-                </button>
-              ))
+              return sortedCategories.map((tab) => {
+                const handleCategoryClick = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  
+                  // En móvil, prevenir el scroll del contenedor cuando se toca un botón
+                  const container = document.querySelector('.category-scroll-container')
+                  if (container) {
+                    container.style.scrollBehavior = 'auto'
+                  }
+                  
+                  scrollToSection(tab.key)
+                  
+                  // Restaurar scroll suave después de un delay
+                  setTimeout(() => {
+                    if (container) {
+                      container.style.scrollBehavior = 'smooth'
+                    }
+                  }, 100)
+                }
+
+                return (
+                  <button
+                    key={tab.key}
+                    data-tab={tab.key}
+                    onClick={handleCategoryClick}
+                    onTouchEnd={(e) => {
+                      // Manejar touch end para móvil
+                      handleCategoryClick(e)
+                      e.currentTarget.style.opacity = '1'
+                    }}
+                    onTouchStart={(e) => {
+                      // Feedback visual inmediato
+                      e.currentTarget.style.opacity = '0.7'
+                    }}
+                    onTouchCancel={(e) => {
+                      // Restaurar opacidad si se cancela el touch
+                      e.currentTarget.style.opacity = '1'
+                    }}
+                    className={`flex-shrink-0 bebas-title-category-bar category-button ${
+                      activeTab === tab.key ? "active" : ""
+                    }`}
+                    type="button"
+                  >
+                    {tab.label}
+                  </button>
+                )
+              })
             })()}
           </div>
         </div>
