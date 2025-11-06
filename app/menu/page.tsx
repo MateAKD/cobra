@@ -1025,7 +1025,7 @@ export default function MenuPage() {
   return (
     <>
       <CobraLoadingScreen isLoading={loading} />
-      <div className="cobra-snake-bg menu-snake-bg">
+      <div className="cobra-snake-bg menu-page">
       {/* Carátula full-screen minimalista */}
       <header className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden pt-8 sm:pt-12">
         
@@ -1232,7 +1232,7 @@ export default function MenuPage() {
           </div>
         </div>
 
-        <footer className="pt-8 sm:pt-10 lg:pt-12 pb-8" style={{ backgroundColor: '#d4cfc0' }}>
+        <footer className="pt-8 sm:pt-10 lg:pt-12 pb-8 relative z-10" style={{ backgroundColor: '#d4cfc0' }}>
           {/* Divisor superior con estilo de la página */}
           <div className="flex justify-center mb-8">
             <div className="neon-category-divider"></div>

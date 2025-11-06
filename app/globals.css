@@ -413,10 +413,9 @@
   border-radius: 8px;
   padding: 0.75rem 0;
   margin-bottom: 0.5rem;
-}
-
-.menu-item-hover:hover {
-  background: rgba(255, 255, 255, 0.2);
+  user-select: none; /* No seleccionable */
+  pointer-events: none; /* No clickeable */
+  cursor: default;
 }
 
 /* Removemos la línea industrial para un look más limpio */
@@ -771,12 +770,18 @@
     position: absolute; /* Absolute en móvil para mejor rendimiento */
   }
   
-  /* Fondo del menú en móvil: exactamente igual al de la botonera */
-  .menu-snake-bg::before {
-    position: absolute; /* Igual que la botonera en móvil */
-    background-size: cover; /* Igual que la botonera */
-    background-position: center; /* Igual que la botonera */
-    background-repeat: no-repeat; /* Igual que la botonera */
+  /* Fondo del menú en móvil: EXACTAMENTE igual a la botonera, pero fijo para verse en todo el menú */
+  .menu-page::before {
+    /* La botonera tiene max-h-screen (100vh) y usa cover, así que el fondo se escala exactamente al viewport */
+    /* Para el menú, usamos fixed para que sea fijo y se vea a lo largo de todo el menú */
+    position: fixed; /* Fixed para que sea fijo y se vea en todo el scroll */
+    width: 100vw; /* Ancho exacto del viewport */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height para mejor soporte móvil */
+    /* Usar cover igual que la botonera - se escalará al tamaño del viewport */
+    background-size: cover;
+    background-position: center;
+    background-repeat: repeat-y; /* Repetir verticalmente manteniendo el mismo tamaño */
   }
 }
 
@@ -1372,10 +1377,7 @@ html {
   }
 }
 
-/* Pausa la animación al hacer hover */
-.logos-carousel:hover .logos-track {
-  animation-play-state: paused;
-}
+/* Los logos giran siempre sin parar - sin pausa en hover */
 
 /* Estilos individuales de cada logo */
 .logo-item {
@@ -1387,19 +1389,12 @@ html {
   text-transform: uppercase;
   color: #666666;
   opacity: 0.7;
-  transition: all 0.3s ease;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   white-space: nowrap;
   user-select: none;
+  pointer-events: none; /* No clickeable */
   cursor: default;
-}
-
-/* Efecto hover en los logos */
-.logo-item:hover {
-  opacity: 0.9;
-  color: #555555;
-  transform: scale(1.05);
 }
 
 /* Responsive para móviles */
@@ -1505,10 +1500,7 @@ html {
   }
 }
 
-/* Pausa la animación al hacer hover */
-.logos-carousel-large:hover .logos-track-large {
-  animation-play-state: paused;
-}
+/* Los logos giran siempre sin parar - sin pausa en hover */
 
 /* Estilos individuales de cada logo grande */
 .logo-item-large {
@@ -1519,16 +1511,9 @@ html {
   object-fit: contain;
   filter: grayscale(100%) brightness(0.4) contrast(2) saturate(0);
   opacity: 0.7;
-  transition: all 0.3s ease;
   user-select: none;
+  pointer-events: none; /* No clickeable */
   cursor: default;
-}
-
-/* Efecto hover en los logos grandes */
-.logo-item-large:hover {
-  opacity: 0.9;
-  filter: grayscale(100%) brightness(0.6) contrast(2) saturate(0);
-  transform: scale(1.1);
 }
 
 /* Logos con fondo que necesita ser removido */
@@ -1536,11 +1521,6 @@ html {
   filter: grayscale(100%) brightness(0.4) contrast(2) saturate(0);
   mix-blend-mode: multiply;
   background: transparent;
-}
-
-.logo-item-large.remove-background:hover {
-  filter: grayscale(100%) brightness(0.6) contrast(2) saturate(0);
-  mix-blend-mode: multiply;
 }
 
 /* Responsive para móviles - carrusel grande */
