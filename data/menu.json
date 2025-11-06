@@ -138,14 +138,6 @@
   ],
   "achurass": [
     {
-      "id": "product-1762228166371-007tjwggi",
-      "name": "mollejas",
-      "description": "300gr",
-      "price": "27.500",
-      "tags": [],
-      "hidden": false
-    },
-    {
       "id": "product-1762228133526-121pzkugw",
       "name": "chorizo",
       "description": "2 chorizos",
@@ -153,6 +145,14 @@
       "tags": [
         "picante"
       ],
+      "hidden": false
+    },
+    {
+      "id": "product-1762228166371-007tjwggi",
+      "name": "mollejas",
+      "description": "300gr",
+      "price": "27.500",
+      "tags": [],
       "hidden": false
     }
   ]

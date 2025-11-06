@@ -2,7 +2,7 @@
   "empanadas": {
     "name": "Empanadas",
     "description": "Deliciosas empanadas caseras",
-    "order": 2,
+    "order": 4,
     "timeRestricted": true,
     "startTime": "10:30",
     "endTime": "14:00"
@@ -10,12 +10,12 @@
   "vinos": {
     "name": "Vinos",
     "description": "DE 12 A 21HS",
-    "order": 4
+    "order": 1
   },
   "tortas": {
     "name": "Tortas",
     "description": "12 a 16",
-    "order": 1,
+    "order": 2,
     "timeRestricted": false
   },
   "parrilla": {
