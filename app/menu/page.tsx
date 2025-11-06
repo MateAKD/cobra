@@ -23,18 +23,17 @@ const CobraLoadingScreen = ({ isLoading }: { isLoading: boolean }) => {
             style={{ filter: "grayscale(1)" }}
             draggable={false}
           />
-          {/* Contenedor para la animación de llenado */}
-          <div className="logo-fill-container">
-            <img
-              src="/Logo cobra NEGRO.png"
-              alt="Logo Cobra"
-              className="absolute inset-0 w-full h-full object-contain animate-logo-fill"
-              style={{
-                filter: "brightness(1.5)"
-              }}
-              draggable={false}
-            />
-          </div>
+          {/* Logo encima, con animación de "llenado" vertical */}
+          <img
+            src="/Logo cobra NEGRO.png"
+            alt="Logo Cobra"
+            className="absolute inset-0 w-full h-full object-contain animate-logo-fill"
+            style={{
+              zIndex: 2,
+              filter: "brightness(1.5)"
+            }}
+            draggable={false}
+          />
         </div>
         <p className="text-black text-lg mt-4 animate-pulse">Cargando menú...</p>
       </div>
@@ -1026,7 +1025,7 @@ export default function MenuPage() {
   return (
     <>
       <CobraLoadingScreen isLoading={loading} />
-      <div className="cobra-snake-bg">
+      <div className="cobra-snake-bg menu-snake-bg">
       {/* Carátula full-screen minimalista */}
       <header className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden pt-8 sm:pt-12">
         
