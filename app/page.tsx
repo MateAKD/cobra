@@ -29,17 +29,17 @@ export default function HomePage() {
               style={{ filter: "grayscale(1)" }}
               draggable={false}
             />
-            {/* Logo encima, con animación de "llenado" vertical */}
-            <img
-              src="/Logo cobra NEGRO.png"
-              alt="Logo Cobra"
-              className="absolute inset-0 w-full h-full object-contain animate-logo-fill"
-              style={{
-                zIndex: 2,
-                filter: "brightness(1.5)"
-              }}
-              draggable={false}
-            />
+            {/* Contenedor para animación de llenado */}
+            <div className="logo-fill-wrapper" style={{ zIndex: 2 }}>
+              <img
+                src="/Logo cobra NEGRO.png"
+                alt="Logo Cobra"
+                style={{
+                  filter: "brightness(1.5)"
+                }}
+                draggable={false}
+              />
+            </div>
           </div>
           <p className="text-black text-lg mt-4 animate-pulse">Cargando...</p>
         </div>

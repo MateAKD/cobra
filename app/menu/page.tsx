@@ -23,17 +23,17 @@ const CobraLoadingScreen = ({ isLoading }: { isLoading: boolean }) => {
             style={{ filter: "grayscale(1)" }}
             draggable={false}
           />
-          {/* Logo encima, con animación de "llenado" vertical */}
-          <img
-            src="/Logo cobra NEGRO.png"
-            alt="Logo Cobra"
-            className="absolute inset-0 w-full h-full object-contain animate-logo-fill"
-            style={{
-              zIndex: 2,
-              filter: "brightness(1.5)"
-            }}
-            draggable={false}
-          />
+          {/* Contenedor para animación de llenado */}
+          <div className="logo-fill-wrapper" style={{ zIndex: 2 }}>
+            <img
+              src="/Logo cobra NEGRO.png"
+              alt="Logo Cobra"
+              style={{
+                filter: "brightness(1.5)"
+              }}
+              draggable={false}
+            />
+          </div>
         </div>
         <p className="text-black text-lg mt-4 animate-pulse">Cargando menú...</p>
       </div>
@@ -395,51 +395,17 @@ export default function MenuPage() {
               style={{ filter: "grayscale(1)" }}
               draggable={false}
             />
-            {/* Logo blanco encima, con animación de "llenado" vertical */}
-            <img
-              src="/Logo cobra NEGRO.png"
-              alt="Logo Cobra"
-              className="absolute inset-0 w-full h-full object-contain animate-logo-fill"
-              style={{
-                zIndex: 2,
-                filter: "brightness(1.5)",
-                WebkitMaskImage: "linear-gradient(to top, white 0%, white 100%)",
-                maskImage: "linear-gradient(to top, white 0%, white 100%)"
-              }}
-              draggable={false}
-            />
-            <style jsx global>{`
-              @keyframes logo-fill {
-                0% {
-                  clip-path: inset(100% 0 0 0);
-                  opacity: 1;
-                }
-                20% {
-                  clip-path: inset(80% 0 0 0);
-                  opacity: 1;
-                }
-                40% {
-                  clip-path: inset(60% 0 0 0);
-                  opacity: 1;
-                }
-                60% {
-                  clip-path: inset(40% 0 0 0);
-                  opacity: 1;
-                }
-                80% {
-                  clip-path: inset(20% 0 0 0);
-                  opacity: 1;
-                }
-                100% {
-                  clip-path: inset(0 0 0 0);
-                  opacity: 1;
-                }
-              }
-              .animate-logo-fill {
-                animation: logo-fill 3s ease-in-out forwards;
-                will-change: clip-path;
-              }
-            `}</style>
+            {/* Contenedor para animación de llenado */}
+            <div className="logo-fill-wrapper" style={{ zIndex: 2 }}>
+              <img
+                src="/Logo cobra NEGRO.png"
+                alt="Logo Cobra"
+                style={{
+                  filter: "brightness(1.5)"
+                }}
+                draggable={false}
+              />
+            </div>
           </div>
           <p className="text-black text-lg mt-4 animate-pulse">Cargando menú...</p>
         </div>
