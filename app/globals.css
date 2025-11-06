@@ -1601,15 +1601,9 @@ html {
   }
 }
 
-/* Fondo específico para la página de menú: igual al de la botonera */
+/* Fondo específico para la página de menú: exactamente igual a la botonera */
 .menu-snake-bg::before {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-}
-
-@media (max-width: 1023px) {
-  .menu-snake-bg::before {
-    background-size: cover;
-  }
 }
