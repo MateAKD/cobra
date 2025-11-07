@@ -187,14 +187,20 @@ export default function MenuPage() {
   const [isManualSelection, setIsManualSelection] = useState(false)
   const [lastManualSelection, setLastManualSelection] = useState<string | null>(null)
   const [lastScrollPosition, setLastScrollPosition] = useState(0)
+  const [manualSelectionScrollPosition, setManualSelectionScrollPosition] = useState(0)
   
   // Actualizar el activeTab cuando cambien las categorías visibles - solo si no hay selección manual
   useEffect(() => {
+    // No actualizar si hay una selección manual activa o reciente
+    if (isManualSelection || lastManualSelection) {
+      return
+    }
+    
     const firstVisible = getFirstVisibleCategory()
-    if (firstVisible && firstVisible !== activeTab && !isManualSelection) {
+    if (firstVisible && firstVisible !== activeTab) {
       setActiveTab(firstVisible)
     }
-  }, [visibleCategories])
+  }, [visibleCategories, isManualSelection, lastManualSelection])
   
   // Definir todos los hooks al principio, antes de cualquier lógica condicional
   const sectionRefs = {
@@ -250,11 +256,16 @@ export default function MenuPage() {
       
       // Verificar si el usuario ha hecho scroll manualmente después de la selección manual
       const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
-      const scrollDifference = Math.abs(currentScrollPosition - lastScrollPosition)
       
-      // Si hay una selección manual reciente y el usuario no ha hecho scroll significativo, no cambiar
-      if (lastManualSelection && scrollDifference < 50) {
-        return
+      // Si hay una selección manual reciente, verificar si el usuario ha hecho scroll significativo
+      // Si no ha hecho scroll significativo (>100px), mantener la selección manual
+      if (lastManualSelection && manualSelectionScrollPosition > 0) {
+        const scrollDifference = Math.abs(currentScrollPosition - manualSelectionScrollPosition)
+        // Si el usuario no ha hecho scroll significativo, mantener la selección manual
+        if (scrollDifference < 100) {
+          return
+        }
+        // Si el usuario ha hecho scroll significativo, limpiar la selección manual para permitir detección automática
       }
       
       timeoutId = setTimeout(() => {
@@ -366,7 +377,7 @@ export default function MenuPage() {
         }
         
         // Actualizar solo si es diferente y no hay una selección manual reciente
-        if (activeSection && activeSection !== activeTab && !isManualSelection) {
+        if (activeSection && activeSection !== activeTab && !isManualSelection && !lastManualSelection) {
           const currentScrollPos = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
           setActiveTab(activeSection)
           setLastScrollPosition(currentScrollPos)
@@ -408,8 +419,22 @@ export default function MenuPage() {
         if (Math.abs(currentScrollTop - lastScrollTop) > 10) {
           lastScrollTop = currentScrollTop
           
-          // Si hay una selección manual reciente, esperar más tiempo antes de detectar automáticamente
-          const delay = lastManualSelection ? 500 : 50
+          // Si hay una selección manual reciente, verificar si el usuario ha hecho scroll significativo
+          // Si ha hecho scroll significativo (>100px), limpiar la selección manual y permitir detección
+          if (lastManualSelection) {
+            const scrollDiff = Math.abs(currentScrollTop - manualSelectionScrollPosition)
+            if (scrollDiff > 100) {
+              // El usuario ha hecho scroll significativo después del clic, limpiar selección manual
+              setLastManualSelection(null)
+              setManualSelectionScrollPosition(0)
+            } else {
+              // El usuario no ha hecho scroll significativo, mantener la selección manual
+              return
+            }
+          }
+          
+          // Delay más corto para mejor respuesta cuando el usuario hace scroll manual
+          const delay = 100 // Delay fijo para mejor respuesta
           
           if (scrollTimeout) {
             clearTimeout(scrollTimeout)
@@ -446,7 +471,7 @@ export default function MenuPage() {
       clearTimeout(categoriesChangeDetection)
       window.removeEventListener('scroll', handleScroll)
     }
-  }, [activeTab, visibleCategories, isManualSelection, lastManualSelection, lastScrollPosition])
+  }, [activeTab, visibleCategories, isManualSelection, lastManualSelection, lastScrollPosition, manualSelectionScrollPosition])
   
   if (loading || subcategoryLoading) {
     return (
@@ -937,9 +962,11 @@ export default function MenuPage() {
 
   const scrollToSection = (sectionKey: string) => {
     // Marcar como selección manual y guardar la selección
+    const currentScrollPos = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
     setIsManualSelection(true)
     setLastManualSelection(sectionKey)
-    setLastScrollPosition(window.pageYOffset || document.documentElement.scrollTop || window.scrollY)
+    setManualSelectionScrollPosition(currentScrollPos) // Guardar posición de scroll al hacer clic
+    setLastScrollPosition(currentScrollPos)
     
     // Actualizar el estado activo inmediatamente
     setActiveTab(sectionKey)
@@ -1016,15 +1043,14 @@ export default function MenuPage() {
             })
           }
           
-          // Después de completar el scroll, permitir la detección automática nuevamente
-          // Aumentar el tiempo para que la selección manual se mantenga más tiempo
+          // Después de completar el scroll, NO permitir la detección automática inmediatamente
+          // La selección manual se mantendrá hasta que el usuario haga scroll manualmente
+          // Solo desactivar isManualSelection después de un tiempo muy largo, pero mantener lastManualSelection
           setTimeout(() => {
             setIsManualSelection(false)
-            // Mantener la última selección manual por un tiempo adicional para evitar cambios inmediatos
-            setTimeout(() => {
-              setLastManualSelection(null)
-            }, isMobile ? 2000 : 1000)
-          }, isMobile ? 4000 : 3000) // Más tiempo para asegurar que el scroll termine y la selección se mantenga
+            // Mantener lastManualSelection por más tiempo para evitar que se sobrescriba
+            // Solo se limpiará cuando el usuario haga scroll significativo (>100px)
+          }, isMobile ? 5000 : 4000) // Tiempo largo para asegurar que la selección se mantenga
         } else {
           // Si el elemento no es visible aún, reintentar
           setTimeout(() => {
