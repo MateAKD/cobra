@@ -185,8 +185,10 @@ export default function MenuPage() {
   
   const [activeTab, setActiveTab] = useState(getFirstVisibleCategory())
   const [isManualSelection, setIsManualSelection] = useState(false)
+  const [lastManualSelection, setLastManualSelection] = useState<string | null>(null)
+  const [lastScrollPosition, setLastScrollPosition] = useState(0)
   
-  // Actualizar el activeTab cuando cambien las categorías visibles
+  // Actualizar el activeTab cuando cambien las categorías visibles - solo si no hay selección manual
   useEffect(() => {
     const firstVisible = getFirstVisibleCategory()
     if (firstVisible && firstVisible !== activeTab && !isManualSelection) {
@@ -243,6 +245,15 @@ export default function MenuPage() {
       
       // No ejecutar si hay una selección manual reciente - esto previene que se sobrescriba la selección manual
       if (isManualSelection) {
+        return
+      }
+      
+      // Verificar si el usuario ha hecho scroll manualmente después de la selección manual
+      const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
+      const scrollDifference = Math.abs(currentScrollPosition - lastScrollPosition)
+      
+      // Si hay una selección manual reciente y el usuario no ha hecho scroll significativo, no cambiar
+      if (lastManualSelection && scrollDifference < 50) {
         return
       }
       
@@ -303,59 +314,62 @@ export default function MenuPage() {
         // Ordenar por posición vertical (top)
         sections.sort((a, b) => a.top - b.top)
         
-        // Encontrar la sección activa - la que está más cerca del punto de detección
+        // Encontrar la sección activa - la que está más visible en el viewport
         let activeSection = ''
         const detectionPoint = headerOffset
+        const viewportHeight = window.innerHeight
+        const viewportCenter = viewportHeight / 2
         
-        // Buscar la sección que está actualmente visible en el punto de detección
-        for (let i = 0; i < sections.length; i++) {
-          const section = sections[i]
+        // Buscar la sección que tiene más área visible en el viewport
+        let maxVisibleArea = 0
+        let bestSection = ''
+        
+        for (const section of sections) {
+          // Calcular el área visible de esta sección en el viewport
+          const visibleTop = Math.max(0, section.top)
+          const visibleBottom = Math.min(viewportHeight, section.bottom)
+          const visibleHeight = Math.max(0, visibleBottom - visibleTop)
           
-          // Si el punto de detección está dentro de esta sección
-          if (detectionPoint >= section.top && detectionPoint <= section.bottom) {
-            activeSection = section.key
-            break
-          }
-          
-          // Si estamos entre secciones, usar la que está más cerca del punto de detección
-          if (i < sections.length - 1) {
-            const nextSection = sections[i + 1]
-            if (detectionPoint > section.bottom && detectionPoint < nextSection.top) {
-              // Usar la sección más cercana al punto de detección
-              const distanceToCurrent = Math.abs(detectionPoint - section.bottom)
-              const distanceToNext = Math.abs(detectionPoint - nextSection.top)
-              activeSection = distanceToCurrent < distanceToNext ? section.key : nextSection.key
-              break
+          // Si la sección está visible y tiene un área significativa
+          if (visibleHeight > 50) { // Mínimo 50px de altura visible
+            // Priorizar secciones que están cerca del punto de detección
+            const distanceFromDetection = Math.abs((section.top + section.bottom) / 2 - detectionPoint)
+            const score = visibleHeight - (distanceFromDetection * 0.1) // Penalizar distancia
+            
+            if (score > maxVisibleArea) {
+              maxVisibleArea = score
+              bestSection = section.key
             }
           }
         }
         
-        // Si estamos al final del documento, usar la última sección visible
-        if (!activeSection && sections.length > 0) {
-          const lastSection = sections[sections.length - 1]
-          if (detectionPoint >= lastSection.top) {
-            activeSection = lastSection.key
-          }
-        }
-        
-        // Si aún no hay activa y estamos al inicio, usar la primera sección visible
-        if (!activeSection && sections.length > 0) {
-          // Buscar la primera sección que esté visible o por encima del punto de detección
+        // Si encontramos una sección con buena visibilidad, usarla
+        if (bestSection) {
+          activeSection = bestSection
+        } else {
+          // Fallback: buscar la sección más cercana al punto de detección
+          let minDistance = Infinity
           for (const section of sections) {
-            if (section.top <= detectionPoint + 100) { // Tolerancia de 100px
+            const sectionCenter = (section.top + section.bottom) / 2
+            const distance = Math.abs(sectionCenter - detectionPoint)
+            
+            if (distance < minDistance) {
+              minDistance = distance
               activeSection = section.key
-              break
             }
           }
-          // Si no encontramos ninguna, usar la primera
-          if (!activeSection) {
-            activeSection = sections[0].key
-          }
+        }
+        
+        // Si aún no hay activa, usar la primera sección visible
+        if (!activeSection && sections.length > 0) {
+          activeSection = sections[0].key
         }
         
         // Actualizar solo si es diferente y no hay una selección manual reciente
         if (activeSection && activeSection !== activeTab && !isManualSelection) {
+          const currentScrollPos = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
           setActiveTab(activeSection)
+          setLastScrollPosition(currentScrollPos)
           
           // Scroll automático de la barra de categorías
           requestAnimationFrame(() => {
@@ -387,17 +401,26 @@ export default function MenuPage() {
       rafId = requestAnimationFrame(() => {
         const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
         
+        // Actualizar la posición de scroll
+        setLastScrollPosition(currentScrollTop)
+        
         // Solo ejecutar si el scroll cambió significativamente (más de 10px)
         if (Math.abs(currentScrollTop - lastScrollTop) > 10) {
           lastScrollTop = currentScrollTop
+          
+          // Si hay una selección manual reciente, esperar más tiempo antes de detectar automáticamente
+          const delay = lastManualSelection ? 500 : 50
           
           if (scrollTimeout) {
             clearTimeout(scrollTimeout)
           }
           
           scrollTimeout = setTimeout(() => {
-            detectActiveCategory()
-          }, 50)
+            // Solo detectar si no hay selección manual activa
+            if (!isManualSelection) {
+              detectActiveCategory()
+            }
+          }, delay)
         }
       })
     }
@@ -423,7 +446,7 @@ export default function MenuPage() {
       clearTimeout(categoriesChangeDetection)
       window.removeEventListener('scroll', handleScroll)
     }
-  }, [activeTab, visibleCategories, isManualSelection])
+  }, [activeTab, visibleCategories, isManualSelection, lastManualSelection, lastScrollPosition])
   
   if (loading || subcategoryLoading) {
     return (
@@ -913,8 +936,10 @@ export default function MenuPage() {
   }
 
   const scrollToSection = (sectionKey: string) => {
-    // Marcar como selección manual
+    // Marcar como selección manual y guardar la selección
     setIsManualSelection(true)
+    setLastManualSelection(sectionKey)
+    setLastScrollPosition(window.pageYOffset || document.documentElement.scrollTop || window.scrollY)
     
     // Actualizar el estado activo inmediatamente
     setActiveTab(sectionKey)
@@ -995,7 +1020,11 @@ export default function MenuPage() {
           // Aumentar el tiempo para que la selección manual se mantenga más tiempo
           setTimeout(() => {
             setIsManualSelection(false)
-          }, isMobile ? 3000 : 2000) // Más tiempo para asegurar que el scroll termine y la selección se mantenga
+            // Mantener la última selección manual por un tiempo adicional para evitar cambios inmediatos
+            setTimeout(() => {
+              setLastManualSelection(null)
+            }, isMobile ? 2000 : 1000)
+          }, isMobile ? 4000 : 3000) // Más tiempo para asegurar que el scroll termine y la selección se mantenga
         } else {
           // Si el elemento no es visible aún, reintentar
           setTimeout(() => {
@@ -1069,7 +1098,7 @@ export default function MenuPage() {
           <div className="mb-4 sm:mb-5">
             <h2
               className="bebas-title font-bold"
-              style={{ color: "#FFD600", letterSpacing: "-1px", fontSize: "20px" }} // amarillo
+              style={{ color: "#000", letterSpacing: "-1px", fontSize: "20px" }} // negro
             >
               <b>Chefs:</b>
             </h2>
