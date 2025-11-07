@@ -276,7 +276,7 @@ export default function MenuPage() {
 
         // Usar getBoundingClientRect directamente para mejor precisión en móvil
         const isMobileDevice = window.innerWidth < 1024
-        const headerOffset = isMobileDevice ? 220 : 150 // Offset para la barra sticky
+        const headerOffset = isMobileDevice ? 180 : 120 // Offset reducido para mejor detección
         
         // Crear lista de todas las secciones con sus posiciones relativas al viewport
         const sections: Array<{key: string, top: number, bottom: number, element: HTMLElement}> = []
@@ -325,55 +325,74 @@ export default function MenuPage() {
         // Ordenar por posición vertical (top)
         sections.sort((a, b) => a.top - b.top)
         
-        // Encontrar la sección activa - la que está más visible en el viewport
+        // Encontrar la sección activa - mejorar la lógica de detección
         let activeSection = ''
-        const detectionPoint = headerOffset
+        const detectionPoint = headerOffset + 80 // Punto de detección más abajo para detectar mejor el título
         const viewportHeight = window.innerHeight
-        const viewportCenter = viewportHeight / 2
         
-        // Buscar la sección que tiene más área visible en el viewport
-        let maxVisibleArea = 0
-        let bestSection = ''
+        // Buscar la sección cuyo título está más cerca del punto de detección
+        // Priorizar secciones que tienen el título visible en el viewport
+        let bestScore = -Infinity
+        let bestSectionKey = ''
         
         for (const section of sections) {
-          // Calcular el área visible de esta sección en el viewport
+          // Calcular qué tan visible está la sección
           const visibleTop = Math.max(0, section.top)
           const visibleBottom = Math.min(viewportHeight, section.bottom)
           const visibleHeight = Math.max(0, visibleBottom - visibleTop)
           
-          // Si la sección está visible y tiene un área significativa
-          if (visibleHeight > 50) { // Mínimo 50px de altura visible
-            // Priorizar secciones que están cerca del punto de detección
-            const distanceFromDetection = Math.abs((section.top + section.bottom) / 2 - detectionPoint)
-            const score = visibleHeight - (distanceFromDetection * 0.1) // Penalizar distancia
-            
-            if (score > maxVisibleArea) {
-              maxVisibleArea = score
-              bestSection = section.key
-            }
+          // Solo considerar secciones que tienen al menos 50px visibles (incluyendo el título)
+          if (visibleHeight < 50) {
+            continue
+          }
+          
+          // Priorizar secciones cuyo título (top) está cerca del punto de detección
+          // El título está en la parte superior de la sección
+          const titlePosition = section.top
+          const distanceFromTitleToDetection = Math.abs(titlePosition - detectionPoint)
+          
+          // Score: mayor área visible = mejor, título más cerca del punto de detección = mejor
+          // Dar más peso a la posición del título que a la altura visible
+          const titleScore = Math.max(0, 300 - distanceFromTitleToDetection) // Peso alto para posición del título
+          const visibilityScore = visibleHeight * 1.5 // Peso medio para visibilidad
+          const score = titleScore + visibilityScore
+          
+          if (score > bestScore) {
+            bestScore = score
+            bestSectionKey = section.key
           }
         }
         
-        // Si encontramos una sección con buena visibilidad, usarla
-        if (bestSection) {
-          activeSection = bestSection
+        // Si encontramos una sección con buen score, usarla
+        if (bestSectionKey) {
+          activeSection = bestSectionKey
         } else {
-          // Fallback: buscar la sección más cercana al punto de detección
+          // Fallback: buscar la sección cuyo título está más cerca del punto de detección
           let minDistance = Infinity
           for (const section of sections) {
-            const sectionCenter = (section.top + section.bottom) / 2
-            const distance = Math.abs(sectionCenter - detectionPoint)
+            // Usar el top de la sección (donde está el título) como punto de referencia
+            const distance = Math.abs(section.top - detectionPoint)
             
-            if (distance < minDistance) {
+            // Solo considerar secciones que están visibles en el viewport
+            if (distance < minDistance && section.top < viewportHeight && section.bottom > 0) {
               minDistance = distance
               activeSection = section.key
             }
           }
         }
         
-        // Si aún no hay activa, usar la primera sección visible
+        // Si aún no hay activa, usar la primera sección que esté visible
         if (!activeSection && sections.length > 0) {
-          activeSection = sections[0].key
+          for (const section of sections) {
+            if (section.top < viewportHeight && section.bottom > 0) {
+              activeSection = section.key
+              break
+            }
+          }
+          // Si aún no hay ninguna, usar la primera
+          if (!activeSection) {
+            activeSection = sections[0].key
+          }
         }
         
         // Actualizar solo si es diferente y no hay una selección manual reciente
@@ -389,7 +408,7 @@ export default function MenuPage() {
             }, 50)
           })
         }
-      }, window.innerWidth < 1024 ? 100 : 50) // Reducir delay para mejor respuesta en móvil
+      }, window.innerWidth < 1024 ? 50 : 30) // Delay muy corto para mejor respuesta en móvil
     }
 
     // Ejecutar al cargar y al montar el componente - delay mayor para asegurar que todo esté renderizado
@@ -415,8 +434,8 @@ export default function MenuPage() {
         // Actualizar la posición de scroll
         setLastScrollPosition(currentScrollTop)
         
-        // Solo ejecutar si el scroll cambió significativamente (más de 10px)
-        if (Math.abs(currentScrollTop - lastScrollTop) > 10) {
+        // Solo ejecutar si el scroll cambió significativamente (más de 5px para mejor respuesta)
+        if (Math.abs(currentScrollTop - lastScrollTop) > 5) {
           lastScrollTop = currentScrollTop
           
           // Si hay una selección manual reciente, verificar si el usuario ha hecho scroll significativo
@@ -434,7 +453,8 @@ export default function MenuPage() {
           }
           
           // Delay más corto para mejor respuesta cuando el usuario hace scroll manual
-          const delay = 100 // Delay fijo para mejor respuesta
+          // Si no hay selección manual reciente, usar delay corto para mejor respuesta
+          const delay = lastManualSelection ? 200 : 100 // Delay más corto si no hay selección manual
           
           if (scrollTimeout) {
             clearTimeout(scrollTimeout)
@@ -1009,48 +1029,43 @@ export default function MenuPage() {
         
         if (isVisible) {
           const isMobile = window.innerWidth < 1024
-          const headerOffset = isMobile ? 220 : 150
+          // Reducir el offset para que el título sea visible - ajustado para móvil
+          const headerOffset = isMobile ? 180 : 120 // Reducido para que se vea el título
           
-          // En móvil, usar scrollIntoView que funciona mejor en iOS
-          if (isMobile) {
-            // Usar scrollIntoView con opciones específicas para iOS
-            element.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-              inline: 'nearest'
-            })
-            
-            // Ajustar manualmente después del scroll para compensar el header sticky
-            setTimeout(() => {
-              const currentScroll = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
-              const elementTop = element!.getBoundingClientRect().top + currentScroll
-              const targetPosition = elementTop - headerOffset
-              
-              window.scrollTo({
-                top: Math.max(0, targetPosition),
-                behavior: 'smooth'
-              })
-            }, 100)
-          } else {
-            // En desktop, usar el método original
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
-            const elementTop = rect.top + scrollTop
-            const targetPosition = elementTop - headerOffset
-            
-            window.scrollTo({
-              top: Math.max(0, targetPosition),
-              behavior: "smooth"
-            })
-          }
+          // Calcular la posición del elemento
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
+          const elementTop = rect.top + scrollTop
+          const targetPosition = elementTop - headerOffset
           
-          // Después de completar el scroll, NO permitir la detección automática inmediatamente
-          // La selección manual se mantendrá hasta que el usuario haga scroll manualmente
-          // Solo desactivar isManualSelection después de un tiempo muy largo, pero mantener lastManualSelection
+          // Hacer scroll directamente a la posición calculada
+          window.scrollTo({
+            top: Math.max(0, targetPosition),
+            behavior: "smooth"
+          })
+          
+          // Verificar después del scroll que el título sea visible
           setTimeout(() => {
-            setIsManualSelection(false)
-            // Mantener lastManualSelection por más tiempo para evitar que se sobrescriba
-            // Solo se limpiará cuando el usuario haga scroll significativo (>100px)
-          }, isMobile ? 5000 : 4000) // Tiempo largo para asegurar que la selección se mantenga
+            const finalRect = element!.getBoundingClientRect()
+            const finalScrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
+            
+            // Si el título no es visible (está muy arriba o muy abajo), ajustar
+            if (finalRect.top < headerOffset || finalRect.top > headerOffset + 50) {
+              const adjustedPosition = finalRect.top + finalScrollTop - headerOffset
+              window.scrollTo({
+                top: Math.max(0, adjustedPosition),
+                behavior: "smooth"
+              })
+            }
+            
+            // Después de completar el scroll, NO permitir la detección automática inmediatamente
+            // La selección manual se mantendrá hasta que el usuario haga scroll manualmente
+            // Solo desactivar isManualSelection después de un tiempo muy largo, pero mantener lastManualSelection
+            setTimeout(() => {
+              setIsManualSelection(false)
+              // Mantener lastManualSelection por más tiempo para evitar que se sobrescriba
+              // Solo se limpiará cuando el usuario haga scroll significativo (>100px)
+            }, isMobile ? 5000 : 4000) // Tiempo largo para asegurar que la selección se mantenga
+          }, 300) // Esperar a que termine el scroll suave
         } else {
           // Si el elemento no es visible aún, reintentar
           setTimeout(() => {
