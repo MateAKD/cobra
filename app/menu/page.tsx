@@ -1066,7 +1066,7 @@ export default function MenuPage() {
           <div className="mb-4 sm:mb-5">
             <h2
               className="bebas-title font-bold"
-              style={{ color: "#FFD600", letterSpacing: "-1px", fontSize: "20px" }} // amarillo
+              style={{ color: "#FF2222", letterSpacing: "-1px", fontSize: "20px" }} // rojo
             >
               <b>Chefs:</b>
             </h2>

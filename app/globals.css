@@ -744,6 +744,7 @@
   position: relative;
   /* Asegurar que el contenedor no interfiera con mix-blend-mode */
   overflow: visible;
+  /* NO usar isolation aquí - bloquea mix-blend-mode en elementos hijos */
 }
 
 /* Imagen de fondo con modo de fusión aclarar para el efecto de escamas */
@@ -782,18 +783,17 @@
     min-height: 100dvh;
     /* Asegurar que los filtros se apliquen correctamente */
     mix-blend-mode: lighten !important;
+    -webkit-mix-blend-mode: lighten !important;
     opacity: 0.68 !important;
     background-size: cover !important;
     background-repeat: no-repeat !important;
     /* Forzar renderizado correcto en iOS Safari */
     will-change: transform !important;
-    transform: translateZ(0) !important;
-    -webkit-transform: translateZ(0) !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
-    /* Asegurar que se renderice en una capa separada */
-    isolation: isolate;
-    -webkit-isolation: isolate;
+    /* NO usar isolation aquí - bloquea mix-blend-mode */
   }
 }
 
@@ -810,36 +810,40 @@
 
 @media (max-width: 1023px) {
   .cobra-snake-bg-mobile-overlay {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100vh;
-    height: 100dvh;
-    min-height: 100vh;
-    min-height: 100dvh;
-    background-image: url('/Fondo sutil.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    mix-blend-mode: lighten;
-    opacity: 0.68;
-    z-index: 1;
-    pointer-events: none;
-    /* Optimizaciones para iOS Safari */
-    will-change: transform;
-    transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    isolation: isolate;
-    -webkit-isolation: isolate;
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    background-image: url('/Fondo sutil.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    /* CRÍTICO: mix-blend-mode debe aplicarse sin isolation */
+    mix-blend-mode: lighten !important;
+    -webkit-mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    /* Fallback: filtros CSS para simular el efecto si mix-blend-mode no funciona */
+    filter: brightness(1.2) contrast(0.9) !important;
+    -webkit-filter: brightness(1.2) contrast(0.9) !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    /* Optimizaciones para iOS Safari - SIN isolation que bloquea mix-blend-mode */
+    will-change: transform !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    /* NO usar isolation aquí - bloquea mix-blend-mode */
     /* Forzar renderizado durante el scroll */
-    -webkit-perspective: 1000;
-    perspective: 1000;
+    -webkit-perspective: 1000 !important;
+    perspective: 1000 !important;
   }
   
   /* Ocultar el pseudo-elemento ::before en móvil cuando hay un elemento real */
@@ -889,36 +893,53 @@
     min-height: 100dvh;
     /* Asegurar que los filtros se apliquen correctamente */
     mix-blend-mode: lighten !important;
+    -webkit-mix-blend-mode: lighten !important;
     opacity: 0.68 !important;
     background-size: cover !important;
     background-repeat: no-repeat !important;
     /* Forzar renderizado correcto en iOS Safari */
     will-change: transform !important;
-    transform: translateZ(0) !important;
-    -webkit-transform: translateZ(0) !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
-    /* Asegurar que se renderice en una capa separada */
-    isolation: isolate;
-    -webkit-isolation: isolate;
+    /* NO usar isolation aquí - bloquea mix-blend-mode */
   }
 }
 
 /* Fix específico para iOS Safari - forzar renderizado correcto del mix-blend-mode */
 @supports (-webkit-touch-callout: none) {
+  /* Fix específico para el elemento overlay en iOS */
+  .cobra-snake-bg-mobile-overlay {
+    /* CRÍTICO: NO usar isolation - bloquea mix-blend-mode */
+    /* Forzar renderizado en capa separada en iOS usando translate3d */
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    will-change: transform !important;
+    /* Asegurar que mix-blend-mode se aplique correctamente */
+    mix-blend-mode: lighten !important;
+    -webkit-mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    /* Forzar renderizado durante el scroll */
+    -webkit-perspective: 1000 !important;
+    perspective: 1000 !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
+  
   .cobra-snake-bg::before {
     /* Forzar renderizado en capa separada en iOS usando translate3d */
     transform: translate3d(0, 0, 0) !important;
     -webkit-transform: translate3d(0, 0, 0) !important;
     will-change: transform !important;
-    isolation: isolate !important;
-    -webkit-isolation: isolate !important;
+    /* NO usar isolation aquí - bloquea mix-blend-mode */
     /* Asegurar que mix-blend-mode se aplique correctamente */
     mix-blend-mode: lighten !important;
+    -webkit-mix-blend-mode: lighten !important;
     opacity: 0.68 !important;
     /* Forzar renderizado durante el scroll */
-    -webkit-perspective: 1000;
-    perspective: 1000;
+    -webkit-perspective: 1000 !important;
+    perspective: 1000 !important;
     -webkit-backface-visibility: hidden !important;
     backface-visibility: hidden !important;
   }
@@ -928,9 +949,9 @@
     transform: translate3d(0, 0, 0) !important;
     -webkit-transform: translate3d(0, 0, 0) !important;
     will-change: transform !important;
-    isolation: isolate !important;
-    -webkit-isolation: isolate !important;
+    /* NO usar isolation aquí - bloquea mix-blend-mode */
     mix-blend-mode: lighten !important;
+    -webkit-mix-blend-mode: lighten !important;
     opacity: 0.68 !important;
     /* Asegurar que se renderice correctamente durante el scroll */
     position: fixed !important;
