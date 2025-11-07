@@ -184,19 +184,7 @@ export default function MenuPage() {
   }
   
   const [activeTab, setActiveTab] = useState(getFirstVisibleCategory())
-  const [isScrollingToSection, setIsScrollingToSection] = useState(false)
-  
-  // Actualizar el activeTab cuando cambien las categorías visibles
-  useEffect(() => {
-    if (isScrollingToSection) {
-      return
-    }
-    
-    const firstVisible = getFirstVisibleCategory()
-    if (firstVisible && firstVisible !== activeTab) {
-      setActiveTab(firstVisible)
-    }
-  }, [visibleCategories, isScrollingToSection])
+  const isScrollingRef = useRef(false)
   
   // Definir todos los hooks al principio, antes de cualquier lógica condicional
   const sectionRefs = {
@@ -212,151 +200,82 @@ export default function MenuPage() {
     promociones: useRef<HTMLDivElement>(null)
   }
 
-  // Hook para detectar automáticamente la categoría visible
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout
-
-    const scrollCategoryBarToActive = (categoryKey: string) => {
-      const activeButton = document.querySelector(`[data-tab="${categoryKey}"]`)
-      if (activeButton) {
-        const categoryContainer = document.querySelector('.category-scroll-container')
-        if (categoryContainer) {
-          const containerRect = categoryContainer.getBoundingClientRect()
-          const buttonRect = activeButton.getBoundingClientRect()
-          
-          // Calcular la posición de scroll para centrar el botón
-          const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
-          const containerWidth = containerRect.width
-          const buttonWidth = buttonRect.width
-          
-          const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
-          
-          // Scroll suave hacia el botón activo
-          categoryContainer.scrollTo({
-            left: targetScrollLeft,
-            behavior: 'smooth'
-          })
-        }
+  // Función para hacer scroll de la barra de categorías al botón activo
+  const scrollCategoryBarToActive = (categoryKey: string) => {
+    const activeButton = document.querySelector(`[data-tab="${categoryKey}"]`)
+    if (activeButton) {
+      const categoryContainer = document.querySelector('.category-scroll-container')
+      if (categoryContainer) {
+        const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
+        const containerWidth = (categoryContainer as HTMLElement).offsetWidth
+        const buttonWidth = (activeButton as HTMLElement).offsetWidth
+        
+        const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
+        
+        categoryContainer.scrollTo({
+          left: Math.max(0, targetScrollLeft),
+          behavior: 'smooth'
+        })
       }
     }
+  }
 
-    const detectActiveCategory = () => {
-      // No ejecutar si estamos haciendo scroll programático a una sección
-      if (isScrollingToSection) {
+  // Función para detectar la categoría visible en pantalla
+  const detectActiveCategory = () => {
+    // No ejecutar si estamos haciendo scroll programático
+    if (isScrollingRef.current) {
+      return
+    }
+
+    const isMobile = window.innerWidth < 1024
+    const headerOffset = isMobile ? 200 : 150 // Offset para la barra sticky
+    
+    // Obtener todas las secciones con data-category
+    const allSections = document.querySelectorAll('[data-category]')
+    
+    if (allSections.length === 0) {
+      return
+    }
+    
+    // Encontrar la sección cuyo título está más cerca del punto de detección
+    const detectionPoint = headerOffset
+    let activeSection = ''
+    let minDistance = Infinity
+    
+    allSections.forEach((section) => {
+      const rect = (section as HTMLElement).getBoundingClientRect()
+      const key = section.getAttribute('data-category') || ''
+      
+      if (!key || rect.height === 0) {
         return
       }
       
-      if (timeoutId) {
-        clearTimeout(timeoutId)
+      // Solo considerar secciones visibles en el viewport
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        // Calcular distancia del título (top) al punto de detección
+        const distance = Math.abs(rect.top - detectionPoint)
+        
+        if (distance < minDistance) {
+          minDistance = distance
+          activeSection = key
+        }
       }
-      
-      timeoutId = setTimeout(() => {
-        // Verificar nuevamente si estamos haciendo scroll programático
-        if (isScrollingToSection) {
-          return
-        }
-
-        const isMobileDevice = window.innerWidth < 1024
-        const headerOffset = isMobileDevice ? 200 : 150 // Offset para la barra sticky
-        
-        // Crear lista de todas las secciones con sus posiciones
-        const sections: Array<{key: string, top: number, bottom: number}> = []
-        
-        // Agregar secciones estándar desde refs
-        Object.entries(sectionRefs).forEach(([key, ref]) => {
-          if (ref.current && ref.current.offsetParent !== null) {
-            const rect = ref.current.getBoundingClientRect()
-            if (rect.height > 0) {
-              sections.push({ 
-                key, 
-                top: rect.top, 
-                bottom: rect.bottom
-              })
-            }
-          }
-        })
-        
-        // Agregar categorías personalizadas desde data-category
-        const customSections = document.querySelectorAll('[data-category]')
-        customSections.forEach(section => {
-          const htmlSection = section as HTMLElement
-          if (htmlSection.offsetParent !== null) {
-            const rect = htmlSection.getBoundingClientRect()
-            const key = section.getAttribute('data-category') || ''
-            if (key && rect.height > 0) {
-              // Evitar duplicados
-              if (!sections.find(s => s.key === key)) {
-                sections.push({ 
-                  key, 
-                  top: rect.top, 
-                  bottom: rect.bottom
-                })
-              }
-            }
-          }
-        })
-        
-        if (sections.length === 0) {
-          return
-        }
-        
-        // Ordenar por posición vertical
-        sections.sort((a, b) => a.top - b.top)
-        
-        // Encontrar la sección cuyo título está más cerca del punto de detección
-        const detectionPoint = headerOffset
-        let activeSection = ''
-        let minDistance = Infinity
-        
-        for (const section of sections) {
-          // Usar el top de la sección (donde está el título) como punto de referencia
-          const distance = Math.abs(section.top - detectionPoint)
-          
-          // Solo considerar secciones que están visibles en el viewport
-          if (section.top < window.innerHeight && section.bottom > 0 && distance < minDistance) {
-            minDistance = distance
-            activeSection = section.key
-          }
-        }
-        
-        // Si no encontramos ninguna, usar la primera visible
-        if (!activeSection && sections.length > 0) {
-          for (const section of sections) {
-            if (section.top < window.innerHeight && section.bottom > 0) {
-              activeSection = section.key
-              break
-            }
-          }
-          if (!activeSection) {
-            activeSection = sections[0].key
-          }
-        }
-        
-        // Actualizar solo si es diferente
-        if (activeSection && activeSection !== activeTab) {
-          setActiveTab(activeSection)
-          
-          // Scroll automático de la barra de categorías
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              scrollCategoryBarToActive(activeSection)
-            }, 50)
-          })
-        }
-      }, 150) // Delay razonable para evitar demasiadas actualizaciones
+    })
+    
+    // Si encontramos una sección activa y es diferente a la actual, actualizar
+    if (activeSection && activeSection !== activeTab) {
+      setActiveTab(activeSection)
+      scrollCategoryBarToActive(activeSection)
     }
+  }
 
-    // Ejecutar al cargar y al montar el componente - delay mayor para asegurar que todo esté renderizado
-    const initialDetection = setTimeout(() => {
-      detectActiveCategory()
-    }, 500)
-
-    // Listener de scroll simple y directo
+  // Hook para detectar automáticamente la categoría visible al hacer scroll
+  useEffect(() => {
     let scrollTimeout: NodeJS.Timeout | null = null
     
     const handleScroll = () => {
       // No ejecutar si estamos haciendo scroll programático
-      if (isScrollingToSection) {
+      if (isScrollingRef.current) {
         return
       }
       
@@ -364,33 +283,26 @@ export default function MenuPage() {
         clearTimeout(scrollTimeout)
       }
       
-      // Delay para evitar demasiadas actualizaciones durante el scroll
       scrollTimeout = setTimeout(() => {
-        if (!isScrollingToSection) {
-          detectActiveCategory()
-        }
-      }, 150)
+        detectActiveCategory()
+      }, 100)
     }
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    
-    // También ejecutar cuando cambien las categorías visibles
-    const categoriesChangeDetection = setTimeout(() => {
+    // Detección inicial después de que se monte el componente
+    const initialTimeout = setTimeout(() => {
       detectActiveCategory()
-    }, 600)
+    }, 500)
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
 
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
       if (scrollTimeout) {
         clearTimeout(scrollTimeout)
       }
-      clearTimeout(initialDetection)
-      clearTimeout(categoriesChangeDetection)
+      clearTimeout(initialTimeout)
       window.removeEventListener('scroll', handleScroll)
     }
-  }, [activeTab, visibleCategories, isScrollingToSection])
+  }, [activeTab, visibleCategories])
   
   if (loading || subcategoryLoading) {
     return (
@@ -855,102 +767,45 @@ export default function MenuPage() {
     return null;
   };
 
-  const scrollCategoryBarToButton = (sectionKey: string) => {
-    const activeButton = document.querySelector(`[data-tab="${sectionKey}"]`)
-    if (activeButton) {
-      const categoryContainer = document.querySelector('.category-scroll-container')
-      if (categoryContainer) {
-        const containerRect = categoryContainer.getBoundingClientRect()
-        const buttonRect = activeButton.getBoundingClientRect()
-        
-        // Calcular la posición de scroll para centrar el botón
-        const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
-        const containerWidth = containerRect.width
-        const buttonWidth = buttonRect.width
-        
-        const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
-        
-        // Scroll suave hacia el botón activo
-        categoryContainer.scrollTo({
-          left: targetScrollLeft,
-          behavior: 'smooth'
-        })
-      }
-    }
-  }
-
+  // Función para hacer scroll a una sección cuando se hace clic en una categoría
   const scrollToSection = (sectionKey: string) => {
     // Marcar que estamos haciendo scroll programático
-    setIsScrollingToSection(true)
+    isScrollingRef.current = true
     
     // Actualizar el estado activo inmediatamente
     setActiveTab(sectionKey)
     
     // Scroll de la barra de categorías
-    scrollCategoryBarToButton(sectionKey)
+    scrollCategoryBarToActive(sectionKey)
     
-    // Función para encontrar y hacer scroll al elemento
-    const findAndScroll = (attempts = 0) => {
-      if (attempts > 20) {
-        console.warn(`No se pudo encontrar la sección después de ${attempts} intentos: ${sectionKey}`)
-        setIsScrollingToSection(false)
-        return
-      }
-
-      let element: HTMLElement | null = null
-      
-      // Buscar por data-category
-      element = document.querySelector(`[data-category="${sectionKey}"]`) as HTMLElement
-      
-      // Si no se encuentra, intentar con las referencias existentes
-      if (!element && sectionKey in sectionRefs) {
-        element = sectionRefs[sectionKey as keyof typeof sectionRefs]?.current || null
-      }
-      
-      if (element) {
-        const rect = element.getBoundingClientRect()
-        const isVisible = rect.width > 0 && rect.height > 0
-        
-        if (isVisible) {
-          const isMobile = window.innerWidth < 1024
-          const headerOffset = isMobile ? 200 : 150 // Offset para que el título sea visible
-          
-          // Calcular la posición del elemento
-          const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
-          const elementTop = rect.top + scrollTop
-          const targetPosition = elementTop - headerOffset
-          
-          // Hacer scroll a la posición calculada
-          window.scrollTo({
-            top: Math.max(0, targetPosition),
-            behavior: "smooth"
-          })
-          
-          // Después de completar el scroll, permitir la detección automática nuevamente
-          setTimeout(() => {
-            setIsScrollingToSection(false)
-          }, 1000) // Tiempo suficiente para que termine el scroll suave
-        } else {
-          // Si el elemento no es visible aún, reintentar
-          setTimeout(() => {
-            findAndScroll(attempts + 1)
-          }, 100)
-        }
-      } else {
-        // Si el elemento no está disponible aún, reintentar
-        setTimeout(() => {
-          findAndScroll(attempts + 1)
-        }, 100)
-      }
-    }
+    // Buscar el elemento de la sección
+    const element = document.querySelector(`[data-category="${sectionKey}"]`) as HTMLElement
     
-    // Iniciar búsqueda
-    findAndScroll()
-    requestAnimationFrame(() => {
+    if (element) {
+      const isMobile = window.innerWidth < 1024
+      const headerOffset = isMobile ? 200 : 150 // Offset para que el título sea visible
+      
+      // Calcular la posición del elemento
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
+      const elementTop = element.getBoundingClientRect().top + scrollTop
+      const targetPosition = elementTop - headerOffset
+      
+      // Hacer scroll a la posición calculada
+      window.scrollTo({
+        top: Math.max(0, targetPosition),
+        behavior: "smooth"
+      })
+      
+      // Después de completar el scroll, permitir la detección automática nuevamente
       setTimeout(() => {
-        findAndScroll()
-      }, 50)
-    })
+        isScrollingRef.current = false
+      }, 1000) // Tiempo suficiente para que termine el scroll suave
+    } else {
+      // Si no se encuentra el elemento, permitir detección automática después de un delay
+      setTimeout(() => {
+        isScrollingRef.current = false
+      }, 500)
+    }
   }
 
     // Función para encontrar la primera categoría visible y desplazarse a ella
