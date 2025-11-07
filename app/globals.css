@@ -502,14 +502,10 @@
   /* Mejorar el scroll automático */
   scroll-padding-left: 1rem;
   scroll-padding-right: 1rem;
-  /* Mejorar scroll táctil en móvil - prevenir conflictos */
+  /* Mejorar scroll táctil en móvil */
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
   overscroll-behavior-x: contain;
-  /* Prevenir que el scroll del contenedor interfiera con el scroll de la página */
-  will-change: scroll-position;
-  /* Asegurar que el contenedor no bloquee eventos táctiles */
-  pointer-events: auto;
 }
 
 .category-scroll-container::-webkit-scrollbar {
@@ -746,6 +742,8 @@
   background-color: #EDE9DD; /* Color de fondo específico solicitado */
   min-height: 100vh;
   position: relative;
+  /* Asegurar que el contenedor no interfiera con mix-blend-mode */
+  overflow: visible;
 }
 
 /* Imagen de fondo con modo de fusión aclarar para el efecto de escamas */
@@ -762,38 +760,40 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  mix-blend-mode: overlay; /* Cambiar a overlay para mejor integración */
-  opacity: 0.15; /* Reducir opacidad para que se vea más sutil */
+  mix-blend-mode: lighten; /* Modo de fusión aclarar como en Figma */
+  opacity: 0.68; /* 68% de opacidad */
   z-index: 1;
   pointer-events: none; /* Permitir interacción con el contenido */
-  filter: blur(0.5px); /* Ligero blur para suavizar el patrón */
+  /* Optimizaciones para iOS Safari */
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-/* En móvil, mantener fixed para que el fondo siempre se vea */
+/* En móvil, mantener fixed para que siempre cubra todo el contenido */
 @media (max-width: 1023px) {
   .cobra-snake-bg::before {
-    position: fixed; /* Fixed también en móvil para que siempre se vea */
+    position: fixed; /* Fixed para que siempre cubra todo el contenido al hacer scroll */
     height: 100vh;
     height: 100dvh; /* Dynamic viewport height para mejor soporte móvil */
-    background-size: cover;
-    background-attachment: fixed; /* Mantener fijo durante el scroll */
-    opacity: 0.1; /* Opacidad aún más baja en móvil */
-    filter: blur(1px); /* Más blur en móvil para suavizar */
-  }
-  
-  /* Fondo del menú en móvil: EXACTAMENTE igual a la botonera, pero fijo para verse en todo el menú */
-  .menu-page::before {
-    /* La botonera tiene max-h-screen (100vh) y usa cover, así que el fondo se escala exactamente al viewport */
-    /* Para el menú, usamos fixed para que sea fijo y se vea a lo largo de todo el menú */
-    position: fixed; /* Fixed para que sea fijo y se vea en todo el scroll */
-    width: 100vw; /* Ancho exacto del viewport */
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height para mejor soporte móvil */
-    /* Usar cover igual que la botonera - se escalará al tamaño del viewport */
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed; /* Mantener fijo durante el scroll */
-    background-repeat: no-repeat; /* No repetir, usar cover */
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Asegurar que los filtros se apliquen correctamente */
+    mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    /* Forzar renderizado correcto en iOS Safari */
+    will-change: transform !important;
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    /* Asegurar que se renderice en una capa separada */
+    isolation: isolate;
+    -webkit-isolation: isolate;
   }
 }
 
@@ -801,6 +801,154 @@
 .cobra-snake-bg > * {
   position: relative;
   z-index: 2;
+}
+
+/* Elemento real para el fondo en móvil - más confiable en iOS Safari */
+.cobra-snake-bg-mobile-overlay {
+  display: none; /* Oculto por defecto, solo visible en móvil */
+}
+
+@media (max-width: 1023px) {
+  .cobra-snake-bg-mobile-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-image: url('/Fondo sutil.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    mix-blend-mode: lighten;
+    opacity: 0.68;
+    z-index: 1;
+    pointer-events: none;
+    /* Optimizaciones para iOS Safari */
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    isolation: isolate;
+    -webkit-isolation: isolate;
+    /* Forzar renderizado durante el scroll */
+    -webkit-perspective: 1000;
+    perspective: 1000;
+  }
+  
+  /* Ocultar el pseudo-elemento ::before en móvil cuando hay un elemento real */
+  .menu-page.cobra-snake-bg::before {
+    display: none !important;
+  }
+  
+  /* Ocultar el pseudo-elemento general en móvil solo cuando hay un elemento real presente */
+  .menu-page.cobra-snake-bg:has(.cobra-snake-bg-mobile-overlay)::before {
+    display: none !important;
+  }
+}
+
+/* Asegurar que menu-page use los mismos estilos que cobra-snake-bg */
+.menu-page.cobra-snake-bg::before {
+  /* Heredar todos los estilos de .cobra-snake-bg::before */
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/Fondo sutil.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  mix-blend-mode: lighten;
+  opacity: 0.68;
+  z-index: 1;
+  pointer-events: none;
+  /* Optimizaciones para iOS Safari */
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* En móvil, asegurar que los filtros se apliquen correctamente */
+@media (max-width: 1023px) {
+  .menu-page.cobra-snake-bg::before {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Asegurar que los filtros se apliquen correctamente */
+    mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    /* Forzar renderizado correcto en iOS Safari */
+    will-change: transform !important;
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    /* Asegurar que se renderice en una capa separada */
+    isolation: isolate;
+    -webkit-isolation: isolate;
+  }
+}
+
+/* Fix específico para iOS Safari - forzar renderizado correcto del mix-blend-mode */
+@supports (-webkit-touch-callout: none) {
+  .cobra-snake-bg::before {
+    /* Forzar renderizado en capa separada en iOS usando translate3d */
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    will-change: transform !important;
+    isolation: isolate !important;
+    -webkit-isolation: isolate !important;
+    /* Asegurar que mix-blend-mode se aplique correctamente */
+    mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    /* Forzar renderizado durante el scroll */
+    -webkit-perspective: 1000;
+    perspective: 1000;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
+  
+  /* Fix específico para menu-page en iOS */
+  .menu-page.cobra-snake-bg::before {
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    will-change: transform !important;
+    isolation: isolate !important;
+    -webkit-isolation: isolate !important;
+    mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    /* Asegurar que se renderice correctamente durante el scroll */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    /* Forzar renderizado durante el scroll */
+    -webkit-perspective: 1000 !important;
+    perspective: 1000 !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
 }
 
 /* ==================== ANIMACIÓN DE CARGA DEL LOGO ==================== */

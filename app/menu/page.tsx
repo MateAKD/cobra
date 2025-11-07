@@ -247,29 +247,29 @@ export default function MenuPage() {
       }
       
       timeoutId = setTimeout(() => {
-        // Verificar nuevamente si hay selección manual (con doble verificación)
+        // Verificar nuevamente si hay selección manual
         if (isManualSelection) {
           return
         }
 
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
-        // Ajustar offset según dispositivo (móvil vs desktop)
+        // Usar getBoundingClientRect directamente para mejor precisión en móvil
         const isMobileDevice = window.innerWidth < 1024
-        // En móvil, usar un offset más preciso considerando la altura de la barra sticky
-        const headerOffset = isMobileDevice ? 180 : 150
-        const detectionPoint = scrollTop + headerOffset
+        const headerOffset = isMobileDevice ? 220 : 150 // Offset para la barra sticky
         
-        // Crear lista de todas las secciones con sus posiciones
-        const sections: Array<{key: string, top: number, bottom: number}> = []
+        // Crear lista de todas las secciones con sus posiciones relativas al viewport
+        const sections: Array<{key: string, top: number, bottom: number, element: HTMLElement}> = []
         
         // Agregar secciones estándar desde refs
         Object.entries(sectionRefs).forEach(([key, ref]) => {
           if (ref.current && ref.current.offsetParent !== null) {
             const rect = ref.current.getBoundingClientRect()
-            const top = rect.top + scrollTop
-            const bottom = top + rect.height
             if (rect.height > 0) { // Solo agregar si el elemento es visible
-              sections.push({ key, top, bottom })
+              sections.push({ 
+                key, 
+                top: rect.top, 
+                bottom: rect.bottom,
+                element: ref.current
+              })
             }
           }
         })
@@ -280,13 +280,16 @@ export default function MenuPage() {
           const htmlSection = section as HTMLElement
           if (htmlSection.offsetParent !== null) {
             const rect = htmlSection.getBoundingClientRect()
-            const top = rect.top + scrollTop
-            const bottom = top + rect.height
             const key = section.getAttribute('data-category') || ''
             if (key && rect.height > 0) { // Solo agregar si el elemento es visible
               // Evitar duplicados
               if (!sections.find(s => s.key === key)) {
-                sections.push({ key, top, bottom })
+                sections.push({ 
+                  key, 
+                  top: rect.top, 
+                  bottom: rect.bottom,
+                  element: htmlSection
+                })
               }
             }
           }
@@ -297,52 +300,37 @@ export default function MenuPage() {
           return
         }
         
-        // Ordenar por posición vertical
+        // Ordenar por posición vertical (top)
         sections.sort((a, b) => a.top - b.top)
         
-        // Encontrar la sección activa - la que el usuario está viendo
+        // Encontrar la sección activa - la que está más cerca del punto de detección
         let activeSection = ''
+        const detectionPoint = headerOffset
         
         // Buscar la sección que está actualmente visible en el punto de detección
-        // En móvil, usar un método más preciso que considere el área visible
-        const viewportHeight = window.innerHeight
-        const visibleAreaTop = scrollTop
-        const visibleAreaBottom = scrollTop + viewportHeight
-        
         for (let i = 0; i < sections.length; i++) {
           const section = sections[i]
           
-          // Calcular cuánto de la sección está visible
-          const sectionVisibleTop = Math.max(section.top, visibleAreaTop)
-          const sectionVisibleBottom = Math.min(section.bottom, visibleAreaBottom)
-          const sectionVisibleHeight = Math.max(0, sectionVisibleBottom - sectionVisibleTop)
-          
-          // Si una parte significativa de la sección está visible, considerarla activa
-          const sectionHeight = section.bottom - section.top
-          const visibilityRatio = sectionVisibleHeight / sectionHeight
-          
-          // En móvil, ser más estricto con la visibilidad
-          const minVisibilityRatio = isMobileDevice ? 0.3 : 0.2
-          
-          if (visibilityRatio >= minVisibilityRatio && detectionPoint >= section.top && detectionPoint < section.bottom) {
-            activeSection = section.key
-            break
-          }
-          
           // Si el punto de detección está dentro de esta sección
-          if (detectionPoint >= section.top && detectionPoint < section.bottom) {
+          if (detectionPoint >= section.top && detectionPoint <= section.bottom) {
             activeSection = section.key
             break
           }
           
-          // Si estamos entre secciones, usar la siguiente
-          if (i < sections.length - 1 && detectionPoint >= section.bottom && detectionPoint < sections[i + 1].top) {
-            activeSection = sections[i + 1].key
-            break
+          // Si estamos entre secciones, usar la que está más cerca del punto de detección
+          if (i < sections.length - 1) {
+            const nextSection = sections[i + 1]
+            if (detectionPoint > section.bottom && detectionPoint < nextSection.top) {
+              // Usar la sección más cercana al punto de detección
+              const distanceToCurrent = Math.abs(detectionPoint - section.bottom)
+              const distanceToNext = Math.abs(detectionPoint - nextSection.top)
+              activeSection = distanceToCurrent < distanceToNext ? section.key : nextSection.key
+              break
+            }
           }
         }
         
-        // Si estamos al final del documento, usar la última sección
+        // Si estamos al final del documento, usar la última sección visible
         if (!activeSection && sections.length > 0) {
           const lastSection = sections[sections.length - 1]
           if (detectionPoint >= lastSection.top) {
@@ -350,23 +338,33 @@ export default function MenuPage() {
           }
         }
         
-        // Si aún no hay activa y estamos al inicio, usar la primera
+        // Si aún no hay activa y estamos al inicio, usar la primera sección visible
         if (!activeSection && sections.length > 0) {
-          activeSection = sections[0].key
+          // Buscar la primera sección que esté visible o por encima del punto de detección
+          for (const section of sections) {
+            if (section.top <= detectionPoint + 100) { // Tolerancia de 100px
+              activeSection = section.key
+              break
+            }
+          }
+          // Si no encontramos ninguna, usar la primera
+          if (!activeSection) {
+            activeSection = sections[0].key
+          }
         }
         
         // Actualizar solo si es diferente y no hay una selección manual reciente
         if (activeSection && activeSection !== activeTab && !isManualSelection) {
           setActiveTab(activeSection)
           
-          // Scroll automático de la barra de categorías con mejor manejo en móvil
+          // Scroll automático de la barra de categorías
           requestAnimationFrame(() => {
             setTimeout(() => {
               scrollCategoryBarToActive(activeSection)
-            }, 100) // Delay mayor para móvil
+            }, 50)
           })
         }
-      }, window.innerWidth < 1024 ? 100 : 150) // Delay reducido para mejor respuesta en móvil
+      }, window.innerWidth < 1024 ? 100 : 50) // Reducir delay para mejor respuesta en móvil
     }
 
     // Ejecutar al cargar y al montar el componente - delay mayor para asegurar que todo esté renderizado
@@ -374,17 +372,34 @@ export default function MenuPage() {
       detectActiveCategory()
     }, 500)
 
-    // Listener de scroll con throttling mejorado para móvil
+    // Listener de scroll con throttling mejorado usando requestAnimationFrame para mejor rendimiento en móvil
     let scrollTimeout: NodeJS.Timeout | null = null
+    let rafId: number | null = null
+    let lastScrollTop = 0
+    
     const handleScroll = () => {
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
+      // Cancelar cualquier requestAnimationFrame pendiente
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
       }
-      // Throttling más agresivo en móvil para mejor rendimiento
-      const throttleDelay = window.innerWidth < 1024 ? 100 : 50
-      scrollTimeout = setTimeout(() => {
-        detectActiveCategory()
-      }, throttleDelay)
+      
+      // Usar requestAnimationFrame para mejor rendimiento, especialmente en móvil
+      rafId = requestAnimationFrame(() => {
+        const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
+        
+        // Solo ejecutar si el scroll cambió significativamente (más de 10px)
+        if (Math.abs(currentScrollTop - lastScrollTop) > 10) {
+          lastScrollTop = currentScrollTop
+          
+          if (scrollTimeout) {
+            clearTimeout(scrollTimeout)
+          }
+          
+          scrollTimeout = setTimeout(() => {
+            detectActiveCategory()
+          }, 50)
+        }
+      })
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -400,6 +415,9 @@ export default function MenuPage() {
       }
       if (scrollTimeout) {
         clearTimeout(scrollTimeout)
+      }
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
       }
       clearTimeout(initialDetection)
       clearTimeout(categoriesChangeDetection)
@@ -906,7 +924,7 @@ export default function MenuPage() {
     
     // Función para encontrar y hacer scroll al elemento
     const findAndScroll = (attempts = 0) => {
-      if (attempts > 15) {
+      if (attempts > 20) {
         console.warn(`No se pudo encontrar la sección después de ${attempts} intentos: ${sectionKey}`)
         setIsManualSelection(false)
         return
@@ -938,32 +956,35 @@ export default function MenuPage() {
         const isVisible = rect.width > 0 && rect.height > 0
         
         if (isVisible) {
-          // Calcular la posición considerando el header sticky
           const isMobile = window.innerWidth < 1024
-          const headerOffset = isMobile ? 180 : 150 // Offset ajustado para móvil
+          const headerOffset = isMobile ? 220 : 150
           
-          // Calcular posición absoluta de manera más precisa
-          const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
-          const elementTop = rect.top + scrollTop
-          const targetPosition = elementTop - headerOffset
-          
-          // En móvil, usar un método más directo y confiable
+          // En móvil, usar scrollIntoView que funciona mejor en iOS
           if (isMobile) {
-            // Usar scrollIntoView que es más confiable en móvil
+            // Usar scrollIntoView con opciones específicas para iOS
             element.scrollIntoView({
               behavior: 'smooth',
               block: 'start',
+              inline: 'nearest'
             })
             
-            // Ajuste adicional después del scroll
+            // Ajustar manualmente después del scroll para compensar el header sticky
             setTimeout(() => {
-              const finalPosition = elementTop - headerOffset
+              const currentScroll = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
+              const elementTop = element!.getBoundingClientRect().top + currentScroll
+              const targetPosition = elementTop - headerOffset
+              
               window.scrollTo({
-                top: Math.max(0, finalPosition),
-                behavior: 'auto'
+                top: Math.max(0, targetPosition),
+                behavior: 'smooth'
               })
-            }, 500)
+            }, 100)
           } else {
+            // En desktop, usar el método original
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
+            const elementTop = rect.top + scrollTop
+            const targetPosition = elementTop - headerOffset
+            
             window.scrollTo({
               top: Math.max(0, targetPosition),
               behavior: "smooth"
@@ -971,21 +992,20 @@ export default function MenuPage() {
           }
           
           // Después de completar el scroll, permitir la detección automática nuevamente
-          // Aumentar el tiempo para asegurar que el título coincida con la categoría seleccionada
           setTimeout(() => {
             setIsManualSelection(false)
-          }, isMobile ? 2500 : 3000) // Tiempo aumentado para móvil y desktop
+          }, isMobile ? 1500 : 1000) // Más tiempo en móvil para asegurar que el scroll termine
         } else {
           // Si el elemento no es visible aún, reintentar
           setTimeout(() => {
             findAndScroll(attempts + 1)
-          }, 150)
+          }, 100)
         }
       } else {
         // Si el elemento no está disponible aún, reintentar después de un delay
         setTimeout(() => {
           findAndScroll(attempts + 1)
-        }, 150)
+        }, 100)
       }
     }
     
@@ -994,7 +1014,7 @@ export default function MenuPage() {
     requestAnimationFrame(() => {
       setTimeout(() => {
         findAndScroll()
-      }, 100)
+      }, 50)
     })
   }
 
@@ -1019,6 +1039,8 @@ export default function MenuPage() {
     <>
       <CobraLoadingScreen isLoading={loading} />
       <div className="cobra-snake-bg menu-page">
+      {/* Fondo móvil - elemento real para mejor compatibilidad con iOS Safari */}
+      <div className="cobra-snake-bg-mobile-overlay" aria-hidden="true"></div>
       {/* Carátula full-screen minimalista */}
       <header className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden pt-8 sm:pt-12">
         
@@ -1044,7 +1066,7 @@ export default function MenuPage() {
           <div className="mb-4 sm:mb-5">
             <h2
               className="bebas-title font-bold"
-              style={{ color: "#231F20", letterSpacing: "-1px", fontSize: "20px" }}
+              style={{ color: "#FFD600", letterSpacing: "-1px", fontSize: "20px" }} // amarillo
             >
               <b>Chefs:</b>
             </h2>
@@ -1148,26 +1170,18 @@ export default function MenuPage() {
                   // En móvil, prevenir el scroll del contenedor cuando se toca un botón
                   const container = document.querySelector('.category-scroll-container') as HTMLElement
                   if (container) {
-                    // Prevenir scroll del contenedor durante la navegación
-                    container.style.overflow = 'hidden'
                     container.style.scrollBehavior = 'auto'
                   }
                   
-                  // Scroll a la sección
+                  // Ejecutar scroll inmediatamente
                   scrollToSection(tab.key)
-                  
-                  // Scroll de la barra de categorías después de un pequeño delay
-                  setTimeout(() => {
-                    scrollCategoryBarToButton(tab.key)
-                  }, 50)
                   
                   // Restaurar scroll suave después de un delay
                   setTimeout(() => {
                     if (container) {
-                      container.style.overflow = 'auto'
                       container.style.scrollBehavior = 'smooth'
                     }
-                  }, 300)
+                  }, 100)
                 }
 
                 return (
@@ -1176,33 +1190,18 @@ export default function MenuPage() {
                     data-tab={tab.key}
                     onClick={handleCategoryClick}
                     onTouchEnd={(e) => {
-                      // Manejar touch end para móvil - prevenir propagación
+                      // Manejar touch end para móvil - prevenir comportamiento por defecto
                       e.preventDefault()
                       e.stopPropagation()
                       handleCategoryClick(e)
-                      e.currentTarget.style.opacity = '1'
                     }}
                     onTouchStart={(e) => {
-                      // Feedback visual inmediato - prevenir scroll del contenedor
-                      e.stopPropagation()
+                      // Feedback visual inmediato sin prevenir el evento
                       e.currentTarget.style.opacity = '0.7'
                     }}
                     onTouchCancel={(e) => {
                       // Restaurar opacidad si se cancela el touch
                       e.currentTarget.style.opacity = '1'
-                    }}
-                    onTouchMove={(e) => {
-                      // Prevenir scroll del contenedor cuando el usuario está tocando un botón
-                      const container = document.querySelector('.category-scroll-container') as HTMLElement
-                      if (container && e.touches.length > 0) {
-                        const touch = e.touches[0]
-                        const buttonRect = e.currentTarget.getBoundingClientRect()
-                        // Si el touch está dentro del botón, prevenir scroll del contenedor
-                        if (touch.clientX >= buttonRect.left && touch.clientX <= buttonRect.right &&
-                            touch.clientY >= buttonRect.top && touch.clientY <= buttonRect.bottom) {
-                          e.stopPropagation()
-                        }
-                      }
                     }}
                     className={`flex-shrink-0 bebas-title-category-bar category-button ${
                       activeTab === tab.key ? "active" : ""
