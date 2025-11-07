@@ -241,7 +241,7 @@ export default function MenuPage() {
         clearTimeout(timeoutId)
       }
       
-      // No ejecutar si hay una selección manual reciente
+      // No ejecutar si hay una selección manual reciente - esto previene que se sobrescriba la selección manual
       if (isManualSelection) {
         return
       }
@@ -992,9 +992,10 @@ export default function MenuPage() {
           }
           
           // Después de completar el scroll, permitir la detección automática nuevamente
+          // Aumentar el tiempo para que la selección manual se mantenga más tiempo
           setTimeout(() => {
             setIsManualSelection(false)
-          }, isMobile ? 1500 : 1000) // Más tiempo en móvil para asegurar que el scroll termine
+          }, isMobile ? 3000 : 2000) // Más tiempo para asegurar que el scroll termine y la selección se mantenga
         } else {
           // Si el elemento no es visible aún, reintentar
           setTimeout(() => {
@@ -1040,7 +1041,9 @@ export default function MenuPage() {
       <CobraLoadingScreen isLoading={loading} />
       <div className="cobra-snake-bg menu-page">
       {/* Fondo móvil - elemento real para mejor compatibilidad con iOS Safari */}
-      <div className="cobra-snake-bg-mobile-overlay" aria-hidden="true"></div>
+      <div className="cobra-snake-bg-mobile-overlay-wrapper">
+        <div className="cobra-snake-bg-mobile-overlay" aria-hidden="true"></div>
+      </div>
       {/* Carátula full-screen minimalista */}
       <header className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden pt-8 sm:pt-12">
         
@@ -1066,7 +1069,7 @@ export default function MenuPage() {
           <div className="mb-4 sm:mb-5">
             <h2
               className="bebas-title font-bold"
-              style={{ color: "#FF2222", letterSpacing: "-1px", fontSize: "20px" }} // rojo
+              style={{ color: "#FFD600", letterSpacing: "-1px", fontSize: "20px" }} // amarillo
             >
               <b>Chefs:</b>
             </h2>
