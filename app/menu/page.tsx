@@ -204,7 +204,7 @@ export default function MenuPage() {
   const scrollCategoryBarToActive = (categoryKey: string) => {
     const activeButton = document.querySelector(`[data-tab="${categoryKey}"]`)
     if (activeButton) {
-      const categoryContainer = document.querySelector('.category-scroll-container')
+      const categoryContainer = document.querySelector('.category-menu-scroll')
       if (categoryContainer) {
         const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
         const containerWidth = (categoryContainer as HTMLElement).offsetWidth
@@ -938,8 +938,9 @@ export default function MenuPage() {
       {/* Contenido del menú */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
 
-        <div className="sticky top-0 z-50 mobile-tabs mb-6 lg:hidden">
-          <div className="flex overflow-x-auto category-scroll-container">
+        {/* Menú deslizable de categorías */}
+        <div className="sticky top-0 z-50 category-menu-bar mb-6 lg:hidden">
+          <div className="category-menu-scroll">
             {(() => {
               // Generar las categorías del menú deslizable basándose en las categorías visibles y su orden
               if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
@@ -955,25 +956,12 @@ export default function MenuPage() {
                 }))
 
               return sortedCategories.map((tab) => {
-                const handleCategoryClick = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
+                const isActive = activeTab === tab.key
+                
+                const handleCategoryClick = (e: React.MouseEvent<HTMLButtonElement>) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  
-                  // En móvil, prevenir el scroll del contenedor cuando se toca un botón
-                  const container = document.querySelector('.category-scroll-container') as HTMLElement
-                  if (container) {
-                    container.style.scrollBehavior = 'auto'
-                  }
-                  
-                  // Ejecutar scroll inmediatamente
                   scrollToSection(tab.key)
-                  
-                  // Restaurar scroll suave después de un delay
-                  setTimeout(() => {
-                    if (container) {
-                      container.style.scrollBehavior = 'smooth'
-                    }
-                  }, 100)
                 }
 
                 return (
@@ -981,23 +969,7 @@ export default function MenuPage() {
                     key={tab.key}
                     data-tab={tab.key}
                     onClick={handleCategoryClick}
-                    onTouchEnd={(e) => {
-                      // Manejar touch end para móvil - prevenir comportamiento por defecto
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleCategoryClick(e)
-                    }}
-                    onTouchStart={(e) => {
-                      // Feedback visual inmediato sin prevenir el evento
-                      e.currentTarget.style.opacity = '0.7'
-                    }}
-                    onTouchCancel={(e) => {
-                      // Restaurar opacidad si se cancela el touch
-                      e.currentTarget.style.opacity = '1'
-                    }}
-                    className={`flex-shrink-0 bebas-title-category-bar category-button ${
-                      activeTab === tab.key ? "active" : ""
-                    }`}
+                    className={`category-menu-item ${isActive ? 'active' : ''}`}
                     type="button"
                   >
                     {tab.label}
