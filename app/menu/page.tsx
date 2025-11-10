@@ -183,10 +183,11 @@ export default function MenuPage() {
     return sortedKeys[0] || "parrilla"
   }
   
-  const [activeTab, setActiveTab] = useState(getFirstVisibleCategory())
-  const isScrollingRef = useRef(false)
+  // Estado para la categoría activa
+  const [activeCategory, setActiveCategory] = useState(getFirstVisibleCategory())
+  const scrollingProgrammatically = useRef(false)
   
-  // Definir todos los hooks al principio, antes de cualquier lógica condicional
+  // Refs para las secciones
   const sectionRefs = {
     parrilla: useRef<HTMLDivElement>(null),
     tapeo: useRef<HTMLDivElement>(null),
@@ -200,109 +201,115 @@ export default function MenuPage() {
     promociones: useRef<HTMLDivElement>(null)
   }
 
-  // Función para hacer scroll de la barra de categorías al botón activo
-  const scrollCategoryBarToActive = (categoryKey: string) => {
-    const activeButton = document.querySelector(`[data-tab="${categoryKey}"]`)
-    if (activeButton) {
-      const categoryContainer = document.querySelector('.category-menu-scroll')
-      if (categoryContainer) {
-        const buttonOffsetLeft = (activeButton as HTMLElement).offsetLeft
-        const containerWidth = (categoryContainer as HTMLElement).offsetWidth
-        const buttonWidth = (activeButton as HTMLElement).offsetWidth
-        
-        const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2)
-        
-        categoryContainer.scrollTo({
-          left: Math.max(0, targetScrollLeft),
-          behavior: 'smooth'
-        })
-      }
+  // Función para hacer clic en una categoría
+  const handleCategoryClick = (categoryKey: string) => {
+    // Marcar que estamos haciendo scroll programático
+    scrollingProgrammatically.current = true
+    
+    // Actualizar la categoría activa
+    setActiveCategory(categoryKey)
+    
+    // Buscar el elemento de la sección
+    const section = document.querySelector(`[data-category="${categoryKey}"]`)
+    
+    if (section) {
+      // Calcular offset para la barra sticky (200px en móvil, 150px en desktop)
+      const offset = window.innerWidth < 1024 ? 200 : 150
+      
+      // Obtener la posición del elemento
+      const elementPosition = section.getBoundingClientRect().top + window.pageYOffset
+      const offsetPosition = elementPosition - offset
+      
+      // Hacer scroll
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      })
+      
+      // Después de 1 segundo, permitir detección automática
+      setTimeout(() => {
+        scrollingProgrammatically.current = false
+      }, 1000)
+    } else {
+      scrollingProgrammatically.current = false
     }
   }
 
-  // Función para detectar la categoría visible en pantalla
-  const detectActiveCategory = () => {
-    // No ejecutar si estamos haciendo scroll programático
-    if (isScrollingRef.current) {
-      return
-    }
-
-    const isMobile = window.innerWidth < 1024
-    const headerOffset = isMobile ? 200 : 150 // Offset para la barra sticky
-    
-    // Obtener todas las secciones con data-category
-    const allSections = document.querySelectorAll('[data-category]')
-    
-    if (allSections.length === 0) {
-      return
-    }
-    
-    // Encontrar la sección cuyo título está más cerca del punto de detección
-    const detectionPoint = headerOffset
-    let activeSection = ''
-    let minDistance = Infinity
-    
-    allSections.forEach((section) => {
-      const rect = (section as HTMLElement).getBoundingClientRect()
-      const key = section.getAttribute('data-category') || ''
-      
-      if (!key || rect.height === 0) {
-        return
-      }
-      
-      // Solo considerar secciones visibles en el viewport
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        // Calcular distancia del título (top) al punto de detección
-        const distance = Math.abs(rect.top - detectionPoint)
-        
-        if (distance < minDistance) {
-          minDistance = distance
-          activeSection = key
-        }
-      }
-    })
-    
-    // Si encontramos una sección activa y es diferente a la actual, actualizar
-    if (activeSection && activeSection !== activeTab) {
-      setActiveTab(activeSection)
-      scrollCategoryBarToActive(activeSection)
-    }
-  }
-
-  // Hook para detectar automáticamente la categoría visible al hacer scroll
+  // Detectar categoría visible al hacer scroll
   useEffect(() => {
-    let scrollTimeout: NodeJS.Timeout | null = null
-    
     const handleScroll = () => {
-      // No ejecutar si estamos haciendo scroll programático
-      if (isScrollingRef.current) {
-        return
-      }
+      // Si estamos haciendo scroll programático, no detectar
+      if (scrollingProgrammatically.current) return
       
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
-      }
+      // Offset para la detección (200px en móvil, 150px en desktop)
+      const offset = window.innerWidth < 1024 ? 200 : 150
       
-      scrollTimeout = setTimeout(() => {
-        detectActiveCategory()
-      }, 100)
+      // Buscar todas las secciones
+      const sections = document.querySelectorAll('[data-category]')
+      
+      let currentSection = ''
+      let minDistance = Infinity
+      
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect()
+        const categoryKey = section.getAttribute('data-category')
+        
+        if (!categoryKey) return
+        
+        // Calcular distancia del top de la sección al punto de detección
+        const distance = Math.abs(rect.top - offset)
+        
+        // Si la sección está visible y está más cerca del punto de detección
+        if (rect.top < window.innerHeight && rect.bottom > 0 && distance < minDistance) {
+          minDistance = distance
+          currentSection = categoryKey
+        }
+      })
+      
+      // Si encontramos una sección y es diferente a la actual, actualizar
+      if (currentSection && currentSection !== activeCategory) {
+        setActiveCategory(currentSection)
+      }
     }
-
-    // Detección inicial después de que se monte el componente
-    const initialTimeout = setTimeout(() => {
-      detectActiveCategory()
-    }, 500)
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
+    
+    // Debounce para el scroll
+    let timeout: NodeJS.Timeout
+    const debouncedScroll = () => {
+      clearTimeout(timeout)
+      timeout = setTimeout(handleScroll, 50)
+    }
+    
+    // Ejecutar al montar
+    setTimeout(handleScroll, 500)
+    
+    // Escuchar scroll
+    window.addEventListener('scroll', debouncedScroll, { passive: true })
+    
     return () => {
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
-      }
-      clearTimeout(initialTimeout)
-      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('scroll', debouncedScroll)
+      clearTimeout(timeout)
     }
-  }, [activeTab, visibleCategories])
+  }, [activeCategory])
+
+  // Hacer scroll automático de la barra de categorías cuando cambia la categoría activa
+  useEffect(() => {
+    const activeButton = document.querySelector(`[data-tab="${activeCategory}"]`)
+    const categoryContainer = document.querySelector('.category-scroll-container')
+    
+    if (activeButton && categoryContainer) {
+      const buttonLeft = (activeButton as HTMLElement).offsetLeft
+      const buttonWidth = (activeButton as HTMLElement).offsetWidth
+      const containerWidth = (categoryContainer as HTMLElement).offsetWidth
+      
+      // Centrar el botón en la barra
+      const targetScrollLeft = buttonLeft - (containerWidth / 2) + (buttonWidth / 2)
+      
+      categoryContainer.scrollTo({
+        left: Math.max(0, targetScrollLeft),
+        behavior: 'smooth'
+      })
+    }
+  }, [activeCategory])
   
   if (loading || subcategoryLoading) {
     return (
@@ -767,63 +774,20 @@ export default function MenuPage() {
     return null;
   };
 
-  // Función para hacer scroll a una sección cuando se hace clic en una categoría
-  const scrollToSection = (sectionKey: string) => {
-    // Marcar que estamos haciendo scroll programático
-    isScrollingRef.current = true
+  // Función para hacer scroll a la primera categoría visible
+  const scrollToFirstVisibleCategory = () => {
+    if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
+      return
+    }
     
-    // Actualizar el estado activo inmediatamente
-    setActiveTab(sectionKey)
-    
-    // Scroll de la barra de categorías
-    scrollCategoryBarToActive(sectionKey)
-    
-    // Buscar el elemento de la sección
-    const element = document.querySelector(`[data-category="${sectionKey}"]`) as HTMLElement
-    
-    if (element) {
-      const isMobile = window.innerWidth < 1024
-      const headerOffset = isMobile ? 200 : 150 // Offset para que el título sea visible
-      
-      // Calcular la posición del elemento
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || window.scrollY
-      const elementTop = element.getBoundingClientRect().top + scrollTop
-      const targetPosition = elementTop - headerOffset
-      
-      // Hacer scroll a la posición calculada
-      window.scrollTo({
-        top: Math.max(0, targetPosition),
-        behavior: "smooth"
-      })
-      
-      // Después de completar el scroll, permitir la detección automática nuevamente
-      setTimeout(() => {
-        isScrollingRef.current = false
-      }, 1000) // Tiempo suficiente para que termine el scroll suave
-    } else {
-      // Si no se encuentra el elemento, permitir detección automática después de un delay
-      setTimeout(() => {
-        isScrollingRef.current = false
-      }, 500)
+    const sortedCategories = Object.entries(visibleCategories)
+      .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
+      .map(([key]) => key)
+
+    if (sortedCategories.length > 0) {
+      handleCategoryClick(sortedCategories[0])
     }
   }
-
-    // Función para encontrar la primera categoría visible y desplazarse a ella
-    const scrollToFirstVisibleCategory = () => {
-      // Obtener categorías visibles ordenadas
-      if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
-        return
-      }
-      
-      const sortedVisibleCategories = Object.entries(visibleCategories)
-        .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
-        .map(([key]) => key)
-
-      // Usar la primera categoría visible
-      if (sortedVisibleCategories.length > 0) {
-        scrollToSection(sortedVisibleCategories[0])
-      }
-    }
 
   return (
     <>
@@ -938,45 +902,23 @@ export default function MenuPage() {
       {/* Contenido del menú */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
 
-        {/* Menú deslizable de categorías */}
-        <div className="sticky top-0 z-50 category-menu-bar mb-6 lg:hidden">
-          <div className="category-menu-scroll">
-            {(() => {
-              // Generar las categorías del menú deslizable basándose en las categorías visibles y su orden
-              if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
-                return null
-              }
-
-              // Convertir categorías visibles a array y ordenar por 'order'
-              const sortedCategories = Object.entries(visibleCategories)
-                .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
-                .map(([key, category]) => ({
-                  key,
-                  label: category.name || key.toUpperCase()
-                }))
-
-              return sortedCategories.map((tab) => {
-                const isActive = activeTab === tab.key
-                
-                const handleCategoryClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  scrollToSection(tab.key)
-                }
-
-                return (
-                  <button
-                    key={tab.key}
-                    data-tab={tab.key}
-                    onClick={handleCategoryClick}
-                    className={`category-menu-item ${isActive ? 'active' : ''}`}
-                    type="button"
-                  >
-                    {tab.label}
-                  </button>
-                )
-              })
-            })()}
+        <div className="sticky top-0 z-50 mobile-tabs mb-6 lg:hidden">
+          <div className="flex overflow-x-auto category-scroll-container">
+            {Object.entries(visibleCategories)
+              .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
+              .map(([key, category]) => (
+                <button
+                  key={key}
+                  data-tab={key}
+                  onClick={() => handleCategoryClick(key)}
+                  className={`flex-shrink-0 bebas-title-category-bar category-button ${
+                    activeCategory === key ? "active" : ""
+                  }`}
+                  type="button"
+                >
+                  {category.name}
+                </button>
+              ))}
           </div>
         </div>
 
