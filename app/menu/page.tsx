@@ -201,44 +201,71 @@ export default function MenuPage() {
     promociones: useRef<HTMLDivElement>(null)
   }
 
-  // Función para hacer clic en una categoría (adaptada para iOS)
+  // Función para hacer clic en una categoría (optimizada para iOS)
   const handleCategoryClick = (categoryKey: string) => {
+    console.log('🔍 Buscando categoría:', categoryKey)
+    
     // Marcar que estamos haciendo scroll programático
     scrollingProgrammatically.current = true
     
     // Actualizar la categoría activa inmediatamente
     setActiveCategory(categoryKey)
     
-    // Buscar el elemento de la sección
-    const section = document.querySelector(`[data-category="${categoryKey}"]`)
-    
-    if (section) {
-      // Calcular offset para la barra sticky (200px en móvil, 150px en desktop)
-      const offset = window.innerWidth < 1024 ? 200 : 150
+    // Usar setTimeout para asegurar que el DOM esté listo
+    setTimeout(() => {
+      // Buscar el elemento de la sección
+      const section = document.querySelector(`[data-category="${categoryKey}"]`) as HTMLElement
       
-      // Obtener la posición del elemento - usar scrollY en lugar de pageYOffset para iOS
-      const currentScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop
-      const elementPosition = section.getBoundingClientRect().top + currentScroll
-      const offsetPosition = elementPosition - offset
+      console.log('📍 Sección encontrada:', section ? 'Sí' : 'No')
       
-      // En iOS, smooth scroll puede tener problemas, intentar con y sin
-      try {
-        window.scrollTo({
-          top: Math.max(0, offsetPosition),
-          behavior: 'smooth'
-        })
-      } catch (e) {
-        // Fallback para navegadores que no soportan smooth
-        window.scrollTo(0, Math.max(0, offsetPosition))
-      }
-      
-      // Después de 1.2 segundos, permitir detección automática (más tiempo para iOS)
-      setTimeout(() => {
+      if (section) {
+        // Calcular offset para la barra sticky
+        const isMobile = window.innerWidth < 1024
+        const offset = isMobile ? 200 : 150
+        
+        console.log('📱 Móvil:', isMobile, '| Offset:', offset)
+        
+        // Obtener la posición actual del scroll
+        const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || window.scrollY
+        
+        // Obtener la posición del elemento
+        const rect = section.getBoundingClientRect()
+        const absoluteTop = rect.top + currentScrollTop
+        const targetPosition = absoluteTop - offset
+        
+        console.log('🎯 Posición objetivo:', targetPosition)
+        
+        // Método 1: Intentar con scrollTo smooth
+        const scrollSuccess = () => {
+          window.scrollTo({
+            top: Math.max(0, targetPosition),
+            behavior: 'smooth'
+          })
+        }
+        
+        // Método 2: Fallback sin smooth (más compatible con iOS)
+        const scrollFallback = () => {
+          window.scrollTo(0, Math.max(0, targetPosition))
+        }
+        
+        // Intentar el scroll
+        try {
+          scrollSuccess()
+        } catch (e) {
+          console.log('⚠️ Smooth scroll falló, usando fallback')
+          scrollFallback()
+        }
+        
+        // Después de 1.5 segundos, permitir detección automática
+        setTimeout(() => {
+          scrollingProgrammatically.current = false
+          console.log('✅ Scroll completado')
+        }, 1500)
+      } else {
+        console.error('❌ No se encontró la sección:', categoryKey)
         scrollingProgrammatically.current = false
-      }, 1200)
-    } else {
-      scrollingProgrammatically.current = false
-    }
+      }
+    }, 50)
   }
 
   // Detectar categoría visible al hacer scroll (optimizado para iOS)
@@ -920,13 +947,29 @@ export default function MenuPage() {
 
         {/* Indicador de scroll estilo grafiti */}
         <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 text-center">
-          <div 
+          <button
             className="graffiti-arrow-container cursor-pointer hover:opacity-80 transition-opacity duration-300"
-            onClick={scrollToFirstVisibleCategory}
+            onClick={() => {
+              console.log('🖱️ Click en VER MENÚ')
+              scrollToFirstVisibleCategory()
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault()
+              console.log('👆 Touch en VER MENÚ')
+              scrollToFirstVisibleCategory()
+            }}
+            type="button"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
+            }}
           >
             <span className="text-sm tracking-wide podium-text text-amber-400/80 font-bold">VER MENÚ</span>
             <div className="graffiti-arrow-down"></div>
-          </div>
+          </button>
         </div>
         </header>
 
@@ -941,13 +984,18 @@ export default function MenuPage() {
                 <button
                   key={key}
                   data-tab={key}
-                  onClick={(e) => {
-                    e.preventDefault()
+                  onClick={() => {
+                    console.log('🖱️ Click en categoría:', key)
                     handleCategoryClick(key)
                   }}
+                  onTouchStart={(e) => {
+                    // Prevenir el comportamiento por defecto solo en touch
+                    e.currentTarget.style.opacity = '0.8'
+                  }}
                   onTouchEnd={(e) => {
+                    e.currentTarget.style.opacity = '1'
                     e.preventDefault()
-                    e.stopPropagation()
+                    console.log('👆 Touch en categoría:', key)
                     handleCategoryClick(key)
                   }}
                   className={`flex-shrink-0 bebas-title-category-bar category-button ${
@@ -956,7 +1004,8 @@ export default function MenuPage() {
                   type="button"
                   style={{ 
                     WebkitTapHighlightColor: 'transparent',
-                    touchAction: 'manipulation'
+                    touchAction: 'manipulation',
+                    cursor: 'pointer'
                   }}
                 >
                   {category.name}
