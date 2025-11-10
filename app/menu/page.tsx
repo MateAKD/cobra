@@ -201,12 +201,12 @@ export default function MenuPage() {
     promociones: useRef<HTMLDivElement>(null)
   }
 
-  // Función para hacer clic en una categoría
+  // Función para hacer clic en una categoría (adaptada para iOS)
   const handleCategoryClick = (categoryKey: string) => {
     // Marcar que estamos haciendo scroll programático
     scrollingProgrammatically.current = true
     
-    // Actualizar la categoría activa
+    // Actualizar la categoría activa inmediatamente
     setActiveCategory(categoryKey)
     
     // Buscar el elemento de la sección
@@ -216,99 +216,130 @@ export default function MenuPage() {
       // Calcular offset para la barra sticky (200px en móvil, 150px en desktop)
       const offset = window.innerWidth < 1024 ? 200 : 150
       
-      // Obtener la posición del elemento
-      const elementPosition = section.getBoundingClientRect().top + window.pageYOffset
+      // Obtener la posición del elemento - usar scrollY en lugar de pageYOffset para iOS
+      const currentScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop
+      const elementPosition = section.getBoundingClientRect().top + currentScroll
       const offsetPosition = elementPosition - offset
       
-      // Hacer scroll
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      })
+      // En iOS, smooth scroll puede tener problemas, intentar con y sin
+      try {
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: 'smooth'
+        })
+      } catch (e) {
+        // Fallback para navegadores que no soportan smooth
+        window.scrollTo(0, Math.max(0, offsetPosition))
+      }
       
-      // Después de 1 segundo, permitir detección automática
+      // Después de 1.2 segundos, permitir detección automática (más tiempo para iOS)
       setTimeout(() => {
         scrollingProgrammatically.current = false
-      }, 1000)
+      }, 1200)
     } else {
       scrollingProgrammatically.current = false
     }
   }
 
-  // Detectar categoría visible al hacer scroll
+  // Detectar categoría visible al hacer scroll (optimizado para iOS)
   useEffect(() => {
+    let rafId: number | null = null
+    let timeout: NodeJS.Timeout | null = null
+    
     const handleScroll = () => {
       // Si estamos haciendo scroll programático, no detectar
       if (scrollingProgrammatically.current) return
       
-      // Offset para la detección (200px en móvil, 150px en desktop)
-      const offset = window.innerWidth < 1024 ? 200 : 150
-      
-      // Buscar todas las secciones
-      const sections = document.querySelectorAll('[data-category]')
-      
-      let currentSection = ''
-      let minDistance = Infinity
-      
-      sections.forEach((section) => {
-        const rect = section.getBoundingClientRect()
-        const categoryKey = section.getAttribute('data-category')
-        
-        if (!categoryKey) return
-        
-        // Calcular distancia del top de la sección al punto de detección
-        const distance = Math.abs(rect.top - offset)
-        
-        // Si la sección está visible y está más cerca del punto de detección
-        if (rect.top < window.innerHeight && rect.bottom > 0 && distance < minDistance) {
-          minDistance = distance
-          currentSection = categoryKey
-        }
-      })
-      
-      // Si encontramos una sección y es diferente a la actual, actualizar
-      if (currentSection && currentSection !== activeCategory) {
-        setActiveCategory(currentSection)
+      // Cancelar cualquier animación pendiente
+      if (rafId) {
+        cancelAnimationFrame(rafId)
       }
+      
+      // Usar requestAnimationFrame para mejor rendimiento en iOS
+      rafId = requestAnimationFrame(() => {
+        if (timeout) clearTimeout(timeout)
+        
+        timeout = setTimeout(() => {
+          // Offset para la detección (200px en móvil, 150px en desktop)
+          const offset = window.innerWidth < 1024 ? 200 : 150
+          
+          // Buscar todas las secciones
+          const sections = document.querySelectorAll('[data-category]')
+          
+          if (sections.length === 0) return
+          
+          let currentSection = ''
+          let minDistance = Infinity
+          
+          sections.forEach((section) => {
+            const rect = section.getBoundingClientRect()
+            const categoryKey = section.getAttribute('data-category')
+            
+            if (!categoryKey) return
+            
+            // Calcular distancia del top de la sección al punto de detección
+            const distance = Math.abs(rect.top - offset)
+            
+            // Si la sección está visible y está más cerca del punto de detección
+            if (rect.top < window.innerHeight && rect.bottom > 0 && distance < minDistance) {
+              minDistance = distance
+              currentSection = categoryKey
+            }
+          })
+          
+          // Si encontramos una sección y es diferente a la actual, actualizar
+          if (currentSection && currentSection !== activeCategory) {
+            setActiveCategory(currentSection)
+          }
+        }, 100) // Aumentar debounce para iOS
+      })
     }
     
-    // Debounce para el scroll
-    let timeout: NodeJS.Timeout
-    const debouncedScroll = () => {
-      clearTimeout(timeout)
-      timeout = setTimeout(handleScroll, 50)
-    }
+    // Detección inicial con más delay para iOS
+    const initialTimeout = setTimeout(handleScroll, 800)
     
-    // Ejecutar al montar
-    setTimeout(handleScroll, 500)
-    
-    // Escuchar scroll
-    window.addEventListener('scroll', debouncedScroll, { passive: true })
+    // Escuchar scroll - en iOS también necesitamos touchmove
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('touchmove', handleScroll, { passive: true })
     
     return () => {
-      window.removeEventListener('scroll', debouncedScroll)
-      clearTimeout(timeout)
+      if (rafId) cancelAnimationFrame(rafId)
+      if (timeout) clearTimeout(timeout)
+      clearTimeout(initialTimeout)
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('touchmove', handleScroll)
     }
   }, [activeCategory])
 
-  // Hacer scroll automático de la barra de categorías cuando cambia la categoría activa
+  // Hacer scroll automático de la barra de categorías cuando cambia la categoría activa (iOS compatible)
   useEffect(() => {
-    const activeButton = document.querySelector(`[data-tab="${activeCategory}"]`)
-    const categoryContainer = document.querySelector('.category-scroll-container')
+    // Usar setTimeout para asegurar que el DOM esté actualizado
+    const scrollTimeout = setTimeout(() => {
+      const activeButton = document.querySelector(`[data-tab="${activeCategory}"]`)
+      const categoryContainer = document.querySelector('.category-scroll-container')
+      
+      if (activeButton && categoryContainer) {
+        const buttonLeft = (activeButton as HTMLElement).offsetLeft
+        const buttonWidth = (activeButton as HTMLElement).offsetWidth
+        const containerWidth = (categoryContainer as HTMLElement).offsetWidth
+        
+        // Centrar el botón en la barra
+        const targetScrollLeft = buttonLeft - (containerWidth / 2) + (buttonWidth / 2)
+        
+        // iOS Safari puede tener problemas con scrollTo, usar try-catch
+        try {
+          categoryContainer.scrollTo({
+            left: Math.max(0, targetScrollLeft),
+            behavior: 'smooth'
+          })
+        } catch (e) {
+          // Fallback para navegadores antiguos
+          categoryContainer.scrollLeft = Math.max(0, targetScrollLeft)
+        }
+      }
+    }, 50)
     
-    if (activeButton && categoryContainer) {
-      const buttonLeft = (activeButton as HTMLElement).offsetLeft
-      const buttonWidth = (activeButton as HTMLElement).offsetWidth
-      const containerWidth = (categoryContainer as HTMLElement).offsetWidth
-      
-      // Centrar el botón en la barra
-      const targetScrollLeft = buttonLeft - (containerWidth / 2) + (buttonWidth / 2)
-      
-      categoryContainer.scrollTo({
-        left: Math.max(0, targetScrollLeft),
-        behavior: 'smooth'
-      })
-    }
+    return () => clearTimeout(scrollTimeout)
   }, [activeCategory])
   
   if (loading || subcategoryLoading) {
@@ -903,18 +934,30 @@ export default function MenuPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
 
         <div className="sticky top-0 z-50 mobile-tabs mb-6 lg:hidden">
-          <div className="flex overflow-x-auto category-scroll-container">
+          <div className="flex overflow-x-auto category-scroll-container" style={{ WebkitOverflowScrolling: 'touch' }}>
             {Object.entries(visibleCategories)
               .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
               .map(([key, category]) => (
                 <button
                   key={key}
                   data-tab={key}
-                  onClick={() => handleCategoryClick(key)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleCategoryClick(key)
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleCategoryClick(key)
+                  }}
                   className={`flex-shrink-0 bebas-title-category-bar category-button ${
                     activeCategory === key ? "active" : ""
                   }`}
                   type="button"
+                  style={{ 
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation'
+                  }}
                 >
                   {category.name}
                 </button>
