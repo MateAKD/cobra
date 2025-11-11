@@ -978,51 +978,54 @@
 
 /* ==================== ANIMACIÓN DE CARGA DEL LOGO ==================== */
 
-/* Animación de llenado del logo - Compatible con móviles */
-@keyframes logo-fill-height {
+/* Animación de llenado del logo - Compatible con móviles (incluye Safari iOS) */
+@keyframes logo-fill-slide {
   0% {
-    height: 0%;
-  }
-  20% {
-    height: 20%;
-  }
-  40% {
-    height: 40%;
-  }
-  60% {
-    height: 60%;
-  }
-  80% {
-    height: 80%;
+    transform: translateY(100%);
   }
   100% {
-    height: 100%;
+    transform: translateY(0%);
+  }
+}
+
+@-webkit-keyframes logo-fill-slide {
+  0% {
+    -webkit-transform: translateY(100%);
+  }
+  100% {
+    -webkit-transform: translateY(0%);
   }
 }
 
 /* Contenedor para la animación de llenado */
 .logo-fill-wrapper {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   width: 100%;
-  height: 0%;
+  height: 100%;
   overflow: hidden;
-  animation: logo-fill-height 3s ease-in-out forwards;
-  -webkit-animation: logo-fill-height 3s ease-in-out forwards;
-  will-change: height;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  will-change: transform;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 100%);
+  mask-image: linear-gradient(to top, #000 0%, #000 100%);
 }
 
 .logo-fill-wrapper img {
   position: absolute;
-  bottom: 0;
-  left: 0;
+  inset: auto 0 0 0;
   width: 100%;
-  /* Altura fija igual al contenedor padre (h-32 = 128px) */
-  height: 128px;
+  height: 130%;
   object-fit: contain;
   object-position: bottom;
+  transform: translateY(100%);
+  -webkit-transform: translateY(100%);
+  animation: logo-fill-slide 3s ease-in-out forwards;
+  -webkit-animation: logo-fill-slide 3s ease-in-out forwards;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* ==================== EFECTOS MINIMALISTAS PARA LA CARÁTULA ==================== */
