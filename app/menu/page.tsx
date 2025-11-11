@@ -187,6 +187,14 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState(getFirstVisibleCategory())
   const scrollingProgrammatically = useRef(false)
   
+  // Actualizar categoría activa cuando cambian las categorías visibles
+  useEffect(() => {
+    const firstCategory = getFirstVisibleCategory()
+    if (firstCategory !== activeCategory) {
+      setActiveCategory(firstCategory)
+    }
+  }, [visibleCategories])
+  
   // Refs para las secciones
   const sectionRefs = {
     parrilla: useRef<HTMLDivElement>(null),
@@ -211,35 +219,53 @@ export default function MenuPage() {
     // Actualizar la categoría activa inmediatamente
     setActiveCategory(categoryKey)
     
-    // Buscar el elemento inmediatamente
-    const section = document.querySelector(`[data-category="${categoryKey}"]`) as HTMLElement
-    
-    console.log('📍 Sección encontrada:', section ? 'SÍ ✅' : 'NO ❌')
-    
-    if (section) {
-      const isMobile = window.innerWidth < 1024
-      const offset = isMobile ? 200 : 150
-      
-      console.log('📱 Dispositivo:', isMobile ? 'MÓVIL' : 'DESKTOP', '| Offset:', offset)
-      
-      // Método directo para iOS: calcular posición exacta
-      const y = section.getBoundingClientRect().top + window.pageYOffset - offset
-      
-      console.log('🎯 Haciendo scroll a posición:', y)
-      
-      // Scroll inmediato sin smooth para iOS (más confiable)
-      window.scrollTo(0, y)
-      
-      // Permitir detección automática después de un tiempo
-      setTimeout(() => {
-        scrollingProgrammatically.current = false
-        console.log('✅ Scroll completado y detección automática habilitada')
-      }, 1500)
-    } else {
-      console.error('❌ ERROR: No se encontró ninguna sección con data-category="' + categoryKey + '"')
-      console.log('📋 Secciones disponibles:', Array.from(document.querySelectorAll('[data-category]')).map(el => el.getAttribute('data-category')))
-      scrollingProgrammatically.current = false
-    }
+    // Usar requestAnimationFrame para asegurar que el DOM esté listo
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // Buscar el elemento con un pequeño delay para iOS
+        const section = document.querySelector(`[data-category="${categoryKey}"]`) as HTMLElement
+        
+        console.log('📍 Sección encontrada:', section ? 'SÍ ✅' : 'NO ❌')
+        
+        if (section) {
+          const isMobile = window.innerWidth < 1024
+          const offset = isMobile ? 200 : 150
+          
+          console.log('📱 Dispositivo:', isMobile ? 'MÓVIL' : 'DESKTOP', '| Offset:', offset)
+          
+          // Método 1: scrollIntoView (mejor para iOS)
+          try {
+            const sectionTop = section.getBoundingClientRect().top + window.pageYOffset
+            const scrollPosition = sectionTop - offset
+            
+            console.log('🎯 Posición de scroll calculada:', scrollPosition)
+            
+            // Intentar scroll con behavior instant para iOS
+            window.scrollTo({
+              top: scrollPosition,
+              behavior: 'auto'  // 'auto' es más compatible que 'smooth' en iOS
+            })
+            
+            console.log('✅ Scroll ejecutado')
+          } catch (e) {
+            // Fallback absoluto
+            console.warn('⚠️ Error en scrollTo, usando fallback')
+            const y = section.getBoundingClientRect().top + window.pageYOffset - offset
+            window.scrollTo(0, y)
+          }
+          
+          // Permitir detección automática después de un tiempo más largo
+          setTimeout(() => {
+            scrollingProgrammatically.current = false
+            console.log('✅ Scroll completado y detección automática habilitada')
+          }, 2000)
+        } else {
+          console.error('❌ ERROR: No se encontró ninguna sección con data-category="' + categoryKey + '"')
+          console.log('📋 Secciones disponibles:', Array.from(document.querySelectorAll('[data-category]')).map(el => el.getAttribute('data-category')))
+          scrollingProgrammatically.current = false
+        }
+      })
+    })
   }
 
   // Detectar categoría visible al hacer scroll (optimizado para iOS)
@@ -824,7 +850,11 @@ export default function MenuPage() {
     if (sortedCategories.length > 0) {
       const firstCategory = sortedCategories[0]
       console.log('🎯 Navegando a primera categoría:', firstCategory)
-      handleCategoryClick(firstCategory)
+      
+      // Asegurar que el DOM esté listo antes de navegar
+      setTimeout(() => {
+        handleCategoryClick(firstCategory)
+      }, 100)
     }
   }
 
@@ -930,12 +960,17 @@ export default function MenuPage() {
         <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 text-center">
           <button
             className="graffiti-arrow-container cursor-pointer hover:opacity-80 transition-opacity duration-300"
-            onTouchEnd={() => {
-              // No usar preventDefault para que funcione en iOS
+            onTouchStart={(e) => {
+              e.currentTarget.style.opacity = '0.8'
+            }}
+            onTouchEnd={(e) => {
+              e.currentTarget.style.opacity = '1'
+              // Prevenir el click duplicado en dispositivos táctiles
+              e.preventDefault()
               console.log('👆 Touch en VER MENÚ')
               scrollToFirstVisibleCategory()
             }}
-            onClick={() => {
+            onClick={(e) => {
               console.log('🖱️ Click en VER MENÚ')
               scrollToFirstVisibleCategory()
             }}
@@ -945,7 +980,8 @@ export default function MenuPage() {
               border: 'none',
               padding: 0,
               WebkitTapHighlightColor: 'transparent',
-              userSelect: 'none'
+              userSelect: 'none',
+              touchAction: 'manipulation' // Evita delays en iOS
             }}
           >
             <span className="text-sm tracking-wide podium-text text-amber-400/80 font-bold">VER MENÚ</span>
@@ -970,11 +1006,13 @@ export default function MenuPage() {
                   }}
                   onTouchEnd={(e) => {
                     e.currentTarget.style.opacity = '1'
-                    // No usar preventDefault para que funcione en iOS
+                    // Prevenir el click duplicado en dispositivos táctiles
+                    e.preventDefault()
                     console.log('👆 Touch END en categoría:', key)
                     handleCategoryClick(key)
                   }}
-                  onClick={() => {
+                  onClick={(e) => {
+                    // Solo ejecutar si no es un dispositivo táctil
                     console.log('🖱️ Click en categoría:', key)
                     handleCategoryClick(key)
                   }}
@@ -985,7 +1023,8 @@ export default function MenuPage() {
                   style={{ 
                     WebkitTapHighlightColor: 'transparent',
                     cursor: 'pointer',
-                    userSelect: 'none'
+                    userSelect: 'none',
+                    touchAction: 'manipulation' // Evita delays en iOS
                   }}
                 >
                   {category.name}
