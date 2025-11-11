@@ -981,19 +981,19 @@
 /* Animación de llenado del logo - Compatible con móviles (incluye Safari iOS) */
 @keyframes logo-fill-slide {
   0% {
-    transform: translateY(100%);
+    transform: translate3d(0, 100%, 0);
   }
   100% {
-    transform: translateY(0%);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @-webkit-keyframes logo-fill-slide {
   0% {
-    -webkit-transform: translateY(100%);
+    -webkit-transform: translate3d(0, 100%, 0);
   }
   100% {
-    -webkit-transform: translateY(0%);
+    -webkit-transform: translate3d(0, 0, 0);
   }
 }
 
@@ -1004,28 +1004,26 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  will-change: transform;
-  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 100%);
-  mask-image: linear-gradient(to top, #000 0%, #000 100%);
+  display: block;
 }
 
 .logo-fill-wrapper img {
   position: absolute;
-  inset: auto 0 0 0;
+  inset: 0;
   width: 100%;
-  height: 130%;
+  height: 100%;
   object-fit: contain;
-  object-position: bottom;
-  transform: translateY(100%);
-  -webkit-transform: translateY(100%);
+  object-position: center;
+  transform: translate3d(0, 100%, 0);
+  -webkit-transform: translate3d(0, 100%, 0);
+  transform-origin: center bottom;
+  -webkit-transform-origin: center bottom;
   animation: logo-fill-slide 3s ease-in-out forwards;
   -webkit-animation: logo-fill-slide 3s ease-in-out forwards;
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  display: block;
 }
 
 /* ==================== EFECTOS MINIMALISTAS PARA LA CARÁTULA ==================== */
