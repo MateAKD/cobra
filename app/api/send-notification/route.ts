@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 // Tipos de acciones para las notificaciones
-export type NotificationAction = 'AGREGAR' | 'EDITAR' | 'ELIMINAR' | 'OCULTAR' | 'MOSTRAR'
+export type NotificationAction = 'AGREGAR' | 'EDITAR' | 'ELIMINAR' | 'OCULTAR' | 'MOSTRAR' | 'AGREGAR_HORARIO' | 'EDITAR_HORARIO'
 
 // Interface para los datos del producto
 interface ProductData {
@@ -19,8 +19,17 @@ interface ProductData {
   hiddenBy?: string
 }
 
-// Función para generar el contenido HTML del email
-const generateEmailContent = (
+// Interface para los datos de horario de categoría
+interface TimeRangeData {
+  categoryName: string
+  categoryId: string
+  timeRestricted: boolean
+  startTime?: string
+  endTime?: string
+}
+
+// Función para generar el contenido HTML del email para productos
+const generateProductEmailContent = (
   action: NotificationAction,
   product: ProductData,
   userInfo?: { ip?: string; userAgent?: string }
@@ -109,6 +118,8 @@ const generateEmailContent = (
         .action-eliminar { background: #f8d7da; color: #721c24; }
         .action-ocultar { background: #e2e3e5; color: #383d41; }
         .action-mostrar { background: #cce5ff; color: #004085; }
+        .action-agregar_horario { background: #d1ecf1; color: #0c5460; }
+        .action-editar_horario { background: #d1ecf1; color: #0c5460; }
         .footer {
           margin-top: 30px;
           padding-top: 20px;
@@ -239,6 +250,201 @@ const generateEmailContent = (
   `
 }
 
+// Función para generar el contenido HTML del email para horarios de categorías
+const generateTimeRangeEmailContent = (
+  action: NotificationAction,
+  timeRange: TimeRangeData,
+  userInfo?: { ip?: string; userAgent?: string }
+): string => {
+  const timestamp = new Date().toLocaleString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Notificación COBRA</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f8f9fa;
+        }
+        .container {
+          background: white;
+          border-radius: 8px;
+          padding: 30px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+          text-align: center;
+          border-bottom: 2px solid #e9ecef;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .logo {
+          font-size: 24px;
+          font-weight: bold;
+          color: #2c3e50;
+          margin-bottom: 10px;
+        }
+        .section {
+          margin-bottom: 25px;
+        }
+        .section-title {
+          font-size: 18px;
+          font-weight: bold;
+          color: #2c3e50;
+          margin-bottom: 15px;
+          padding-bottom: 5px;
+          border-bottom: 1px solid #e9ecef;
+        }
+        .detail-row {
+          display: flex;
+          margin-bottom: 8px;
+          padding: 5px 0;
+        }
+        .detail-label {
+          font-weight: bold;
+          color: #495057;
+          min-width: 120px;
+          margin-right: 10px;
+        }
+        .detail-value {
+          color: #6c757d;
+          flex: 1;
+        }
+        .action-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: bold;
+          text-transform: uppercase;
+        }
+        .action-agregar_horario { background: #d1ecf1; color: #0c5460; }
+        .action-editar_horario { background: #d1ecf1; color: #0c5460; }
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e9ecef;
+          text-align: center;
+          color: #6c757d;
+          font-size: 14px;
+        }
+        .system-info {
+          background: #f8f9fa;
+          padding: 15px;
+          border-radius: 5px;
+          margin-top: 20px;
+        }
+        .time-range-info {
+          background: #e7f3ff;
+          padding: 15px;
+          border-radius: 5px;
+          border-left: 4px solid #0066cc;
+          margin-top: 15px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">🐍 COBRA</div>
+          <p style="margin: 0; color: #6c757d;">Sistema de Notificaciones</p>
+        </div>
+
+        <div class="section">
+          <div class="section-title">⏰ Cambio de Horario de Categoría</div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Acción:</span>
+            <span class="detail-value">
+              <span class="action-badge action-${action.toLowerCase()}">${action === 'AGREGAR_HORARIO' ? 'AGREGAR HORARIO' : 'EDITAR HORARIO'}</span>
+            </span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Categoría:</span>
+            <span class="detail-value"><strong>${timeRange.categoryName}</strong></span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">ID de Categoría:</span>
+            <span class="detail-value">${timeRange.categoryId}</span>
+          </div>
+
+          <div class="time-range-info">
+            <div class="detail-row">
+              <span class="detail-label">Restricción Horaria:</span>
+              <span class="detail-value"><strong>${timeRange.timeRestricted ? '✅ Activada' : '❌ Desactivada'}</strong></span>
+            </div>
+            
+            ${timeRange.timeRestricted && timeRange.startTime && timeRange.endTime ? `
+            <div class="detail-row">
+              <span class="detail-label">Horario de Inicio:</span>
+              <span class="detail-value"><strong>${timeRange.startTime}</strong></span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">Horario de Fin:</span>
+              <span class="detail-value"><strong>${timeRange.endTime}</strong></span>
+            </div>
+            
+            <div class="detail-row" style="margin-top: 10px;">
+              <span class="detail-label">Rango:</span>
+              <span class="detail-value"><strong>🕐 ${timeRange.startTime} - ${timeRange.endTime}</strong></span>
+            </div>
+            ` : `
+            <div class="detail-row" style="margin-top: 10px;">
+              <span class="detail-value">La categoría se mostrará en el menú público en todo momento.</span>
+            </div>
+            `}
+          </div>
+        </div>
+
+        <div class="system-info">
+          <div class="section-title">📊 Información del Sistema</div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Fecha y Hora:</span>
+            <span class="detail-value">${timestamp}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">User Agent:</span>
+            <span class="detail-value">${userInfo?.userAgent || 'No disponible'}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">IP:</span>
+            <span class="detail-value">${userInfo?.ip || 'No disponible'}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>Este email fue generado automáticamente por el Panel de Administración de COBRA.</p>
+          <p><strong>Sistema de Notificaciones COBRA</strong></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+}
+
 // Función para obtener el nombre legible de la sección
 const getSectionDisplayName = (section: string): string => {
   const sectionNames: Record<string, string> = {
@@ -286,7 +492,7 @@ const getSectionDisplayName = (section: string): string => {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { action, product, userInfo } = body
+    const { action, product, timeRange, userInfo } = body
 
     console.log('📧 Iniciando envío de notificación por email...')
     console.log('📋 Variables de entorno disponibles:', {
@@ -312,28 +518,72 @@ export async function POST(request: NextRequest) {
     // Crear instancia de Resend dentro de la función
     const resend = new Resend(apiKey)
 
-    // Preparar el contenido del email
-    const emailContent = generateEmailContent(action, product, userInfo)
+    // Obtener los emails destinatarios de las variables de entorno
+    // Soporta múltiples emails separados por comas
+    const recipientEmailString = process.env.RECIPIENT_EMAIL || 'matepedace@gmail.com'
+    const recipientEmails = recipientEmailString
+      .split(',')
+      .map(email => email.trim())
+      .filter(email => email.length > 0)
+
+    // Determinar si es una notificación de horario o de producto
+    const isTimeRangeNotification = action === 'AGREGAR_HORARIO' || action === 'EDITAR_HORARIO'
     
-    // Obtener el email destinatario de las variables de entorno
-    const recipientEmail = process.env.RECIPIENT_EMAIL || 'matepedace@gmail.com'
+    // Preparar el contenido del email según el tipo
+    let emailContent: string
+    let subject: string
+
+    if (isTimeRangeNotification) {
+      if (!timeRange) {
+        return NextResponse.json(
+          { error: 'timeRange es requerido para notificaciones de horario' },
+          { status: 400 }
+        )
+      }
+      emailContent = generateTimeRangeEmailContent(action, timeRange, userInfo)
+      subject = `⏰ Cambio de Horario COBRA - ${timeRange.categoryName}`
+    } else {
+      if (!product) {
+        return NextResponse.json(
+          { error: 'product es requerido para notificaciones de producto' },
+          { status: 400 }
+        )
+      }
+      emailContent = generateProductEmailContent(action, product, userInfo)
+      subject = `🔔 Cambio en el Menú COBRA - ${action}`
+    }
     
     // Enviar el email usando Resend
     const response = await resend.emails.send({
-      from: 'COBRA Restaurant <onboarding@resend.dev>',
-      to: [recipientEmail],
-      subject: `🔔 Cambio en el Menú COBRA - ${action}`,
+      from: 'COBRA Restaurant <notificaciones@cobramenu.com>', // Cambiar esta línea
+      to: recipientEmails,
+      subject,
       html: emailContent,
     })
 
-    console.log('✅ Notificación enviada exitosamente:', {
-      id: response.data?.id,
-      action,
-      product: product.name,
-      to: recipientEmail,
-      from: 'COBRA Restaurant <onboarding@resend.dev>',
-      response: response
-    })
+    // Preparar información para el log
+    const logInfo = isTimeRangeNotification && timeRange
+      ? {
+          id: response.data?.id,
+          action,
+          category: timeRange.categoryName,
+          timeRange: timeRange.timeRestricted ? `${timeRange.startTime} - ${timeRange.endTime}` : 'Sin restricción',
+          to: recipientEmails,
+          from: 'COBRA Restaurant <onboarding@resend.dev>',
+          response: response
+        }
+      : product
+      ? {
+          id: response.data?.id,
+          action,
+          product: product.name,
+          to: recipientEmails,
+          from: 'COBRA Restaurant <onboarding@resend.dev>',
+          response: response
+        }
+      : {}
+
+    console.log('✅ Notificación enviada exitosamente:', logInfo)
 
     return NextResponse.json({ 
       success: true, 
