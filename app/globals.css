@@ -997,6 +997,24 @@
   }
 }
 
+@keyframes logo-fill-reveal {
+  0% {
+    clip-path: inset(100% 0 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@-webkit-keyframes logo-fill-reveal {
+  0% {
+    -webkit-clip-path: inset(100% 0 0 0);
+  }
+  100% {
+    -webkit-clip-path: inset(0 0 0 0);
+  }
+}
+
 /* Contenedor para la animación de llenado */
 .logo-fill-wrapper {
   position: absolute;
@@ -1014,16 +1032,30 @@
   height: 100%;
   object-fit: contain;
   object-position: center;
-  transform: translate3d(0, 100%, 0);
-  -webkit-transform: translate3d(0, 100%, 0);
+  transform: none;
+  -webkit-transform: none;
   transform-origin: center bottom;
   -webkit-transform-origin: center bottom;
-  animation: logo-fill-slide 3s ease-in-out forwards;
-  -webkit-animation: logo-fill-slide 3s ease-in-out forwards;
-  will-change: transform;
+  clip-path: inset(100% 0 0 0);
+  -webkit-clip-path: inset(100% 0 0 0);
+  animation: logo-fill-reveal 2.6s ease-in-out forwards;
+  -webkit-animation: logo-fill-reveal 2.6s ease-in-out forwards;
+  will-change: clip-path;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   display: block;
+}
+
+@supports not ((clip-path: inset(50% 0 0 0)) or (-webkit-clip-path: inset(50% 0 0 0))) {
+  .logo-fill-wrapper img {
+    clip-path: none;
+    -webkit-clip-path: none;
+    transform: translate3d(0, 100%, 0);
+    -webkit-transform: translate3d(0, 100%, 0);
+    animation: logo-fill-slide 3s ease-in-out forwards;
+    -webkit-animation: logo-fill-slide 3s ease-in-out forwards;
+    will-change: transform;
+  }
 }
 
 /* ==================== EFECTOS MINIMALISTAS PARA LA CARÁTULA ==================== */
