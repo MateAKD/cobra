@@ -575,13 +575,18 @@ export async function POST(request: NextRequest) {
           html: emailContent,
         })
 
+        // Log completo de la respuesta para debugging
+        console.log(`📬 Respuesta de Resend para ${recipientEmail}:`, JSON.stringify(response, null, 2))
+
+        const emailId = response.data?.id || response.id || 'unknown'
+        
         emailResults.push({
           recipient: recipientEmail,
-          id: response.data?.id,
+          id: emailId,
           success: true
         })
         
-        console.log(`✅ Email enviado a ${recipientEmail}:`, response.data?.id)
+        console.log(`✅ Email enviado a ${recipientEmail}:`, emailId)
       } catch (error) {
         console.error(`❌ Error al enviar a ${recipientEmail}:`, error)
         errors.push({
