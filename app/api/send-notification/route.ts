@@ -564,7 +564,15 @@ export async function POST(request: NextRequest) {
     const emailResults = []
     const errors = []
 
-    for (const recipientEmail of recipientEmails) {
+    for (let i = 0; i < recipientEmails.length; i++) {
+      const recipientEmail = recipientEmails[i]
+      
+      // Agregar delay entre envíos para respetar rate limit de Resend (2 req/seg)
+      // Esperar 600ms entre cada email para estar seguros
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 600))
+      }
+      
       try {
         console.log(`📧 Enviando a: ${recipientEmail}`)
         
@@ -588,7 +596,7 @@ export async function POST(request: NextRequest) {
         // Log completo de la respuesta para debugging
         console.log(`📬 Respuesta de Resend para ${recipientEmail}:`, JSON.stringify(response, null, 2))
 
-        const emailId = response.data?.id || response.id || 'unknown'
+        const emailId = response.data?.id || 'unknown'
         
         emailResults.push({
           recipient: recipientEmail,
