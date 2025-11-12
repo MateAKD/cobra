@@ -526,6 +526,9 @@ export async function POST(request: NextRequest) {
       .map(email => email.trim())
       .filter(email => email.length > 0)
 
+    console.log('📧 Destinatarios a enviar:', recipientEmails)
+    console.log('📊 Total de destinatarios:', recipientEmails.length)
+
     // Determinar si es una notificación de horario o de producto
     const isTimeRangeNotification = action === 'AGREGAR_HORARIO' || action === 'EDITAR_HORARIO'
     
@@ -554,12 +557,21 @@ export async function POST(request: NextRequest) {
     }
     
     // Enviar el email usando Resend
+    console.log('📤 Enviando email con:', {
+      from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
+      to: recipientEmails,
+      subject,
+      totalRecipients: recipientEmails.length
+    })
+    
     const response = await resend.emails.send({
-      from: 'COBRA Restaurant <notificaciones@cobramenu.com>', // Cambiar esta línea
+      from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
       to: recipientEmails,
       subject,
       html: emailContent,
     })
+
+    console.log('📬 Respuesta completa de Resend:', JSON.stringify(response, null, 2))
 
     // Preparar información para el log
     const logInfo = isTimeRangeNotification && timeRange
@@ -569,7 +581,8 @@ export async function POST(request: NextRequest) {
           category: timeRange.categoryName,
           timeRange: timeRange.timeRestricted ? `${timeRange.startTime} - ${timeRange.endTime}` : 'Sin restricción',
           to: recipientEmails,
-          from: 'COBRA Restaurant <onboarding@resend.dev>',
+          from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
+          totalRecipients: recipientEmails.length,
           response: response
         }
       : product
@@ -578,7 +591,8 @@ export async function POST(request: NextRequest) {
           action,
           product: product.name,
           to: recipientEmails,
-          from: 'COBRA Restaurant <onboarding@resend.dev>',
+          from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
+          totalRecipients: recipientEmails.length,
           response: response
         }
       : {}
