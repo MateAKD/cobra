@@ -31,6 +31,10 @@ if [ ! -f "package.json" ]; then
     error "No se encuentra package.json. ¿Estás en el directorio correcto?"
 fi
 
+# Configurar Git para evitar error de permisos
+log "Configurando Git..."
+git config --global --add safe.directory /var/www/cobra || warn "No se pudo configurar safe.directory (puede que ya esté configurado)"
+
 # 1. Pull últimos cambios
 log "Descargando últimos cambios..."
 git pull origin main || error "Error al hacer pull"
