@@ -575,6 +575,16 @@ export async function POST(request: NextRequest) {
           html: emailContent,
         })
 
+        // Verificar si hay error en la respuesta
+        if (response.error) {
+          console.error(`❌ Error de Resend para ${recipientEmail}:`, response.error)
+          errors.push({
+            recipient: recipientEmail,
+            error: response.error.message || 'Error desconocido de Resend'
+          })
+          continue
+        }
+
         // Log completo de la respuesta para debugging
         console.log(`📬 Respuesta de Resend para ${recipientEmail}:`, JSON.stringify(response, null, 2))
 
