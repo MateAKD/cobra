@@ -557,52 +557,76 @@ export async function POST(request: NextRequest) {
     }
     
     // Enviar el email usando Resend
-    console.log('📤 Enviando email con:', {
-      from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
-      to: recipientEmails,
-      subject,
-      totalRecipients: recipientEmails.length
-    })
+    // Enviar un email individual a cada destinatario para asegurar que todos reciban el correo
+    // y que aparezcan por separado en el dashboard de Resend
+    console.log('📤 Enviando emails a', recipientEmails.length, 'destinatarios...')
     
-    const response = await resend.emails.send({
-      from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
-      to: recipientEmails,
-      subject,
-      html: emailContent,
-    })
+    const emailResults = []
+    const errors = []
 
-    console.log('📬 Respuesta completa de Resend:', JSON.stringify(response, null, 2))
+    for (const recipientEmail of recipientEmails) {
+      try {
+        console.log(`📧 Enviando a: ${recipientEmail}`)
+        
+        const response = await resend.emails.send({
+          from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
+          to: recipientEmail, // Enviar a un solo destinatario a la vez
+          subject,
+          html: emailContent,
+        })
+
+        emailResults.push({
+          recipient: recipientEmail,
+          id: response.data?.id,
+          success: true
+        })
+        
+        console.log(`✅ Email enviado a ${recipientEmail}:`, response.data?.id)
+      } catch (error) {
+        console.error(`❌ Error al enviar a ${recipientEmail}:`, error)
+        errors.push({
+          recipient: recipientEmail,
+          error: error instanceof Error ? error.message : 'Error desconocido'
+        })
+      }
+    }
 
     // Preparar información para el log
-    const logInfo = isTimeRangeNotification && timeRange
-      ? {
-          id: response.data?.id,
-          action,
-          category: timeRange.categoryName,
-          timeRange: timeRange.timeRestricted ? `${timeRange.startTime} - ${timeRange.endTime}` : 'Sin restricción',
-          to: recipientEmails,
-          from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
-          totalRecipients: recipientEmails.length,
-          response: response
-        }
-      : product
-      ? {
-          id: response.data?.id,
-          action,
-          product: product.name,
-          to: recipientEmails,
-          from: 'COBRA Restaurant <notificaciones@cobramenu.com>',
-          totalRecipients: recipientEmails.length,
-          response: response
-        }
-      : {}
+    const logInfo: any = {
+      totalRecipients: recipientEmails.length,
+      successful: emailResults.length,
+      failed: errors.length,
+      results: emailResults,
+      errors: errors.length > 0 ? errors : undefined
+    }
 
-    console.log('✅ Notificación enviada exitosamente:', logInfo)
+    if (isTimeRangeNotification && timeRange) {
+      logInfo.action = action
+      logInfo.category = timeRange.categoryName
+      logInfo.timeRange = timeRange.timeRestricted ? `${timeRange.startTime} - ${timeRange.endTime}` : 'Sin restricción'
+    } else if (product) {
+      logInfo.action = action
+      logInfo.product = product.name
+    }
 
-    return NextResponse.json({ 
-      success: true, 
-      messageId: response.data?.id 
-    })
+    console.log('✅ Notificaciones enviadas:', logInfo)
+
+    // Retornar éxito si al menos un email se envió correctamente
+    if (emailResults.length > 0) {
+      return NextResponse.json({ 
+        success: true, 
+        messageIds: emailResults.map(r => r.id),
+        totalSent: emailResults.length,
+        totalFailed: errors.length,
+        errors: errors.length > 0 ? errors : undefined
+      })
+    } else {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'No se pudo enviar ningún email',
+        errors: errors
+      }, { status: 500 })
+    }
 
   } catch (error) {
     console.error('❌ Error al enviar notificación por email:', error)
