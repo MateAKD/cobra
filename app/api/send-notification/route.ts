@@ -568,9 +568,9 @@ export async function POST(request: NextRequest) {
       const recipientEmail = recipientEmails[i]
       
       // Agregar delay entre envíos para respetar rate limit de Resend (2 req/seg)
-      // Esperar 600ms entre cada email para estar seguros
+      // Esperar 1000ms (1 segundo) entre cada email para estar seguros
       if (i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 600))
+        await new Promise(resolve => setTimeout(resolve, 1000))
       }
       
       try {
