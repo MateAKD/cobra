@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Bebas_Neue, Inter } from "next/font/google"
 import "./globals.css"
-import { FaviconSwitcher } from "@/components/favicon-switcher"
 
 const bebasNeue = Bebas_Neue({
   subsets: ["latin"],
@@ -23,16 +22,9 @@ export const metadata: Metadata = {
   description: "Menú gastronómico elegante y moderno - Bar Restaurante Cobra",
   generator: "v0.app",
   icons: {
-    icon: [
-      {
-        url: '/Logo cobra NEGRO.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/Logo cobra sf.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-    ],
+    icon: "/Logo cobra sf.png",
+    shortcut: "/Logo cobra sf.png",
+    apple: "/Logo cobra sf.png",
   },
 }
 
@@ -53,10 +45,7 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
       </head>
-      <body>
-        <FaviconSwitcher />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }
