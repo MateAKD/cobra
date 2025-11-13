@@ -49,16 +49,16 @@ pnpm build || error "Error en el build"
 
 # 4. Reiniciar PM2
 log "Reiniciando aplicación..."
-pm2 restart cobra-app || error "Error al reiniciar PM2"
+pm2 restart cobramenu || error "Error al reiniciar PM2"
 
 # 5. Verificar estado
 log "Verificando estado..."
-pm2 status cobra-app
+pm2 status cobramenu
 
 # 6. Mostrar logs
 warn "Mostrando logs (CTRL+C para salir)..."
 sleep 2
-pm2 logs cobra-app --lines 20
+pm2 logs cobramenu --lines 20
 
 log "🎉 Deploy completado exitosamente!"
 
