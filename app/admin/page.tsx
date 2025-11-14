@@ -2461,6 +2461,59 @@ export default function AdminPanel() {
     }
   }
 
+  // Función para confirmar y sincronizar todos los cambios
+  const handleConfirmAndSync = async () => {
+    try {
+      setSaving(true)
+      setNotificationStatus("🔄 Sincronizando todos los cambios...")
+      
+      // 1. Recargar datos del admin para asegurar que todo esté guardado
+      await refetchAdminMenu()
+      
+      // 2. Recargar categorías
+      await loadCategories()
+      
+      // 3. Recargar mapeo de subcategorías
+      try {
+        const mappingResponse = await fetch("/api/admin/subcategory-mapping")
+        if (mappingResponse.ok) {
+          const mappingData = await mappingResponse.json()
+          setSubcategoryMapping(mappingData)
+        }
+      } catch (error) {
+        console.warn("Error recargando mapeo de subcategorías:", error)
+      }
+      
+      // 4. Sincronizar datos locales
+      if (adminMenuData) {
+        await syncAdminData()
+      }
+      
+      // 5. Forzar recarga del menú público (invalidar caché)
+      try {
+        await fetch("/api/menu", { 
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache"
+          }
+        })
+      } catch (error) {
+        console.warn("Error refrescando menú público:", error)
+      }
+      
+      setNotificationStatus("✅ Todos los cambios han sido sincronizados correctamente")
+      setTimeout(() => setNotificationStatus(""), 5000)
+      
+    } catch (error) {
+      console.error("Error sincronizando cambios:", error)
+      setNotificationStatus("❌ Error al sincronizar cambios")
+      setTimeout(() => setNotificationStatus(""), 5000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Función para renderizar subcategorías dentro de una categoría
   const renderSubcategories = (categoryId: string) => {
     const subcategories = Object.entries(subcategoryMapping)
@@ -3064,6 +3117,23 @@ export default function AdminPanel() {
             </p>
           </div>
           <div className="flex gap-4">
+            <Button 
+              onClick={handleConfirmAndSync}
+              disabled={saving}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0 font-semibold admin-action-button"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Sincronizando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Confirmar Cambios
+                </>
+              )}
+            </Button>
             <Button 
               onClick={() => setShowPriceIncreaseModal(true)}
               className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
@@ -3913,8 +3983,8 @@ export default function AdminPanel() {
                             onClick={() => handleRestoreCategory(deletedCategory)}
                             className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-restore-button"
                           >
-                            <Plus className="w-4 h-4 text-white" />
-                            <span className="text-white">Restaurar</span>
+                            <Plus className="w-4 h-4 text-black" />
+                            <span className="text-black">Restaurar</span>
                           </Button>
                           <Button 
                             variant="destructive"
