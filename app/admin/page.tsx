@@ -277,7 +277,7 @@ export default function AdminPanel() {
         // Categoría con array directo
         sections[key] = categoryData as any[]
       } else if (typeof categoryData === 'object' && categoryData !== null) {
-        // Para objetos como vinos y promociones que tienen subcategorías
+        // Para objetos como vinos que tienen subcategorías
         const obj = categoryData as any
         Object.keys(obj).forEach(subKey => {
           if (Array.isArray(obj[subKey])) {
@@ -1127,10 +1127,6 @@ export default function AdminPanel() {
             if (section.startsWith("vinos-")) {
               const category = section.split("-")[1]
               itemToDelete = (vinos as any)[category]?.find((item: any) => item.id === id)
-            } else if (section.startsWith("promociones-")) {
-              // Promociones se maneja como cualquier otra categoría
-              itemToDelete = menuSections[section]?.find((item: any) => item.id === id)
-            }
         }
         
         // Eliminar en el servidor
@@ -3612,44 +3608,6 @@ export default function AdminPanel() {
              {renderSubcategories("tragos")}
                        </TabsContent>
 
-            {/* Promociones - Se comporta igual que cualquier otra categoría */}
-            <TabsContent value="promociones" className="space-y-4">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Promociones</h2>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => {
-                      setSelectedCategoryForSubcategory("promociones")
-                      setIsAddingSubcategory(true)
-                    }}
-                  >
-                    <Plus className="w-4 h-4 text-white" />
-                    <span className="text-white">Agregar Subcategoría</span>
-                  </Button>
-                  <Button 
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => setIsAdding("promociones")}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Agregar Producto
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Productos directos de la categoría promociones */}
-              {Array.isArray(menuSections["promociones"]) && menuSections["promociones"].length > 0 && (
-                <div className="space-y-4 mb-8">
-                  <h3 className="text-lg font-semibold text-gray-700">Productos Directos</h3>
-                  {menuSections["promociones"].map((item: any) => renderMenuItem(item, "promociones"))}
-                </div>
-              )}
-              
-              {/* Renderizar subcategorías dinámicas */}
-              {renderSubcategories("promociones")}
-            </TabsContent>
 
          </Tabs>
       </div>

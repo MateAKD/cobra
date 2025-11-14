@@ -197,8 +197,7 @@ export default function MenuPage() {
     postres: useRef<HTMLDivElement>(null),
     bebidas: useRef<HTMLDivElement>(null),
     tragos: useRef<HTMLDivElement>(null),
-    vinos: useRef<HTMLDivElement>(null),
-    promociones: useRef<HTMLDivElement>(null)
+    vinos: useRef<HTMLDivElement>(null)
   }
 
   const computeScrollOffset = () => {
@@ -458,8 +457,7 @@ export default function MenuPage() {
     tragosEspeciales, 
     tragosRedBull, 
     vinos, 
-    botellas, 
-    promociones,
+    botellas,
     ...customCategories
   } = menuData
 
@@ -468,7 +466,7 @@ export default function MenuPage() {
     'parrilla', 'guarniciones', 'tapeo', 'milanesas', 'hamburguesas', 
     'ensaladas', 'otros', 'postres', 'sandwicheria', 'cafeteria', 
     'pasteleria', 'bebidasSinAlcohol', 'cervezas', 'tragosClasicos', 
-    'tragosEspeciales', 'tragosRedBull', 'vinos', 'botellas', 'promociones'
+    'tragosEspeciales', 'tragosRedBull', 'vinos', 'botellas'
   ]
   
   // Filtrar solo las categorías principales (no subcategorías)
@@ -612,12 +610,6 @@ export default function MenuPage() {
         )
       case 'vinos':
         return renderSubcategoriesInCategory('vinos')
-      case 'promociones':
-        return (
-          <>
-            {renderSubcategoriesInCategory("promociones")}
-          </>
-        )
       default:
         // Para categorías personalizadas
         return renderSubcategoriesInCategory(categoryId)
@@ -742,68 +734,6 @@ export default function MenuPage() {
       );
     }
     
-    if (categoryName === 'promociones') {
-      return (
-        <div className="space-y-6 sm:space-y-8">
-          {/* Subcategorías dinámicas */}
-          {Object.entries(subcategoryMapping)
-            .filter(([subcatId, parentId]) => parentId === 'promociones')
-            .map(([subcatId]) => {
-              const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
-              const subcatData = (customCategories as any)[subcatId]
-                || (customCategories as any)[altId]
-                || ((promociones as any)?.[subcatId])
-                || ((promociones as any)?.[altId])
-                || ((menuData as any)?.[subcatId])
-                || ((menuData as any)?.[altId])
-                || []
-              if (!Array.isArray(subcatData) || subcatData.length === 0) return null
-              const subcatName = subcatId.split('-').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-              ).join(' ')
-              
-              // Si es una subcategoría hardcodeada, usar los datos correspondientes
-              if (subcatId === 'cafe') {
-                return (
-                  <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                    {promociones?.cafe?.map((promo, index) => (
-                      <MenuItemComponent key={promo.id || index} item={promo} />
-                    ))}
-                  </SubcategorySection>
-                )
-              }
-              
-              if (subcatId === 'tapeos') {
-                return (
-                  <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                    {promociones?.tapeos?.map((promo, index) => (
-                      <MenuItemComponent key={promo.id || index} item={promo} />
-                    ))}
-                  </SubcategorySection>
-                )
-              }
-              
-              if (subcatId === 'bebidas') {
-                return (
-                  <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                    {promociones?.bebidas?.map((promo, index) => (
-                      <MenuItemComponent key={promo.id || index} item={promo} />
-                    ))}
-                  </SubcategorySection>
-                )
-              }
-              
-              return (
-                <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                  {subcatData.map((item: any, index: number) => (
-                    <MenuItemComponent key={item.id || index} item={item} />
-                  ))}
-                </SubcategorySection>
-              )
-            })}
-        </div>
-      );
-    }
     
     // Para cualquier otra categoría, buscar subcategorías dinámicas
     const dynamicSubcategories = Object.entries(subcategoryMapping)
