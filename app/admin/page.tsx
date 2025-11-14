@@ -145,13 +145,7 @@ export default function AdminPanel() {
   const [allCategories, setAllCategories] = useState<any[]>([])
 
   // Estado para mapear subcategorías con sus categorías padre
-  const [subcategoryMapping, setSubcategoryMapping] = useState<{[key: string]: string}>({
-    'guarniciones': 'parrilla',
-    'milanesas': 'principales',
-    'hamburguesas': 'principales',
-    'ensaladas': 'principales',
-    'otros': 'principales'
-  })
+  const [subcategoryMapping, setSubcategoryMapping] = useState<{[key: string]: string}>({})
 
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [isAddingSubcategory, setIsAddingSubcategory] = useState(false)
@@ -271,30 +265,8 @@ export default function AdminPanel() {
       console.warn("Error cargando mapeo de subcategorías:", error)
     }
 
-    // Actualizar todos los estados con las nuevas categorías
-    setParrilla(adminMenuData.parrilla || [])
-    setGuarniciones(adminMenuData.guarniciones || [])
-    setTapeo(adminMenuData.tapeo || [])
-    setMilanesas(adminMenuData.milanesas || [])
-    setHamburguesas(adminMenuData.hamburguesas || [])
-    setEnsaladas(adminMenuData.ensaladas || [])
-    setOtros(adminMenuData.otros || [])
-    setPostres(adminMenuData.postres || [])
-    setSandwicheria(adminMenuData.sandwicheria || [])
-    setCafeteria(adminMenuData.cafeteria || [])
-    setPasteleria(adminMenuData.pasteleria || [])
-    setBebidasSinAlcohol(adminMenuData.bebidasSinAlcohol || [])
-    setCervezas(adminMenuData.cervezas || [])
-    setTragosClasicos(adminMenuData.tragosClasicos || [])
-    setTragosEspeciales(adminMenuData.tragosEspeciales || [])
-    setTragosRedBull(adminMenuData.tragosRedBull || [])
-    setVinos(adminMenuData.vinos || {
-      tintos: [],
-      blancos: [],
-      rosados: [],
-      copas: [],
-    })
-    setBotellas(adminMenuData.botellas || [])
+    // Los estados hardcodeados se mantienen para compatibilidad pero ya no se usan
+    // Todo se maneja dinámicamente a través de menuSections
 
     // Crear un objeto con todas las secciones del menú para acceso dinámico
     const sections: {[key: string]: any[]} = {}
@@ -481,16 +453,8 @@ export default function AdminPanel() {
       setPasteleria(data.pasteleria || [])
       setBebidasSinAlcohol(data.bebidasSinAlcohol || [])
       setCervezas(data.cervezas || [])
-      setTragosClasicos(data.tragosClasicos || [])
-      setTragosEspeciales(data.tragosEspeciales || [])
-      setTragosRedBull(data.tragosRedBull || [])
-      setVinos(data.vinos || {
-        tintos: [],
-        blancos: [],
-        rosados: [],
-        copas: [],
-      })
-      setBotellas(data.botellas || [])
+      // Los estados hardcodeados se mantienen para compatibilidad pero ya no se usan
+      // Todo se maneja dinámicamente a través de menuSections
 
       // Crear un objeto con todas las secciones del menú para acceso dinámico
       const sections: {[key: string]: MenuItem[]} = {}
