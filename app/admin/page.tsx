@@ -318,11 +318,21 @@ export default function AdminPanel() {
         // Categoría con array directo
         sections[key] = categoryData as any[]
       } else if (typeof categoryData === 'object' && categoryData !== null) {
-        // Para objetos como vinos que tienen subcategorías
+        // Para objetos como vinos y promociones que tienen subcategorías
         const obj = categoryData as any
         Object.keys(obj).forEach(subKey => {
           if (Array.isArray(obj[subKey])) {
-            sections[`${key}-${subKey}`] = obj[subKey]
+            // Para promociones, las subcategorías se guardan directamente en el objeto
+            // pero también necesitamos acceso por ID para las subcategorías dinámicas
+            if (key === 'promociones') {
+              // Las subcategorías de promociones se acceden directamente por su ID
+              sections[subKey] = obj[subKey]
+              // También mantener el formato promociones-subKey para compatibilidad
+              sections[`${key}-${subKey}`] = obj[subKey]
+            } else {
+              // Para otras categorías como vinos, usar el formato key-subKey
+              sections[`${key}-${subKey}`] = obj[subKey]
+            }
           }
         })
         
@@ -332,6 +342,18 @@ export default function AdminPanel() {
         }
       }
     })
+    
+    // Agregar subcategorías dinámicas desde subcategoryMapping
+    Object.entries(currentSubcategoryMapping).forEach(([subcatId, parentId]) => {
+      // Si la subcategoría no está ya en sections, agregarla
+      if (!sections[subcatId] && adminMenuData[subcatId as keyof typeof adminMenuData]) {
+        const subcatData = adminMenuData[subcatId as keyof typeof adminMenuData]
+        if (Array.isArray(subcatData)) {
+          sections[subcatId] = subcatData
+        }
+      }
+    })
+    
     setMenuSections(sections)
 
     // Actualizar el estado de todas las categorías basándose en el archivo JSON
@@ -1586,12 +1608,15 @@ export default function AdminPanel() {
     
     try {
       const subcategoryId = newSubcategoryName.toLowerCase().replace(/\s+/g, '-')
+      const originalName = newSubcategoryName.trim()
       
       // Permitir duplicados: Si ya existe una subcategoría con ese ID, agregar un sufijo único
       let finalSubcategoryId = subcategoryId
-      if (subcategoryMapping[subcategoryId]) {
-        // Agregar timestamp para hacer el ID único
-        finalSubcategoryId = `${subcategoryId}-${Date.now()}`
+      let counter = 1
+      while (subcategoryMapping[finalSubcategoryId]) {
+        // Si ya existe, agregar un contador en lugar de timestamp para que sea más legible
+        finalSubcategoryId = `${subcategoryId}-${counter}`
+        counter++
       }
       
       // Agregar la nueva subcategoría al mapeo
@@ -1611,18 +1636,51 @@ export default function AdminPanel() {
       
       // PERSISTIR LA SUBCATEGORÍA EN EL ARCHIVO JSON DEL MENÚ
       try {
-        // Crear la subcategoría en el archivo menu.json usando PUT para crear/actualizar la sección
-        const saveMenuResponse = await fetch(`/api/menu/${finalSubcategoryId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify([]), // Array vacío para la nueva subcategoría
-        })
-        
-        if (!saveMenuResponse.ok) {
-          const errorData = await saveMenuResponse.json().catch(() => ({}))
-          throw new Error(errorData.error || "Error al guardar la subcategoría en el menú")
+        // Si es una subcategoría de promociones, crearla dentro del objeto promociones
+        if (selectedCategoryForSubcategory === "promociones") {
+          // Obtener el menú actual
+          const menuResponse = await fetch("/api/menu")
+          if (!menuResponse.ok) {
+            throw new Error("Error al cargar el menú")
+          }
+          const menuData = await menuResponse.json()
+          
+          // Asegurar que promociones existe y es un objeto
+          if (!menuData.promociones || typeof menuData.promociones !== 'object') {
+            menuData.promociones = { cafe: [], tapeos: [], bebidas: [] }
+          }
+          
+          // Agregar la nueva subcategoría dentro de promociones
+          if (!menuData.promociones[finalSubcategoryId]) {
+            menuData.promociones[finalSubcategoryId] = []
+          }
+          
+          // Guardar el menú actualizado
+          const saveMenuResponse = await fetch("/api/menu", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(menuData),
+          })
+          
+          if (!saveMenuResponse.ok) {
+            throw new Error("Error al guardar la subcategoría en promociones")
+          }
+        } else {
+          // Para otras categorías, crear como sección separada
+          const saveMenuResponse = await fetch(`/api/menu/${finalSubcategoryId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify([]), // Array vacío para la nueva subcategoría
+          })
+          
+          if (!saveMenuResponse.ok) {
+            const errorData = await saveMenuResponse.json().catch(() => ({}))
+            throw new Error(errorData.error || "Error al guardar la subcategoría en el menú")
+          }
         }
         
         console.log("Subcategoría creada en el archivo menu.json:", finalSubcategoryId)
@@ -2434,9 +2492,19 @@ export default function AdminPanel() {
         {subcategories.map(subcatId => {
           // Asegurar que subcatData siempre sea un array válido
           const subcatData = Array.isArray(menuSections[subcatId]) ? menuSections[subcatId] : []
-          const subcatName = subcatId.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' ')
+          // Generar nombre desde el ID, pero eliminar sufijos numéricos al final
+          let subcatName = subcatId.split('-').map(word => {
+            // Si la palabra es solo un número, omitirla (es un sufijo de duplicado)
+            if (/^\d+$/.test(word)) return null
+            return word.charAt(0).toUpperCase() + word.slice(1)
+          }).filter(Boolean).join(' ')
+          
+          // Si después de filtrar números quedó vacío, usar el ID completo
+          if (!subcatName) {
+            subcatName = subcatId.split('-').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ')
+          }
           
           // Debug: mostrar información de cada subcategoría
           if (process.env.NODE_ENV === 'development') {
@@ -2518,12 +2586,19 @@ export default function AdminPanel() {
 
   const startEditSubcategory = (subcatId: string) => {
     setInlineEditingSubcatId(subcatId)
-    setInlineEditingSubcatName(
-      subcatId
-        .split("-")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ")
-    )
+    // Generar nombre desde el ID, pero eliminar sufijos numéricos al final
+    let subcatName = subcatId.split("-").map((w) => {
+      // Si la palabra es solo un número, omitirla (es un sufijo de duplicado)
+      if (/^\d+$/.test(w)) return null
+      return w.charAt(0).toUpperCase() + w.slice(1)
+    }).filter(Boolean).join(" ")
+    
+    // Si después de filtrar números quedó vacío, usar el ID completo
+    if (!subcatName) {
+      subcatName = subcatId.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+    }
+    
+    setInlineEditingSubcatName(subcatName)
     setInlineEditingSubcatParent(subcategoryMapping[subcatId] || "")
   }
 
@@ -2541,7 +2616,13 @@ export default function AdminPanel() {
 
     // Permitir duplicados: Si el nuevo ID ya existe y es diferente al antiguo, agregar un sufijo único
     if (newId !== oldId && subcategoryMapping[newId]) {
-      newId = `${newId}-${Date.now()}`
+      let counter = 1
+      let tempId = `${newId}-${counter}`
+      while (subcategoryMapping[tempId]) {
+        counter++
+        tempId = `${newId}-${counter}`
+      }
+      newId = tempId
     }
 
     setSaving(true)
