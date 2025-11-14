@@ -22,8 +22,18 @@ export async function POST(request: NextRequest) {
     
     categories.forEach((category: any, index: number) => {
       if (reorderedCategories[category.id]) {
+        // Actualizar el order de la categoría existente
         reorderedCategories[category.id] = {
           ...reorderedCategories[category.id],
+          order: index + 1
+        }
+      } else {
+        // Si la categoría no existe en categories.json, crearla
+        reorderedCategories[category.id] = {
+          name: category.name || category.id.split('-').map((word: string) => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' '),
+          description: category.description || "",
           order: index + 1
         }
       }

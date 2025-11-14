@@ -31,7 +31,7 @@ import AddForm from "./components/AddForm"
 import HideItemModal from "./components/HideItemModal"
 import TimeRangeModal, { TimeRangeData } from "./components/TimeRangeModal"
 import CategoryDragDrop from "./components/CategoryDragDrop"
-import { sendProductNotification, getUserInfo, validateEmailConfig, type NotificationAction } from "@/lib/emailService"
+import { sendProductNotification, sendTimeRangeNotification, getUserInfo, validateEmailConfig, type NotificationAction } from "@/lib/emailService"
 import { useAdminMenuData } from "@/hooks/use-admin-menu-data"
 import { useCategories } from "@/hooks/use-categories"
 import { isCategoryVisible } from "@/lib/menuUtils"
@@ -89,7 +89,7 @@ export default function AdminPanel() {
   const { menuData: adminMenuData, loading: adminMenuLoading, refetch: refetchAdminMenu, getCategoryStats } = useAdminMenuData()
   
   // Hook para gestionar categorías
-  const { categories, updateCategory, loadCategories } = useCategories()
+  const { categories, updateCategory, updateCategories, loadCategories } = useCategories()
   
   const [activeTab, setActiveTab] = useState("parrilla")
   const [isEditing, setIsEditing] = useState<string | null>(null)
@@ -233,9 +233,6 @@ export default function AdminPanel() {
       setSaving(true)
       setNotificationStatus("Guardando nuevo orden de categorías...")
       
-      // Actualizar el estado local
-      setAllCategories(reorderedCategories)
-      
       // Enviar al servidor
       const response = await fetch('/api/admin/reorder-categories', {
         method: 'POST',
@@ -248,6 +245,10 @@ export default function AdminPanel() {
       if (response.ok) {
         // Refrescar categorías desde categories.json para asegurar orden persistido
         await loadCategories()
+        
+        // Actualizar allCategories con el nuevo orden (ya está guardado en el servidor)
+        // Mantener el orden que el usuario acaba de establecer
+        setAllCategories(reorderedCategories)
         setNotificationStatus("✅ Orden de categorías actualizado correctamente")
         setTimeout(() => setNotificationStatus(""), 3000)
       } else {
@@ -334,6 +335,7 @@ export default function AdminPanel() {
     setMenuSections(sections)
 
     // Actualizar el estado de todas las categorías basándose en el archivo JSON
+    // Y sincronizar con categories.json para asegurar que todas existan
     setAllCategories(prev => {
       // Obtener todas las categorías del archivo JSON (solo las que realmente existen)
       const jsonCategories: any[] = []
@@ -347,29 +349,32 @@ export default function AdminPanel() {
         const isObjectWithSubcategories = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
         
         if (isArray || isObjectWithSubcategories) {
-          // Determinar si es una categoría estándar o personalizada
-          const standardCategories: string[] = []
-          
-          const isStandard = false
-          
           // EXCLUIR SUBCATEGORÍAS: No agregar si esta clave es una subcategoría
           const isSubcategory = Object.keys(currentSubcategoryMapping).includes(key)
           
           if (!isSubcategory) {
+            // Obtener datos de categories.json si existen, o usar valores por defecto
+            const categoryInfo = (categories as any)?.[key] || {}
+            const categoryName = categoryInfo.name || key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+            
             jsonCategories.push({
               id: key,
-              name: key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-              isStandard: isStandard
+              name: categoryName,
+              isStandard: false,
+              description: categoryInfo.description || "",
+              order: categoryInfo.order ?? Number.MAX_SAFE_INTEGER
             })
           }
         }
       })
-      // Ordenar según el 'order' persistido en categories.json (vía hook useCategories)
+      
+      // Ordenar según el 'order' persistido en categories.json
       jsonCategories.sort((a, b) => {
-        const aOrder = (categories as any)?.[a.id]?.order ?? Number.MAX_SAFE_INTEGER
-        const bOrder = (categories as any)?.[b.id]?.order ?? Number.MAX_SAFE_INTEGER
+        const aOrder = (categories as any)?.[a.id]?.order ?? a.order ?? Number.MAX_SAFE_INTEGER
+        const bOrder = (categories as any)?.[b.id]?.order ?? b.order ?? Number.MAX_SAFE_INTEGER
         return aOrder - bOrder
       })
+      
       return jsonCategories
     })
   }
@@ -382,6 +387,57 @@ export default function AdminPanel() {
       })
     }
   }, [adminMenuData, isAuthenticated])
+
+  // Actualizar el orden de allCategories cuando cambie categories (después de reordenar)
+  useEffect(() => {
+    if (Object.keys(categories).length > 0 && allCategories.length > 0) {
+      setAllCategories(prev => {
+        // Crear una copia ordenada según el nuevo order de categories
+        const sorted = [...prev].sort((a, b) => {
+          const aOrder = categories[a.id]?.order ?? Number.MAX_SAFE_INTEGER
+          const bOrder = categories[b.id]?.order ?? Number.MAX_SAFE_INTEGER
+          return aOrder - bOrder
+        })
+        return sorted
+      })
+    }
+  }, [categories])
+
+  // Sincronizar categories.json con todas las categorías de adminMenuData
+  useEffect(() => {
+    if (adminMenuData && Object.keys(categories).length > 0 && isAuthenticated) {
+      const categoriesToSync: any = {}
+      let needsSync = false
+      
+      // Verificar todas las categorías en adminMenuData
+      Object.keys(adminMenuData).forEach(key => {
+        const categoryData = adminMenuData[key as keyof typeof adminMenuData]
+        const isArray = Array.isArray(categoryData)
+        const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
+        
+        if ((isArray || isObject) && !subcategoryMapping[key]) {
+          // Si la categoría no existe en categories.json, crear una entrada
+          if (!categories[key]) {
+            needsSync = true
+            const categoryName = key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+            categoriesToSync[key] = {
+              name: categoryName,
+              description: "",
+              order: Object.keys(categories).length + Object.keys(categoriesToSync).length + 1
+            }
+          }
+        }
+      })
+      
+      // Si hay categorías nuevas para sincronizar, guardarlas
+      if (needsSync && Object.keys(categoriesToSync).length > 0) {
+        const updatedCategories = { ...categories, ...categoriesToSync }
+        updateCategories(updatedCategories).catch(err => 
+          console.warn("Error sincronizando categorías:", err)
+        )
+      }
+    }
+  }, [adminMenuData, categories, subcategoryMapping, isAuthenticated, updateCategories])
 
   const loadMenuData = async () => {
     try {
@@ -1005,6 +1061,10 @@ export default function AdminPanel() {
       
       const categoryName = categories[selectedCategoryForTime]?.name || ""
       
+      // Determinar si es AGREGAR o EDITAR según si ya tenía horario configurado
+      const hadTimeRangeBefore = selectedCategoryTimeData?.timeRestricted || false
+      const action: 'AGREGAR_HORARIO' | 'EDITAR_HORARIO' = hadTimeRangeBefore ? 'EDITAR_HORARIO' : 'AGREGAR_HORARIO'
+      
       // Actualizar la categoría con los datos de horario
       await updateCategory(selectedCategoryForTime, {
         timeRestricted: data.timeRestricted,
@@ -1012,7 +1072,21 @@ export default function AdminPanel() {
         endTime: data.endTime,
       })
       
-      setNotificationStatus("✅ Configuración de horarios guardada")
+      // Enviar notificación por email
+      try {
+        const userInfo = getUserInfo()
+        await sendTimeRangeNotification(action, {
+          categoryName,
+          categoryId: selectedCategoryForTime,
+          timeRestricted: data.timeRestricted,
+          startTime: data.startTime,
+          endTime: data.endTime,
+        }, userInfo)
+        setNotificationStatus("✅ Configuración de horarios guardada y notificación enviada")
+      } catch (emailError) {
+        console.error("Error al enviar notificación de horario:", emailError)
+        setNotificationStatus("✅ Configuración de horarios guardada (error al enviar notificación)")
+      }
       
       let message = `Configuración de horarios actualizada para "${categoryName}": `
       if (data.timeRestricted && data.startTime && data.endTime) {
@@ -1496,16 +1570,17 @@ export default function AdminPanel() {
     try {
       const subcategoryId = newSubcategoryName.toLowerCase().replace(/\s+/g, '-')
       
-      // Verificar que la subcategoría no exista ya
+      // Permitir duplicados: Si ya existe una subcategoría con ese ID, agregar un sufijo único
+      let finalSubcategoryId = subcategoryId
       if (subcategoryMapping[subcategoryId]) {
-        alert("Ya existe una subcategoría con ese nombre")
-        return
+        // Agregar timestamp para hacer el ID único
+        finalSubcategoryId = `${subcategoryId}-${Date.now()}`
       }
       
       // Agregar la nueva subcategoría al mapeo
       const newMapping = {
         ...subcategoryMapping,
-        [subcategoryId]: selectedCategoryForSubcategory
+        [finalSubcategoryId]: selectedCategoryForSubcategory
       }
       
       console.log("Nuevo mapeo de subcategorías:", newMapping)
@@ -1514,39 +1589,26 @@ export default function AdminPanel() {
       // Inicializar la subcategoría en menuSections con un array vacío
       setMenuSections(prev => ({
         ...prev,
-        [subcategoryId]: []
+        [finalSubcategoryId]: []
       }))
       
       // PERSISTIR LA SUBCATEGORÍA EN EL ARCHIVO JSON DEL MENÚ
       try {
-        // Crear la subcategoría en el archivo menu.json
-        const menuResponse = await fetch("/api/menu")
-        if (menuResponse.ok) {
-          const menuData = await menuResponse.json()
-          
-          // Agregar la nueva subcategoría al menú
-          const updatedMenuData = {
-            ...menuData,
-            [subcategoryId]: [] // Array vacío para la nueva subcategoría
-          }
-          
-          // Guardar el menú actualizado
-          const saveMenuResponse = await fetch("/api/menu", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(updatedMenuData),
-          })
-          
-          if (!saveMenuResponse.ok) {
-            throw new Error("Error al guardar la subcategoría en el menú")
-          }
-          
-          console.log("Subcategoría creada en el archivo menu.json:", subcategoryId)
-        } else {
-          throw new Error("Error al cargar los datos del menú")
+        // Crear la subcategoría en el archivo menu.json usando PUT para crear/actualizar la sección
+        const saveMenuResponse = await fetch(`/api/menu/${finalSubcategoryId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify([]), // Array vacío para la nueva subcategoría
+        })
+        
+        if (!saveMenuResponse.ok) {
+          const errorData = await saveMenuResponse.json().catch(() => ({}))
+          throw new Error(errorData.error || "Error al guardar la subcategoría en el menú")
         }
+        
+        console.log("Subcategoría creada en el archivo menu.json:", finalSubcategoryId)
       } catch (error) {
         console.error("Error configurando subcategoría en menu.json:", error)
         alert("Advertencia: La subcategoría se creó localmente pero no se pudo guardar en el menú")
@@ -2457,12 +2519,12 @@ export default function AdminPanel() {
   const saveEditSubcategory = async () => {
     if (!inlineEditingSubcatId || !inlineEditingSubcatName.trim()) return
     const oldId = inlineEditingSubcatId
-    const newId = slugifyId(inlineEditingSubcatName)
+    let newId = slugifyId(inlineEditingSubcatName)
     const newParent = inlineEditingSubcatParent || subcategoryMapping[oldId]
 
+    // Permitir duplicados: Si el nuevo ID ya existe y es diferente al antiguo, agregar un sufijo único
     if (newId !== oldId && subcategoryMapping[newId]) {
-      alert("Ya existe una subcategoría con ese nombre")
-      return
+      newId = `${newId}-${Date.now()}`
     }
 
     setSaving(true)
@@ -2967,7 +3029,7 @@ export default function AdminPanel() {
                 })()}
               </div>
             </div>
-            <TabsList className="grid w-full gap-2 grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
+            <TabsList className="flex flex-wrap w-full gap-2">
             {(allCategories || []).map((category) => {
               // Contar subcategorías para esta categoría
               const subcategoryCount = Object.entries(subcategoryMapping)
@@ -2981,14 +3043,15 @@ export default function AdminPanel() {
                 <TabsTrigger 
                   key={category.id} 
                   value={category.id} 
-                  className={`relative transition-all duration-300 text-xs sm:text-sm ${
+                  className={`relative transition-all duration-300 text-xs sm:text-sm !whitespace-normal break-words min-w-fit max-w-full px-3 py-2 ${
                     category.id === activeTab ? 'scale-105' : ''
                   } ${
                     !isVisible ? 'opacity-50 text-gray-400' : ''
                   }`}
-                  title={!isVisible ? 'Categoría fuera de horario' : ''}
+                  style={{ whiteSpace: 'normal', flex: '0 1 auto' }}
+                  title={!isVisible ? 'Categoría fuera de horario' : category.name}
                 >
-                  {category.name}
+                  <span className="block text-center">{category.name}</span>
                   {!isVisible && (
                     <span className="ml-1 text-[10px]">🕐</span>
                   )}
@@ -4250,17 +4313,31 @@ export default function AdminPanel() {
             transition: all 0.2s ease-in-out;
             min-height: 40px;
             padding: 8px 12px;
+            max-width: 100%;
           }
           
           .tabs-trigger:hover {
             transform: translateY(-1px);
           }
           
-          /* Asegurar que el texto se ajuste bien */
+          /* Permitir que el texto se ajuste al contenido */
           .tabs-trigger span {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+          }
+          
+          /* Asegurar que el TabsList permita flex-wrap */
+          [data-slot="tabs-list"] {
+            flex-wrap: wrap !important;
+            display: flex !important;
+          }
+          
+          /* Sobrescribir whitespace-nowrap del componente base */
+          [data-slot="tabs-trigger"] {
+            white-space: normal !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
           }
         .admin-action-button {
           min-width: 40px;
