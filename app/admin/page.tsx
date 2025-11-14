@@ -1127,6 +1127,8 @@ export default function AdminPanel() {
             if (section.startsWith("vinos-")) {
               const category = section.split("-")[1]
               itemToDelete = (vinos as any)[category]?.find((item: any) => item.id === id)
+            }
+            break
         }
         
         // Eliminar en el servidor
