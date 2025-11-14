@@ -404,35 +404,52 @@ export default function AdminPanel() {
   }, [categories])
 
   // Sincronizar categories.json con todas las categorías de adminMenuData
+  // Eliminar categorías que no estén en adminMenuData y agregar las que falten
   useEffect(() => {
     if (adminMenuData && Object.keys(categories).length > 0 && isAuthenticated) {
-      const categoriesToSync: any = {}
-      let needsSync = false
-      
-      // Verificar todas las categorías en adminMenuData
+      // Obtener todas las categorías válidas del admin (excluyendo subcategorías)
+      const validCategoryIds = new Set<string>()
       Object.keys(adminMenuData).forEach(key => {
         const categoryData = adminMenuData[key as keyof typeof adminMenuData]
         const isArray = Array.isArray(categoryData)
         const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
         
+        // Solo incluir si no es una subcategoría
         if ((isArray || isObject) && !subcategoryMapping[key]) {
-          // Si la categoría no existe en categories.json, crear una entrada
-          if (!categories[key]) {
-            needsSync = true
-            const categoryName = key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-            categoriesToSync[key] = {
-              name: categoryName,
-              description: "",
-              order: Object.keys(categories).length + Object.keys(categoriesToSync).length + 1
-            }
-          }
+          validCategoryIds.add(key)
         }
       })
       
-      // Si hay categorías nuevas para sincronizar, guardarlas
-      if (needsSync && Object.keys(categoriesToSync).length > 0) {
-        const updatedCategories = { ...categories, ...categoriesToSync }
-        updateCategories(updatedCategories).catch(err => 
+      const categoriesToSync: any = {}
+      let needsSync = false
+      
+      // Agregar categorías que faltan en categories.json
+      validCategoryIds.forEach(key => {
+        if (!categories[key]) {
+          needsSync = true
+          const categoryName = key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+          categoriesToSync[key] = {
+            name: categoryName,
+            description: "",
+            order: validCategoryIds.size + Object.keys(categoriesToSync).length
+          }
+        } else {
+          // Mantener las categorías existentes que están en adminMenuData
+          categoriesToSync[key] = categories[key]
+        }
+      })
+      
+      // Verificar si hay categorías en categories.json que NO están en adminMenuData
+      const categoriesToRemove = Object.keys(categories).filter(key => !validCategoryIds.has(key))
+      if (categoriesToRemove.length > 0) {
+        needsSync = true
+        console.log("Eliminando categorías que no están en adminMenuData:", categoriesToRemove)
+      }
+      
+      // Si hay cambios (agregar nuevas o eliminar viejas), guardar
+      if (needsSync) {
+        // categoriesToSync solo contiene las categorías válidas (las del admin)
+        updateCategories(categoriesToSync).catch(err => 
           console.warn("Error sincronizando categorías:", err)
         )
       }
