@@ -2467,31 +2467,47 @@ export default function AdminPanel() {
       setSaving(true)
       setNotificationStatus("🔄 Sincronizando todos los cambios...")
       
-      // 1. Recargar datos del admin para asegurar que todo esté guardado
-      await refetchAdminMenu()
-      
-      // 2. Recargar mapeo de subcategorías
+      // 1. Recargar mapeo de subcategorías PRIMERO
+      let currentSubcategoryMapping = subcategoryMapping
       try {
         const mappingResponse = await fetch("/api/admin/subcategory-mapping")
         if (mappingResponse.ok) {
           const mappingData = await mappingResponse.json()
+          currentSubcategoryMapping = mappingData
           setSubcategoryMapping(mappingData)
         }
       } catch (error) {
         console.warn("Error recargando mapeo de subcategorías:", error)
       }
       
-      // 3. Limpiar y reconstruir categories.json SOLO con categorías que están en adminMenuData
-      if (adminMenuData) {
-        // Obtener todas las categorías válidas del admin (excluyendo subcategorías)
+      // 2. Recargar datos del admin para asegurar que todo esté guardado
+      await refetchAdminMenu()
+      
+      // 3. Esperar un momento para que adminMenuData se actualice
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // 4. Obtener los datos más recientes del menú directamente desde la API
+      let latestMenuData = adminMenuData
+      try {
+        const menuResponse = await fetch("/api/menu")
+        if (menuResponse.ok) {
+          latestMenuData = await menuResponse.json()
+        }
+      } catch (error) {
+        console.warn("Error obteniendo datos del menú:", error)
+      }
+      
+      // 5. Limpiar y reconstruir categories.json SOLO con categorías que están en el menú
+      if (latestMenuData) {
+        // Obtener todas las categorías válidas del menú (excluyendo subcategorías)
         const validCategoryIds = new Set<string>()
-        Object.keys(adminMenuData).forEach(key => {
-          const categoryData = adminMenuData[key as keyof typeof adminMenuData]
+        Object.keys(latestMenuData).forEach(key => {
+          const categoryData = (latestMenuData as any)[key]
           const isArray = Array.isArray(categoryData)
           const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
           
           // Solo incluir si no es una subcategoría
-          if ((isArray || isObject) && !subcategoryMapping[key]) {
+          if ((isArray || isObject) && !currentSubcategoryMapping[key]) {
             validCategoryIds.add(key)
           }
         })
@@ -2517,19 +2533,27 @@ export default function AdminPanel() {
           order++
         })
         
-        // Guardar categories.json limpio
-        await updateCategories(cleanCategories)
-        
-        // Recargar categorías limpias
-        await loadCategories()
+        // IMPORTANTE: Solo guardar si hay categorías, nunca dejar vacío
+        if (Object.keys(cleanCategories).length > 0) {
+          // Guardar categories.json con las categorías válidas
+          await updateCategories(cleanCategories)
+          
+          // Recargar categorías
+          await loadCategories()
+        } else {
+          console.warn("No se encontraron categorías válidas para sincronizar")
+          setNotificationStatus("⚠️ No se encontraron categorías para sincronizar")
+          setTimeout(() => setNotificationStatus(""), 5000)
+          return
+        }
       }
       
-      // 4. Sincronizar datos locales
+      // 6. Sincronizar datos locales
       if (adminMenuData) {
         await syncAdminData()
       }
       
-      // 5. Forzar recarga del menú público (invalidar caché)
+      // 7. Forzar recarga del menú público (invalidar caché)
       try {
         await fetch("/api/menu", { 
           method: "GET",
