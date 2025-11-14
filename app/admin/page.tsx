@@ -137,11 +137,6 @@ export default function AdminPanel() {
     copas: [],
   })
   const [botellas, setBotellas] = useState<any[]>([])
-  const [promociones, setPromociones] = useState<any>({
-    cafe: [],
-    tapeos: [],
-    bebidas: [],
-  })
 
   // Estado para almacenar dinámicamente las secciones del menú
   const [menuSections, setMenuSections] = useState<{[key: string]: any[]}>({})
@@ -155,10 +150,7 @@ export default function AdminPanel() {
     'milanesas': 'principales',
     'hamburguesas': 'principales',
     'ensaladas': 'principales',
-    'otros': 'principales',
-    'cafe': 'promociones',
-    'tapeos': 'promociones',
-    'bebidas': 'promociones'
+    'otros': 'principales'
   })
 
   const [isAddingCategory, setIsAddingCategory] = useState(false)
@@ -303,11 +295,6 @@ export default function AdminPanel() {
       copas: [],
     })
     setBotellas(adminMenuData.botellas || [])
-    setPromociones(adminMenuData.promociones || {
-      cafe: [],
-      tapeos: [],
-      bebidas: [],
-    })
 
     // Crear un objeto con todas las secciones del menú para acceso dinámico
     const sections: {[key: string]: any[]} = {}
@@ -322,17 +309,8 @@ export default function AdminPanel() {
         const obj = categoryData as any
         Object.keys(obj).forEach(subKey => {
           if (Array.isArray(obj[subKey])) {
-            // Para promociones, las subcategorías se guardan directamente en el objeto
-            // pero también necesitamos acceso por ID para las subcategorías dinámicas
-            if (key === 'promociones') {
-              // Las subcategorías de promociones se acceden directamente por su ID
-              sections[subKey] = obj[subKey]
-              // También mantener el formato promociones-subKey para compatibilidad
-              sections[`${key}-${subKey}`] = obj[subKey]
-            } else {
-              // Para otras categorías como vinos, usar el formato key-subKey
-              sections[`${key}-${subKey}`] = obj[subKey]
-            }
+            // Para todas las categorías con subcategorías, usar el formato key-subKey
+            sections[`${key}-${subKey}`] = obj[subKey]
           }
         })
         
@@ -513,11 +491,6 @@ export default function AdminPanel() {
         copas: [],
       })
       setBotellas(data.botellas || [])
-      setPromociones(data.promociones || {
-        cafe: [],
-        tapeos: [],
-        bebidas: [],
-      })
 
       // Crear un objeto con todas las secciones del menú para acceso dinámico
       const sections: {[key: string]: MenuItem[]} = {}
@@ -735,15 +708,7 @@ export default function AdminPanel() {
                  item.id === updatedItem.id ? updatedItem : item
                )
              }))
-           } else if (section.startsWith("promociones-")) {
-             const category = section.split("-")[1]
-             setPromociones(prev => ({
-               ...prev,
-               [category]: prev[category as keyof typeof prev].map((item: any) => 
-                 item.id === updatedItem.id ? updatedItem : item
-               )
-             }))
-           } else {
+          } else {
              // Para categorías personalizadas dinámicas
              setMenuSections(prev => ({
                ...prev,
@@ -869,13 +834,7 @@ export default function AdminPanel() {
                ...prev,
                [category]: [...prev[category as keyof typeof prev], addedItem]
              }))
-           } else if (section.startsWith("promociones-")) {
-             const category = section.split("-")[1]
-             setPromociones(prev => ({
-               ...prev,
-               [category]: [...prev[category as keyof typeof prev], addedItem]
-             }))
-           } else {
+          } else {
              // Para categorías personalizadas dinámicas
              setMenuSections(prev => ({
                ...prev,
@@ -1013,14 +972,6 @@ export default function AdminPanel() {
           if (selectedSection.startsWith("vinos-")) {
             const category = selectedSection.split("-")[1]
             setVinos(prev => ({
-              ...prev,
-              [category]: prev[category as keyof typeof prev].map((item: any) => 
-                item.id === selectedItem.id ? updatedItem : item
-              )
-            }))
-          } else if (selectedSection.startsWith("promociones-")) {
-            const category = selectedSection.split("-")[1]
-            setPromociones(prev => ({
               ...prev,
               [category]: prev[category as keyof typeof prev].map((item: any) => 
                 item.id === selectedItem.id ? updatedItem : item
@@ -1213,8 +1164,8 @@ export default function AdminPanel() {
               const category = section.split("-")[1]
               itemToDelete = (vinos as any)[category]?.find((item: any) => item.id === id)
             } else if (section.startsWith("promociones-")) {
-              const category = section.split("-")[1]
-              itemToDelete = (promociones as any)[category]?.find((item: any) => item.id === id)
+              // Promociones se maneja como cualquier otra categoría
+              itemToDelete = menuSections[section]?.find((item: any) => item.id === id)
             }
         }
         
@@ -1287,13 +1238,7 @@ export default function AdminPanel() {
                  ...prev,
                  [category]: prev[category as keyof typeof prev].filter((item: any) => item.id !== id)
                }))
-             } else if (section.startsWith("promociones-")) {
-               const category = section.split("-")[1]
-               setPromociones(prev => ({
-                 ...prev,
-                 [category]: prev[category as keyof typeof prev].filter((item: any) => item.id !== id)
-               }))
-             } else {
+            } else {
                // Para categorías personalizadas dinámicas
                setMenuSections(prev => ({
                  ...prev,
@@ -1459,10 +1404,7 @@ export default function AdminPanel() {
         // Obtener la sección actual del menú
         let currentSectionData: any[] = []
         
-        if (selectedSectionForProduct.startsWith("promociones-")) {
-          const subcat = selectedSectionForProduct.split("-")[1] as keyof typeof promociones
-          currentSectionData = [...(promociones[subcat] || [])]
-        } else if (selectedSectionForProduct.startsWith("vinos-")) {
+        if (selectedSectionForProduct.startsWith("vinos-")) {
           const subcat = selectedSectionForProduct.split("-")[1] as keyof typeof vinos
           currentSectionData = [...(vinos[subcat] || [])]
         } else {
@@ -1527,14 +1469,7 @@ export default function AdminPanel() {
       }
       
       // Actualizar el estado local
-      if (selectedSectionForProduct.startsWith("promociones-")) {
-        // Para subcategorías de promociones
-        const subcat = selectedSectionForProduct.split("-")[1] as keyof typeof promociones
-        setPromociones(prev => ({
-          ...prev,
-          [subcat]: [...(prev[subcat] || []), newProductItem]
-        }))
-      } else if (selectedSectionForProduct.startsWith("vinos-")) {
+      if (selectedSectionForProduct.startsWith("vinos-")) {
         // Para subcategorías de vinos
         const subcat = selectedSectionForProduct.split("-")[1] as keyof typeof vinos
         setVinos(prev => ({
@@ -1620,19 +1555,10 @@ export default function AdminPanel() {
       }
       
       // Agregar la nueva subcategoría al mapeo
-      // IMPORTANTE: No agregar subcategorías estándar de promociones (cafe, tapeos, bebidas)
-      const standardPromocionesSubcats = ['cafe', 'tapeos', 'bebidas']
-      const isStandardPromocionSubcat = selectedCategoryForSubcategory === 'promociones' && 
-                                        standardPromocionesSubcats.includes(finalSubcategoryId)
-      
+      // Todas las categorías se comportan igual
       const newMapping = {
         ...subcategoryMapping,
-        ...(isStandardPromocionSubcat ? {} : { [finalSubcategoryId]: selectedCategoryForSubcategory })
-      }
-      
-      // Si es una subcategoría estándar de promociones, no agregarla al mapeo
-      if (isStandardPromocionSubcat) {
-        console.log("Subcategoría estándar de promociones, no se agrega al mapeo:", finalSubcategoryId)
+        [finalSubcategoryId]: selectedCategoryForSubcategory
       }
       
       console.log("Nuevo mapeo de subcategorías:", newMapping)
@@ -1645,67 +1571,19 @@ export default function AdminPanel() {
       }))
       
       // PERSISTIR LA SUBCATEGORÍA EN EL ARCHIVO JSON DEL MENÚ
+      // Todas las categorías se comportan igual: las subcategorías son secciones separadas
       try {
-        // Si es una subcategoría de promociones, crearla dentro del objeto promociones
-        if (selectedCategoryForSubcategory === "promociones") {
-          // Obtener promociones actual
-          let currentPromociones = { cafe: [], tapeos: [], bebidas: [] }
-          try {
-            const promocionesResponse = await fetch("/api/menu/promociones")
-            if (promocionesResponse.ok) {
-              currentPromociones = await promocionesResponse.json()
-            }
-          } catch (error) {
-            console.warn("Promociones no existe aún, se creará desde cero")
-          }
-          
-          // Asegurar que es un objeto
-          if (typeof currentPromociones !== 'object' || Array.isArray(currentPromociones)) {
-            currentPromociones = { cafe: [], tapeos: [], bebidas: [] }
-          }
-          
-          // Agregar la nueva subcategoría dentro de promociones (solo si no existe)
-          // Asegurar que las subcategorías estándar siempre existan
-          const promocionesObj = currentPromociones as any
-          if (!promocionesObj.cafe) promocionesObj.cafe = []
-          if (!promocionesObj.tapeos) promocionesObj.tapeos = []
-          if (!promocionesObj.bebidas) promocionesObj.bebidas = []
-          
-          // Agregar la nueva subcategoría solo si no existe y no es una estándar
-          const standardPromocionesSubcats = ['cafe', 'tapeos', 'bebidas']
-          if (!standardPromocionesSubcats.includes(finalSubcategoryId) && !promocionesObj[finalSubcategoryId]) {
-            promocionesObj[finalSubcategoryId] = []
-          }
-          
-          currentPromociones = promocionesObj
-          
-          // Guardar promociones usando PUT
-          const saveMenuResponse = await fetch("/api/menu/promociones", {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(currentPromociones),
-          })
-          
-          if (!saveMenuResponse.ok) {
-            const errorData = await saveMenuResponse.json().catch(() => ({}))
-            throw new Error(errorData.error || "Error al guardar la subcategoría en promociones")
-          }
-        } else {
-          // Para otras categorías, crear como sección separada
-          const saveMenuResponse = await fetch(`/api/menu/${finalSubcategoryId}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify([]), // Array vacío para la nueva subcategoría
-          })
-          
-          if (!saveMenuResponse.ok) {
-            const errorData = await saveMenuResponse.json().catch(() => ({}))
-            throw new Error(errorData.error || "Error al guardar la subcategoría en el menú")
-          }
+        const saveMenuResponse = await fetch(`/api/menu/${finalSubcategoryId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify([]), // Array vacío para la nueva subcategoría
+        })
+        
+        if (!saveMenuResponse.ok) {
+          const errorData = await saveMenuResponse.json().catch(() => ({}))
+          throw new Error(errorData.error || "Error al guardar la subcategoría en el menú")
         }
         
         console.log("Subcategoría creada en el archivo menu.json:", finalSubcategoryId)
@@ -1715,26 +1593,23 @@ export default function AdminPanel() {
       }
       
       // PERSISTIR EL MAPEO DE SUBCATEGORÍAS EN EL ARCHIVO JSON
-      // Solo guardar el mapeo si no es una subcategoría estándar de promociones
-      if (!isStandardPromocionSubcat) {
-        try {
-          const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newMapping),
-          })
-          
-          if (!mappingResponse.ok) {
-            throw new Error("Error al guardar el mapeo de subcategorías")
-          }
-          
-          console.log("Mapeo de subcategorías guardado exitosamente")
-        } catch (error) {
-          console.error("Error guardando mapeo de subcategorías:", error)
-          alert("Advertencia: La subcategoría se creó pero no se pudo guardar el mapeo")
+      try {
+        const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newMapping),
+        })
+        
+        if (!mappingResponse.ok) {
+          throw new Error("Error al guardar el mapeo de subcategorías")
         }
+        
+        console.log("Mapeo de subcategorías guardado exitosamente")
+      } catch (error) {
+        console.error("Error guardando mapeo de subcategorías:", error)
+        alert("Advertencia: La subcategoría se creó pero no se pudo guardar el mapeo")
       }
       
       // Limpiar y cerrar modal
@@ -2608,14 +2483,9 @@ export default function AdminPanel() {
 
   // Función para renderizar subcategorías dentro de una categoría
   const renderSubcategories = (categoryId: string) => {
-    // Para promociones, excluir las subcategorías estándar (cafe, tapeos, bebidas)
-    const standardPromocionesSubcats = categoryId === 'promociones' ? ['cafe', 'tapeos', 'bebidas'] : []
-    
+    // Todas las categorías se comportan igual
     const subcategories = Object.entries(subcategoryMapping)
-      .filter(([subcatId, parentId]) => {
-        // Solo incluir si pertenece a la categoría y no es una subcategoría estándar de promociones
-        return parentId === categoryId && !standardPromocionesSubcats.includes(subcatId)
-      })
+      .filter(([subcatId, parentId]) => parentId === categoryId)
       .map(([subcatId]) => subcatId)
     
     // Debug: mostrar información de subcategorías (solo en desarrollo)
@@ -3778,72 +3648,42 @@ export default function AdminPanel() {
              {renderSubcategories("tragos")}
                        </TabsContent>
 
-            {/* Promociones */}
+            {/* Promociones - Se comporta igual que cualquier otra categoría */}
             <TabsContent value="promociones" className="space-y-4">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-semibold text-gray-900">Promociones</h2>
-                <Button 
-                  size="sm"
-                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                  onClick={() => {
-                    setSelectedCategoryForSubcategory("promociones")
-                    setIsAddingSubcategory(true)
-                  }}
-                >
-                  <Plus className="w-4 h-4 text-white" />
-                  <span className="text-white">Agregar Subcategoría</span>
-                </Button>
-              </div>
-              
-              {/* Subcategorías estándar de promociones */}
-              <div className="space-y-8">
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900">Café</h3>
-                    <Button 
-                      size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => setIsAdding("promociones-cafe")}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar
-                    </Button>
-                  </div>
-                  {Array.isArray(promociones?.cafe) && promociones.cafe.map((item: any) => renderMenuItem(item, "promociones-cafe"))}
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900">Tapeos</h3>
-                    <Button 
-                      size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => setIsAdding("promociones-tapeos")}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar
-                    </Button>
-                  </div>
-                  {Array.isArray(promociones?.tapeos) && promociones.tapeos.map((item: any) => renderMenuItem(item, "promociones-tapeos"))}
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900">Bebidas</h3>
-                    <Button 
-                      size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => setIsAdding("promociones-bebidas")}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar
-                    </Button>
-                  </div>
-                  {Array.isArray(promociones?.bebidas) && promociones.bebidas.map((item: any) => renderMenuItem(item, "promociones-bebidas"))}
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => {
+                      setSelectedCategoryForSubcategory("promociones")
+                      setIsAddingSubcategory(true)
+                    }}
+                  >
+                    <Plus className="w-4 h-4 text-white" />
+                    <span className="text-white">Agregar Subcategoría</span>
+                  </Button>
+                  <Button 
+                    size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => setIsAdding("promociones")}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar Producto
+                  </Button>
                 </div>
               </div>
               
-              {/* Renderizar subcategorías dinámicas creadas por el usuario */}
+              {/* Productos directos de la categoría promociones */}
+              {Array.isArray(menuSections["promociones"]) && menuSections["promociones"].length > 0 && (
+                <div className="space-y-4 mb-8">
+                  <h3 className="text-lg font-semibold text-gray-700">Productos Directos</h3>
+                  {menuSections["promociones"].map((item: any) => renderMenuItem(item, "promociones"))}
+                </div>
+              )}
+              
+              {/* Renderizar subcategorías dinámicas */}
               {renderSubcategories("promociones")}
             </TabsContent>
 
