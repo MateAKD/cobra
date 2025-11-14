@@ -1620,9 +1620,19 @@ export default function AdminPanel() {
       }
       
       // Agregar la nueva subcategoría al mapeo
+      // IMPORTANTE: No agregar subcategorías estándar de promociones (cafe, tapeos, bebidas)
+      const standardPromocionesSubcats = ['cafe', 'tapeos', 'bebidas']
+      const isStandardPromocionSubcat = selectedCategoryForSubcategory === 'promociones' && 
+                                        standardPromocionesSubcats.includes(finalSubcategoryId)
+      
       const newMapping = {
         ...subcategoryMapping,
-        [finalSubcategoryId]: selectedCategoryForSubcategory
+        ...(isStandardPromocionSubcat ? {} : { [finalSubcategoryId]: selectedCategoryForSubcategory })
+      }
+      
+      // Si es una subcategoría estándar de promociones, no agregarla al mapeo
+      if (isStandardPromocionSubcat) {
+        console.log("Subcategoría estándar de promociones, no se agrega al mapeo:", finalSubcategoryId)
       }
       
       console.log("Nuevo mapeo de subcategorías:", newMapping)
@@ -1638,34 +1648,49 @@ export default function AdminPanel() {
       try {
         // Si es una subcategoría de promociones, crearla dentro del objeto promociones
         if (selectedCategoryForSubcategory === "promociones") {
-          // Obtener el menú actual
-          const menuResponse = await fetch("/api/menu")
-          if (!menuResponse.ok) {
-            throw new Error("Error al cargar el menú")
-          }
-          const menuData = await menuResponse.json()
-          
-          // Asegurar que promociones existe y es un objeto
-          if (!menuData.promociones || typeof menuData.promociones !== 'object') {
-            menuData.promociones = { cafe: [], tapeos: [], bebidas: [] }
-          }
-          
-          // Agregar la nueva subcategoría dentro de promociones
-          if (!menuData.promociones[finalSubcategoryId]) {
-            menuData.promociones[finalSubcategoryId] = []
+          // Obtener promociones actual
+          let currentPromociones = { cafe: [], tapeos: [], bebidas: [] }
+          try {
+            const promocionesResponse = await fetch("/api/menu/promociones")
+            if (promocionesResponse.ok) {
+              currentPromociones = await promocionesResponse.json()
+            }
+          } catch (error) {
+            console.warn("Promociones no existe aún, se creará desde cero")
           }
           
-          // Guardar el menú actualizado
-          const saveMenuResponse = await fetch("/api/menu", {
-            method: "POST",
+          // Asegurar que es un objeto
+          if (typeof currentPromociones !== 'object' || Array.isArray(currentPromociones)) {
+            currentPromociones = { cafe: [], tapeos: [], bebidas: [] }
+          }
+          
+          // Agregar la nueva subcategoría dentro de promociones (solo si no existe)
+          // Asegurar que las subcategorías estándar siempre existan
+          const promocionesObj = currentPromociones as any
+          if (!promocionesObj.cafe) promocionesObj.cafe = []
+          if (!promocionesObj.tapeos) promocionesObj.tapeos = []
+          if (!promocionesObj.bebidas) promocionesObj.bebidas = []
+          
+          // Agregar la nueva subcategoría solo si no existe y no es una estándar
+          const standardPromocionesSubcats = ['cafe', 'tapeos', 'bebidas']
+          if (!standardPromocionesSubcats.includes(finalSubcategoryId) && !promocionesObj[finalSubcategoryId]) {
+            promocionesObj[finalSubcategoryId] = []
+          }
+          
+          currentPromociones = promocionesObj
+          
+          // Guardar promociones usando PUT
+          const saveMenuResponse = await fetch("/api/menu/promociones", {
+            method: "PUT",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(menuData),
+            body: JSON.stringify(currentPromociones),
           })
           
           if (!saveMenuResponse.ok) {
-            throw new Error("Error al guardar la subcategoría en promociones")
+            const errorData = await saveMenuResponse.json().catch(() => ({}))
+            throw new Error(errorData.error || "Error al guardar la subcategoría en promociones")
           }
         } else {
           // Para otras categorías, crear como sección separada
@@ -1690,23 +1715,26 @@ export default function AdminPanel() {
       }
       
       // PERSISTIR EL MAPEO DE SUBCATEGORÍAS EN EL ARCHIVO JSON
-      try {
-        const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newMapping),
-        })
-        
-        if (!mappingResponse.ok) {
-          throw new Error("Error al guardar el mapeo de subcategorías")
+      // Solo guardar el mapeo si no es una subcategoría estándar de promociones
+      if (!isStandardPromocionSubcat) {
+        try {
+          const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newMapping),
+          })
+          
+          if (!mappingResponse.ok) {
+            throw new Error("Error al guardar el mapeo de subcategorías")
+          }
+          
+          console.log("Mapeo de subcategorías guardado exitosamente")
+        } catch (error) {
+          console.error("Error guardando mapeo de subcategorías:", error)
+          alert("Advertencia: La subcategoría se creó pero no se pudo guardar el mapeo")
         }
-        
-        console.log("Mapeo de subcategorías guardado exitosamente")
-      } catch (error) {
-        console.error("Error guardando mapeo de subcategorías:", error)
-        alert("Advertencia: La subcategoría se creó pero no se pudo guardar el mapeo")
       }
       
       // Limpiar y cerrar modal
@@ -2580,8 +2608,14 @@ export default function AdminPanel() {
 
   // Función para renderizar subcategorías dentro de una categoría
   const renderSubcategories = (categoryId: string) => {
+    // Para promociones, excluir las subcategorías estándar (cafe, tapeos, bebidas)
+    const standardPromocionesSubcats = categoryId === 'promociones' ? ['cafe', 'tapeos', 'bebidas'] : []
+    
     const subcategories = Object.entries(subcategoryMapping)
-      .filter(([subcatId, parentId]) => parentId === categoryId)
+      .filter(([subcatId, parentId]) => {
+        // Solo incluir si pertenece a la categoría y no es una subcategoría estándar de promociones
+        return parentId === categoryId && !standardPromocionesSubcats.includes(subcatId)
+      })
       .map(([subcatId]) => subcatId)
     
     // Debug: mostrar información de subcategorías (solo en desarrollo)
