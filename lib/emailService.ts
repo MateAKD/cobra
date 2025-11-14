@@ -120,3 +120,11 @@ export const getUserInfo = (): { ip?: string; userAgent?: string } => {
   }
   return {}
 }
+
+// Export por defecto para asegurar compatibilidad con el build
+export default {
+  sendProductNotification,
+  sendTimeRangeNotification,
+  getUserInfo,
+  validateEmailConfig
+}
