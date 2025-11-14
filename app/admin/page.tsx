@@ -2470,10 +2470,7 @@ export default function AdminPanel() {
       // 1. Recargar datos del admin para asegurar que todo esté guardado
       await refetchAdminMenu()
       
-      // 2. Recargar categorías
-      await loadCategories()
-      
-      // 3. Recargar mapeo de subcategorías
+      // 2. Recargar mapeo de subcategorías
       try {
         const mappingResponse = await fetch("/api/admin/subcategory-mapping")
         if (mappingResponse.ok) {
@@ -2482,6 +2479,49 @@ export default function AdminPanel() {
         }
       } catch (error) {
         console.warn("Error recargando mapeo de subcategorías:", error)
+      }
+      
+      // 3. Limpiar y reconstruir categories.json SOLO con categorías que están en adminMenuData
+      if (adminMenuData) {
+        // Obtener todas las categorías válidas del admin (excluyendo subcategorías)
+        const validCategoryIds = new Set<string>()
+        Object.keys(adminMenuData).forEach(key => {
+          const categoryData = adminMenuData[key as keyof typeof adminMenuData]
+          const isArray = Array.isArray(categoryData)
+          const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
+          
+          // Solo incluir si no es una subcategoría
+          if ((isArray || isObject) && !subcategoryMapping[key]) {
+            validCategoryIds.add(key)
+          }
+        })
+        
+        // Construir categories.json solo con categorías válidas
+        const cleanCategories: any = {}
+        let order = 1
+        validCategoryIds.forEach(key => {
+          // Obtener nombre de categories.json si existe, o generar desde el ID
+          const existingCategory = categories[key]
+          const categoryName = existingCategory?.name || key.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ')
+          
+          cleanCategories[key] = {
+            name: categoryName,
+            description: existingCategory?.description || "",
+            order: existingCategory?.order || order,
+            timeRestricted: existingCategory?.timeRestricted || false,
+            startTime: existingCategory?.startTime,
+            endTime: existingCategory?.endTime
+          }
+          order++
+        })
+        
+        // Guardar categories.json limpio
+        await updateCategories(cleanCategories)
+        
+        // Recargar categorías limpias
+        await loadCategories()
       }
       
       // 4. Sincronizar datos locales
