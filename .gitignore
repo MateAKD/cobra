@@ -26,3 +26,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# Archivos de datos (no versionarlos, se manejan en servidor)
+data/menu.json
+data/categories.json
+data/subcategory-mapping.json
+data/subcategory-order.json
+data/category-hierarchy.json

@@ -20,24 +20,28 @@ export async function GET() {
   }
 }
 
-// POST - Actualizar todos los datos del menú
+// POST - Actualizar todos los datos del menú (hace merge con los datos existentes)
 export async function POST(request: NextRequest) {
   try {
     const newMenuData = await request.json()
     
-    // Validar que los datos tengan la estructura correcta
-    const requiredSections = ["tapas", "entrePanes", "postres", "tragosAutor", "vinos", "tragosClasicos", "sinAlcohol"]
-    for (const section of requiredSections) {
-      if (!newMenuData.hasOwnProperty(section)) {
-        return NextResponse.json(
-          { error: `Sección faltante: ${section}` },
-          { status: 400 }
-        )
-      }
+    // Leer los datos existentes
+    let existingData = {}
+    try {
+      const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
+      existingData = JSON.parse(fileContents)
+    } catch (error) {
+      console.log("No existing menu data, creating new file")
     }
     
-    // Escribir los nuevos datos al archivo
-    await fs.writeFile(MENU_FILE_PATH, JSON.stringify(newMenuData, null, 2), "utf8")
+    // Hacer merge: los datos nuevos se agregan o actualizan sobre los existentes
+    const mergedData = {
+      ...existingData,
+      ...newMenuData
+    }
+    
+    // Escribir los datos combinados al archivo
+    await fs.writeFile(MENU_FILE_PATH, JSON.stringify(mergedData, null, 2), "utf8")
     
     return NextResponse.json({ 
       message: "Menú actualizado exitosamente",

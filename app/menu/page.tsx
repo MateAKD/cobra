@@ -6,6 +6,7 @@ import { Leaf, Flame, Wheat } from "lucide-react"
 import { useMenuData } from "@/hooks/use-menu-data"
 import { useCategories } from "@/hooks/use-categories"
 import { useSubcategoryMapping } from "@/hooks/use-subcategory-mapping"
+import { useSubcategoryOrder } from "@/hooks/use-subcategory-order"
 
 // Componente de carga con logo de Cobra
 const CobraLoadingScreen = ({ isLoading }: { isLoading: boolean }) => {
@@ -164,13 +165,28 @@ export default function MenuPage() {
   const { menuData, loading, error } = useMenuData()
   const { categories } = useCategories()
   const { subcategoryMapping, loading: subcategoryLoading } = useSubcategoryMapping()
+  const { subcategoryOrder } = useSubcategoryOrder()
   
   // Filtrar categorías para incluir solo las que están en menuData (visibles por horario)
+  // Y excluir subcategorías (que están en subcategoryMapping como claves)
   const visibleCategories = menuData 
     ? Object.fromEntries(
-        Object.entries(categories).filter(([key]) => key in menuData)
+        Object.entries(categories).filter(([key]) => {
+          // Debe existir en menuData
+          if (!(key in menuData)) return false
+          
+          // NO debe ser una subcategoría (no debe estar en las claves de subcategoryMapping)
+          if (Object.keys(subcategoryMapping).includes(key)) return false
+          
+          return true
+        })
       )
-    : categories
+    : Object.fromEntries(
+        Object.entries(categories).filter(([key]) => {
+          // Excluir subcategorías incluso cuando no hay menuData cargado
+          return !Object.keys(subcategoryMapping).includes(key)
+        })
+      )
   
   // Obtener la primera categoría visible para el estado inicial
   const getFirstVisibleCategory = () => {
@@ -523,8 +539,10 @@ export default function MenuPage() {
 
   // Función para renderizar el contenido de cada categoría
   const renderCategoryContent = (categoryId: string) => {
-    // Primero verificar si la categoría existe en los datos del menú
-    if (!menuData || !menuData[categoryId as keyof typeof menuData]) {
+    // No verificar si la categoría está vacía porque puede tener subcategorías
+    // Las categorías principales como "menu" pueden estar vacías pero contener subcategorías
+    
+    if (!menuData) {
       return (
         <div className="text-center py-6 text-gray-500">
           <p>No hay productos en esta categoría.</p>
@@ -616,15 +634,86 @@ export default function MenuPage() {
     }
   }
 
+  // Función helper para ordenar subcategorías según el orden guardado
+  const sortSubcategories = (subcategories: [string, string][], categoryName: string) => {
+    const order = subcategoryOrder[categoryName] || []
+    if (order.length === 0) return subcategories
+    
+    return subcategories.sort((a, b) => {
+      const indexA = order.indexOf(a[0])
+      const indexB = order.indexOf(b[0])
+      
+      // Si ninguno está en el orden, mantener orden actual
+      if (indexA === -1 && indexB === -1) return 0
+      // Si solo A no está en el orden, va al final
+      if (indexA === -1) return 1
+      // Si solo B no está en el orden, va al final
+      if (indexB === -1) return -1
+      // Ambos están en el orden, usar posición
+      return indexA - indexB
+    })
+  }
+
+  // Función helper para renderizar una subcategoría con sus sub-subcategorías
+  const renderSubcategoryWithChildren = (subcatId: string, subcatData: any[], subcatName: string) => {
+    // Buscar sub-subcategorías de esta subcategoría
+    const subSubcategories = sortSubcategories(
+      Object.entries(subcategoryMapping)
+        .filter(([subsubId, parentId]) => parentId === subcatId),
+      subcatId
+    )
+
+    const hasSubSubcategories = subSubcategories.length > 0
+
+    return (
+      <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
+        {/* Productos directos de la subcategoría */}
+        {subcatData.map((item: any, index: number) => (
+          <MenuItemComponent key={item.id || index} item={item} />
+        ))}
+        
+        {/* Sub-subcategorías */}
+        {hasSubSubcategories && subSubcategories.map(([subsubId]) => {
+          const subsubAltId = subsubId.endsWith('s') ? subsubId.slice(0, -1) : `${subsubId}s`
+          const subsubData = (customCategories as any)[subsubId]
+            || (customCategories as any)[subsubAltId]
+            || ((menuData as any)?.[subsubId])
+            || ((menuData as any)?.[subsubAltId])
+            || []
+          
+          if (!Array.isArray(subsubData) || subsubData.length === 0) return null
+          
+          const subsubName = subsubId.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ')
+          
+          return (
+            <div key={subsubId} className="neon-subcategory-container mt-6">
+              <h3 className="bebas-title-subcategory">{subsubName.toUpperCase()}</h3>
+              <div className="neon-subcategory-divider"></div>
+              <div className="space-y-2">
+                {subsubData.map((item: any, index: number) => (
+                  <MenuItemComponent key={item.id || index} item={item} />
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </SubcategorySection>
+    )
+  }
+
   // Función para renderizar subcategorías dentro de una categoría
   const renderSubcategoriesInCategory = (categoryName: string) => {
     if (categoryName === 'parrilla') {
       return (
         <>
                     {/* Subcategorías dinámicas */}
-          {Object.entries(subcategoryMapping)
-            .filter(([subcatId, parentId]) => parentId === 'parrilla')
-            .map(([subcatId]) => {
+          {sortSubcategories(
+            Object.entries(subcategoryMapping)
+              .filter(([subcatId, parentId]) => parentId === 'parrilla'),
+            'parrilla'
+          ).map(([subcatId]) => {
               const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
               const subcatData = (customCategories as any)[subcatId]
                 || (customCategories as any)[altId]
@@ -633,29 +722,23 @@ export default function MenuPage() {
                 || ((menuData as any)?.[subcatId])
                 || ((menuData as any)?.[altId])
                 || []
-              if (!Array.isArray(subcatData) || subcatData.length === 0) return null
+              // Si no hay datos directos, verificar si tiene sub-subcategorías
+              const hasSubSubcategories = Object.entries(subcategoryMapping)
+                .some(([, parentId]) => parentId === subcatId)
+              
+              if (!Array.isArray(subcatData) && !hasSubSubcategories) return null
+              if (Array.isArray(subcatData) && subcatData.length === 0 && !hasSubSubcategories) return null
+              
               const subcatName = subcatId.split('-').map(word => 
                 word.charAt(0).toUpperCase() + word.slice(1)
               ).join(' ')
               
               // Si es "guarniciones", usar los datos de la sección hardcodeada
               if (subcatId === 'guarniciones') {
-                return (
-                  <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                    {guarniciones?.map((item, index) => (
-                      <MenuItemComponent key={item.id || index} item={item} />
-                    ))}
-                  </SubcategorySection>
-                )
+                return renderSubcategoryWithChildren(subcatId, guarniciones || [], subcatName)
               }
               
-              return (
-                <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                  {subcatData.map((item: any, index: number) => (
-                    <MenuItemComponent key={item.id || index} item={item} />
-                  ))}
-                </SubcategorySection>
-              )
+              return renderSubcategoryWithChildren(subcatId, subcatData || [], subcatName)
             })}
         </>
       );
@@ -665,9 +748,11 @@ export default function MenuPage() {
       return (
         <>
           {/* Subcategorías dinámicas */}
-          {Object.entries(subcategoryMapping)
-            .filter(([subcatId, parentId]) => parentId === 'principales')
-            .map(([subcatId]) => {
+          {sortSubcategories(
+            Object.entries(subcategoryMapping)
+              .filter(([subcatId, parentId]) => parentId === 'principales'),
+            'principales'
+          ).map(([subcatId]) => {
               const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
               const subcatData = (customCategories as any)[subcatId]
                 || (customCategories as any)[altId]
@@ -676,59 +761,25 @@ export default function MenuPage() {
                 || ((menuData as any)?.[subcatId])
                 || ((menuData as any)?.[altId])
                 || []
-              if (!Array.isArray(subcatData) || subcatData.length === 0) return null
+              
+              const hasSubSubcategories = Object.entries(subcategoryMapping)
+                .some(([, parentId]) => parentId === subcatId)
+              
+              if (!Array.isArray(subcatData) && !hasSubSubcategories) return null
+              if (Array.isArray(subcatData) && subcatData.length === 0 && !hasSubSubcategories) return null
+              
               const subcatName = subcatId.split('-').map(word => 
                 word.charAt(0).toUpperCase() + word.slice(1)
               ).join(' ')
               
-              // Si es una subcategoría hardcodeada, usar los datos correspondientes
-              if (subcatId === 'milanesas') {
-                return (
-                  <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                    {milanesas?.map((item, index) => (
-                      <MenuItemComponent key={item.id || index} item={item} />
-                    ))}
-                  </SubcategorySection>
-                )
-              }
+              // Usar datos específicos para subcategorías hardcodeadas
+              let dataToUse = subcatData
+              if (subcatId === 'milanesas') dataToUse = milanesas || []
+              else if (subcatId === 'hamburguesas') dataToUse = hamburguesas || []
+              else if (subcatId === 'ensaladas') dataToUse = ensaladas || []
+              else if (subcatId === 'otros') dataToUse = otros || []
               
-              if (subcatId === 'hamburguesas') {
-                return (
-                  <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                    {hamburguesas?.map((item, index) => (
-                      <MenuItemComponent key={item.id || index} item={item} />
-                    ))}
-                  </SubcategorySection>
-                )
-              }
-              
-              if (subcatId === 'ensaladas') {
-                return (
-                  <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                    {ensaladas?.map((item, index) => (
-                      <MenuItemComponent key={item.id || index} item={item} />
-                    ))}
-                  </SubcategorySection>
-                )
-              }
-              
-              if (subcatId === 'otros') {
-                return (
-                  <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                    {otros?.map((item, index) => (
-                      <MenuItemComponent key={item.id || index} item={item} />
-                    ))}
-                  </SubcategorySection>
-                )
-              }
-              
-              return (
-                <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-                  {subcatData.map((item: any, index: number) => (
-                    <MenuItemComponent key={item.id || index} item={item} />
-                  ))}
-                </SubcategorySection>
-              )
+              return renderSubcategoryWithChildren(subcatId, dataToUse, subcatName)
             })}
         </>
       );
@@ -736,9 +787,11 @@ export default function MenuPage() {
     
     
     // Para cualquier otra categoría, buscar subcategorías dinámicas
-    const dynamicSubcategories = Object.entries(subcategoryMapping)
-      .filter(([subcatId, parentId]) => parentId === categoryName)
-      .map(([subcatId]) => {
+    const dynamicSubcategories = sortSubcategories(
+      Object.entries(subcategoryMapping)
+        .filter(([subcatId, parentId]) => parentId === categoryName),
+      categoryName
+    ).map(([subcatId]) => {
         const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
         const subcatData = (customCategories as any)[subcatId]
           || (customCategories as any)[altId]
@@ -747,18 +800,18 @@ export default function MenuPage() {
           || ((menuData as any)?.[subcatId])
           || ((menuData as any)?.[altId])
           || []
-        if (!Array.isArray(subcatData) || subcatData.length === 0) return null
+        
+        const hasSubSubcategories = Object.entries(subcategoryMapping)
+          .some(([, parentId]) => parentId === subcatId)
+        
+        if (!Array.isArray(subcatData) && !hasSubSubcategories) return null
+        if (Array.isArray(subcatData) && subcatData.length === 0 && !hasSubSubcategories) return null
+        
         const subcatName = subcatId.split('-').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ')
         
-        return (
-          <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-            {subcatData.map((item: any, index: number) => (
-              <MenuItemComponent key={item.id || index} item={item} />
-            ))}
-          </SubcategorySection>
-        )
+        return renderSubcategoryWithChildren(subcatId, subcatData || [], subcatName)
       })
     
     // Obtener productos directos de la categoría principal

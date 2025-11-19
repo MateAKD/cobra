@@ -31,6 +31,7 @@ import AddForm from "./components/AddForm"
 import HideItemModal from "./components/HideItemModal"
 import TimeRangeModal, { TimeRangeData } from "./components/TimeRangeModal"
 import CategoryDragDrop from "./components/CategoryDragDrop"
+import SubcategoryDragDrop from "./components/SubcategoryDragDrop"
 import { sendProductNotification, sendTimeRangeNotification, getUserInfo, validateEmailConfig, type NotificationAction, type TimeRangeNotificationData } from "@/lib/emailService"
 import { useAdminMenuData } from "@/hooks/use-admin-menu-data"
 import { useCategories } from "@/hooks/use-categories"
@@ -112,6 +113,11 @@ export default function AdminPanel() {
   
   // Estado para el modo de reordenamiento de categorías
   const [isReorderingCategories, setIsReorderingCategories] = useState(false)
+  
+  // Estado para el modo de reordenamiento de subcategorías
+  const [isReorderingSubcategories, setIsReorderingSubcategories] = useState(false)
+  const [selectedCategoryForReorder, setSelectedCategoryForReorder] = useState<string>("")
+  const [subcategoryOrder, setSubcategoryOrder] = useState<Record<string, string[]>>({})
 
   // Estado para cada sección del menú - Nuevas categorías
   const [parrilla, setParrilla] = useState<any[]>([])
@@ -248,6 +254,47 @@ export default function AdminPanel() {
       setSaving(false)
     }
   }
+  
+  // Función para manejar el reordenamiento de subcategorías
+  const handleSubcategoriesReorder = async (reorderedSubcategories: any[]) => {
+    try {
+      setSaving(true)
+      setNotificationStatus("Guardando nuevo orden de subcategorías...")
+      
+      // Extraer solo los IDs en el nuevo orden
+      const subcategoryIds = reorderedSubcategories.map(sub => sub.id)
+      
+      // Enviar al servidor
+      const response = await fetch('/api/admin/subcategory-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          categoryId: selectedCategoryForReorder,
+          subcategoryOrder: subcategoryIds 
+        }),
+      })
+      
+      if (response.ok) {
+        // Actualizar el estado local
+        setSubcategoryOrder(prev => ({
+          ...prev,
+          [selectedCategoryForReorder]: subcategoryIds
+        }))
+        setNotificationStatus("✅ Orden de subcategorías actualizado correctamente")
+        setTimeout(() => setNotificationStatus(""), 3000)
+      } else {
+        throw new Error('Error al guardar el orden')
+      }
+    } catch (error) {
+      console.error('Error al reordenar subcategorías:', error)
+      setNotificationStatus("❌ Error al guardar el orden de subcategorías")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   // Función para sincronizar datos del admin con los estados locales
   const syncAdminData = async () => {
@@ -263,6 +310,17 @@ export default function AdminPanel() {
       }
     } catch (error) {
       console.warn("Error cargando mapeo de subcategorías:", error)
+    }
+    
+    // Cargar el orden de subcategorías
+    try {
+      const orderResponse = await fetch("/api/admin/subcategory-order")
+      if (orderResponse.ok) {
+        const order = await orderResponse.json()
+        setSubcategoryOrder(order)
+      }
+    } catch (error) {
+      console.warn("Error cargando orden de subcategorías:", error)
     }
 
     // Los estados hardcodeados se mantienen para compatibilidad pero ya no se usan
@@ -1976,6 +2034,92 @@ export default function AdminPanel() {
     }
   }
 
+  // Función para agregar sub-subcategoría (nivel 2)
+  const handleAddSubSubcategory = async (parentSubcategoryId: string, newSubSubId: string, newSubSubName: string) => {
+    try {
+      setSaving(true)
+      setNotificationStatus(`Creando sub-subcategoría "${newSubSubName}"...`)
+
+      // Agregar al mapeo de subcategorías con el parentSubcategoryId como padre
+      const newMapping = { ...subcategoryMapping }
+      newMapping[newSubSubId] = parentSubcategoryId
+      setSubcategoryMapping(newMapping)
+
+      // Persistir el mapeo
+      const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newMapping),
+      })
+      
+      if (!mappingResponse.ok) {
+        throw new Error("Error al guardar el mapeo de subcategorías")
+      }
+
+      // Agregar a la jerarquía con level 2
+      const hierarchyResponse = await fetch("/api/admin/category-hierarchy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subcategoryId: newSubSubId,
+          parentId: parentSubcategoryId,
+          level: 2,
+          type: "category"
+        }),
+      })
+
+      if (!hierarchyResponse.ok) {
+        throw new Error("Error al guardar la jerarquía")
+      }
+
+      // Crear la sección vacía en el menú
+      const menuUpdate: any = {}
+      menuUpdate[newSubSubId] = []
+
+      const menuResponse = await fetch("/api/menu", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(menuUpdate),
+      })
+
+      if (!menuResponse.ok) {
+        throw new Error("Error al crear la sección en el menú")
+      }
+
+      // Actualizar estado local
+      setMenuSections(prev => ({
+        ...prev,
+        [newSubSubId]: []
+      }))
+
+      setNotificationStatus(`✅ Sub-subcategoría "${newSubSubName}" creada correctamente`)
+      setTimeout(() => setNotificationStatus(""), 3000)
+
+      // Recargar datos
+      await refetchAdminMenu()
+      
+      // Recargar el mapeo
+      const reloadMapping = await fetch("/api/admin/subcategory-mapping")
+      if (reloadMapping.ok) {
+        const updatedMapping = await reloadMapping.json()
+        setSubcategoryMapping(updatedMapping)
+      }
+
+    } catch (error) {
+      console.error("Error creando sub-subcategoría:", error)
+      setNotificationStatus("❌ Error al crear la sub-subcategoría")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Función para eliminar subcategoría
   const handleDeleteSubcategory = async (subcategoryId: string) => {
     // Verificar que la subcategoría existe en el mapeo
@@ -2068,9 +2212,11 @@ export default function AdminPanel() {
       await refetchAdminMenu()
       
       // Limpiar mapeos inválidos (subcategorías que apuntan a categorías inexistentes)
+      // validCategories incluye: categorías principales + subcategorías (que pueden ser padres de sub-subcategorías)
       const validCategories = (allCategories || []).map(cat => cat.id)
+      const validParents = [...validCategories, ...Object.keys(subcategoryMapping)]
       const invalidMappings = Object.entries(subcategoryMapping).filter(
-        ([subcatId, parentId]) => !validCategories.includes(parentId)
+        ([subcatId, parentId]) => !validParents.includes(parentId)
       )
       
       if (invalidMappings.length > 0) {
@@ -2551,6 +2697,79 @@ export default function AdminPanel() {
                   <p className="text-xs mt-1">Haz clic en "Agregar Producto" para comenzar.</p>
                 </div>
               )}
+              
+              {/* Renderizar sub-subcategorías (nivel 2) */}
+              {(() => {
+                const subSubcategories = Object.entries(subcategoryMapping)
+                  .filter(([subsubId, parentId]) => parentId === subcatId)
+                  .map(([subsubId]) => subsubId)
+                
+                if (subSubcategories.length === 0) return null
+                
+                return (
+                  <div className="mt-4 ml-4 space-y-4 border-l-2 border-blue-300 pl-4">
+                    {subSubcategories.map(subsubId => {
+                      const subsubData = Array.isArray(menuSections[subsubId]) ? menuSections[subsubId] : []
+                      let subsubName = subsubId.split('-').map(word => {
+                        if (/^\d+$/.test(word)) return null
+                        return word.charAt(0).toUpperCase() + word.slice(1)
+                      }).filter(Boolean).join(' ')
+                      
+                      if (!subsubName) {
+                        subsubName = subsubId.split('-').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join(' ')
+                      }
+                      
+                      return (
+                        <div key={subsubId} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                          <div className="flex justify-between items-center mb-3">
+                            <h5 className="text-md font-semibold text-gray-800 flex items-center gap-2">
+                              <span className="text-blue-500">↳</span>
+                              {subsubName}
+                              <span className="text-sm text-gray-500 font-normal">
+                                ({subsubData.length} producto{subsubData.length !== 1 ? 's' : ''})
+                              </span>
+                            </h5>
+                            <div className="flex gap-2 items-center">
+                              <Button 
+                                size="sm"
+                                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold text-xs h-8"
+                                onClick={() => {
+                                  setSelectedSectionForProduct(subsubId)
+                                  setIsAddingProduct(true)
+                                }}
+                              >
+                                <Plus className="w-3 h-3 text-white" />
+                                <span className="text-white">Agregar</span>
+                              </Button>
+                              <Button 
+                                size="sm"
+                                variant="destructive"
+                                className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white border-0 font-semibold text-xs h-8"
+                                onClick={() => handleDeleteSubcategory(subsubId)}
+                              >
+                                <Trash2 className="w-3 h-3 text-white" />
+                                <span>Eliminar</span>
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {Array.isArray(subsubData) && subsubData.length > 0 ? (
+                            <div className="space-y-2">
+                              {subsubData.map((item) => renderMenuItem(item, subsubId))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 text-gray-500 bg-white rounded border-2 border-dashed border-blue-200">
+                              <p className="text-xs">No hay productos en esta sub-subcategoría aún.</p>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           )
         })}
@@ -3964,7 +4183,20 @@ export default function AdminPanel() {
               
               {/* Gestión de subcategorías */}
               <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-gray-900">Subcategorías</h4>
+                <div className="flex justify-between items-center">
+                  <h4 className="text-lg font-semibold text-gray-900">Subcategorías</h4>
+                  <Button
+                    onClick={() => {
+                      setSelectedCategoryForReorder(editingCategory.id)
+                      setIsReorderingSubcategories(true)
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold text-sm"
+                    size="sm"
+                  >
+                    <GripVertical className="w-3 h-3" />
+                    Reordenar
+                  </Button>
+                </div>
                 <div className="space-y-2">
                   {Object.entries(subcategoryMapping)
                     .filter(([subcatId, parentId]) => parentId === editingCategory.id)
@@ -3974,33 +4206,82 @@ export default function AdminPanel() {
                       ).join(' ')
                       
                       return (
-                        <div key={subcatId} className="flex justify-between items-center p-3 bg-gray-50 rounded border">
-                          <span className="font-medium text-gray-700">{subcatName}</span>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
-                                if (percentage && !isNaN(parseFloat(percentage))) {
-                                  handleBulkPriceIncrease(subcatId, parseFloat(percentage))
-                                }
-                              }}
-                              className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                            >
-                              <Plus className="w-3 h-3" />
-                              Aumentar Precios
-                            </Button>
-                            <Button 
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteSubcategory(subcatId)}
-                              className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
-                            >
-                              <Trash2 className="w-3 h-3 text-white" />
-                              Eliminar
-                            </Button>
+                        <div key={subcatId} className="border rounded-lg">
+                          <div className="flex justify-between items-center p-3 bg-gray-50">
+                            <span className="font-medium text-gray-700">{subcatName}</span>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const newSubName = prompt(`Ingresa el nombre de la sub-subcategoría dentro de ${subcatName}:`)
+                                  if (newSubName) {
+                                    const newSubId = newSubName.toLowerCase().replace(/\s+/g, '-')
+                                    handleAddSubSubcategory(subcatId, newSubId, newSubName)
+                                  }
+                                }}
+                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0 font-semibold"
+                              >
+                                <Plus className="w-3 h-3" />
+                                Agregar Subcat
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
+                                  if (percentage && !isNaN(parseFloat(percentage))) {
+                                    handleBulkPriceIncrease(subcatId, parseFloat(percentage))
+                                  }
+                                }}
+                                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                              >
+                                <Plus className="w-3 h-3" />
+                                Precios
+                              </Button>
+                              <Button 
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteSubcategory(subcatId)}
+                                className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                              >
+                                <Trash2 className="w-3 h-3 text-white" />
+                                Eliminar
+                              </Button>
+                            </div>
                           </div>
+                          
+                          {/* Sub-subcategorías */}
+                          {Object.entries(subcategoryMapping)
+                            .filter(([subsubId, parentId]) => parentId === subcatId)
+                            .map(([subsubId]) => {
+                              const subsubName = subsubId.split('-').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                              ).join(' ')
+                              const subsubData = menuSections[subsubId] || []
+                              const itemCount = Array.isArray(subsubData) ? subsubData.length : 0
+                              
+                              return (
+                                <div key={subsubId} className="flex justify-between items-center p-2 ml-6 bg-blue-50 border-l-2 border-blue-400 m-2 rounded">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-blue-600">↳</span>
+                                    <span className="font-medium text-sm text-gray-700">{subsubName}</span>
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                      {itemCount} productos
+                                    </span>
+                                  </div>
+                                  <Button 
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteSubcategory(subsubId)}
+                                    className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white border-0 font-semibold text-xs h-6"
+                                  >
+                                    <Trash2 className="w-2.5 h-2.5 text-white" />
+                                    Eliminar
+                                  </Button>
+                                </div>
+                              )
+                            })}
                         </div>
                       )
                     })}
@@ -4330,6 +4611,58 @@ export default function AdminPanel() {
             <CategoryDragDrop
               categories={allCategories}
               onCategoriesReorder={handleCategoriesReorder}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Modal para reordenar subcategorías */}
+      {isReorderingSubcategories && selectedCategoryForReorder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-black">Reordenar Subcategorías</h3>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsReorderingSubcategories(false)
+                  setSelectedCategoryForReorder("")
+                }}
+                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+              >
+                <X className="w-4 h-4" />
+                Cerrar
+              </Button>
+            </div>
+            
+            <SubcategoryDragDrop
+              subcategories={
+                Object.entries(subcategoryMapping)
+                  .filter(([, parentId]) => parentId === selectedCategoryForReorder)
+                  .map(([subcatId]) => {
+                    const subcatData = menuSections[subcatId] || []
+                    const subcatName = subcatId.split('-').map(word => 
+                      word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join(' ')
+                    return {
+                      id: subcatId,
+                      name: subcatName,
+                      itemCount: Array.isArray(subcatData) ? subcatData.length : 0
+                    }
+                  })
+                  .sort((a, b) => {
+                    // Ordenar según el orden guardado
+                    const order = subcategoryOrder[selectedCategoryForReorder] || []
+                    const indexA = order.indexOf(a.id)
+                    const indexB = order.indexOf(b.id)
+                    if (indexA === -1 && indexB === -1) return 0
+                    if (indexA === -1) return 1
+                    if (indexB === -1) return -1
+                    return indexA - indexB
+                  })
+              }
+              onSubcategoriesReorder={handleSubcategoriesReorder}
+              categoryName={categories[selectedCategoryForReorder]?.name || selectedCategoryForReorder}
             />
           </div>
         </div>

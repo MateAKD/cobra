@@ -1,1 +1,32 @@
-{}
+{
+  "menu": {
+    "name": "Menu",
+    "description": "",
+    "order": 1,
+    "timeRestricted": false
+  },
+  "promociones": {
+    "name": "Promociones",
+    "description": "",
+    "order": 4,
+    "timeRestricted": false
+  },
+  "desayunos-y-meriendas": {
+    "name": "Desayunos Y Meriendas",
+    "description": "",
+    "order": 2,
+    "timeRestricted": false
+  },
+  "coctelería": {
+    "name": "Coctelería y botellas",
+    "description": "",
+    "order": 3,
+    "timeRestricted": false
+  },
+  "sub-cat-test": {
+    "name": "Sub Cat Test",
+    "description": "",
+    "order": 5,
+    "timeRestricted": false
+  }
+}
