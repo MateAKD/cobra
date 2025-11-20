@@ -45,6 +45,10 @@ cp data/subcategory-mapping.json backups/subcategory-mapping.backup.${BACKUP_DAT
 cp data/subcategory-order.json backups/subcategory-order.backup.${BACKUP_DATE}.json 2>/dev/null || warn "No se pudo hacer backup de subcategory-order.json"
 cp data/category-hierarchy.json backups/category-hierarchy.backup.${BACKUP_DATE}.json 2>/dev/null || warn "No se pudo hacer backup de category-hierarchy.json"
 
+# ⭐ Guardar cambios locales de archivos de datos (si existen)
+log "Guardando cambios locales de archivos de datos..."
+git stash push -m "Backup datos antes de deploy ${BACKUP_DATE}" data/menu.json data/categories.json data/subcategory-mapping.json data/subcategory-order.json data/category-hierarchy.json 2>/dev/null || warn "No hay cambios locales en archivos de datos o ya están guardados"
+
 # 1. Pull últimos cambios
 log "Descargando últimos cambios..."
 git pull origin main || error "Error al hacer pull"

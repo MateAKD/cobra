@@ -39,10 +39,35 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Datos de categorías inválidos' }, { status: 400 })
     }
 
-    // Escribir las categorías al archivo
-    fs.writeFileSync(categoriesFilePath, JSON.stringify(categories, null, 2), 'utf-8')
+    // PROTECCIÓN: Filtrar subcategorías antes de guardar
+    // Leer el mapeo de subcategorías para excluirlas
+    const subcategoryMappingPath = path.join(process.cwd(), 'data', 'subcategory-mapping.json')
+    let subcategoryMapping: Record<string, string> = {}
     
-    return NextResponse.json({ message: 'Categorías actualizadas exitosamente', categories })
+    try {
+      if (fs.existsSync(subcategoryMappingPath)) {
+        const mappingData = fs.readFileSync(subcategoryMappingPath, 'utf-8')
+        subcategoryMapping = JSON.parse(mappingData)
+      }
+    } catch (error) {
+      console.warn('Error leyendo subcategory-mapping.json:', error)
+    }
+    
+    // Filtrar: remover cualquier categoría que esté en subcategoryMapping (es una subcategoría)
+    const filteredCategories: any = {}
+    Object.keys(categories).forEach(key => {
+      // Solo incluir si NO es una subcategoría
+      if (!subcategoryMapping[key]) {
+        filteredCategories[key] = categories[key]
+      } else {
+        console.warn(`⚠️ Prevenido: Se intentó agregar la subcategoría "${key}" a categories.json. Fue filtrada automáticamente.`)
+      }
+    })
+
+    // Escribir las categorías filtradas al archivo
+    fs.writeFileSync(categoriesFilePath, JSON.stringify(filteredCategories, null, 2), 'utf-8')
+    
+    return NextResponse.json({ message: 'Categorías actualizadas exitosamente', categories: filteredCategories })
   } catch (error) {
     console.error('Error updating categories:', error)
     return NextResponse.json({ error: 'Error al actualizar las categorías' }, { status: 500 })

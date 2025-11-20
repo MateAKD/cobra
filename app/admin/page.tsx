@@ -444,8 +444,15 @@ export default function AdminPanel() {
         const isArray = Array.isArray(categoryData)
         const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
         
-        // Solo incluir si no es una subcategoría
-        if ((isArray || isObject) && !subcategoryMapping[key]) {
+        // CRÍTICO: Excluir subcategorías de TODOS los niveles
+        // Una clave es subcategoría si:
+        // 1. Está en las CLAVES de subcategoryMapping (es una subcategoría)
+        // 2. Está en los VALORES de subcategoryMapping pero NO está en categories.json (es una sub-subcategoría o subcategoría de nivel 2+)
+        const isSubcategory = Object.keys(subcategoryMapping).includes(key)
+        const isSubSubcategory = Object.values(subcategoryMapping).includes(key) && !categories[key]
+        
+        // Solo incluir si NO es subcategoría de ningún nivel Y tiene datos válidos
+        if ((isArray || isObject) && !isSubcategory && !isSubSubcategory) {
           validCategoryIds.add(key)
         }
       })
@@ -1648,6 +1655,10 @@ export default function AdminPanel() {
       } catch (error) {
         console.warn("Error recargando mapeo de subcategorías:", error)
       }
+      
+      // CRÍTICO: Recargar datos del menú DESPUÉS de actualizar subcategoryMapping
+      // para que el useEffect de sincronización vea la subcategoría correctamente
+      await refetchAdminMenu()
       
       // Mostrar mensaje de éxito
       setNotificationStatus("✅ Subcategoría creada exitosamente")
