@@ -1,0 +1,117 @@
+{
+  "parrilla": {
+    "parent": "menu",
+    "level": 1,
+    "type": "category"
+  },
+  "guarniciones": {
+    "parent": "menu",
+    "level": 1,
+    "type": "category"
+  },
+  "cafeteria": {
+    "parent": "desayunos-y-meriendas",
+    "level": 1,
+    "type": "category"
+  },
+  "pasteleria": {
+    "parent": "desayunos-y-meriendas",
+    "level": 1,
+    "type": "category"
+  },
+  "brunch": {
+    "parent": "desayunos-y-meriendas",
+    "level": 1,
+    "type": "category"
+  },
+  "cervezas": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "tragos-clasicos": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "especiales": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "shots": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "tragos-con-red-bull": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "vinos-tintos": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "vinos-blancos": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "vinos-rosados": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "copas-de-vino": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "tapeos": {
+    "parent": "menu",
+    "level": 1,
+    "type": "category"
+  },
+  "milanesas": {
+    "parent": "principales",
+    "level": 2,
+    "type": "category"
+  },
+  "hamburguesas": {
+    "parent": "principales",
+    "level": 2,
+    "type": "category"
+  },
+  "ensaladas": {
+    "parent": "principales",
+    "level": 2,
+    "type": "category"
+  },
+  "otros": {
+    "parent": "menu",
+    "level": 1,
+    "type": "category"
+  },
+  "postres": {
+    "parent": "menu",
+    "level": 1,
+    "type": "category"
+  },
+  "botellas": {
+    "parent": "coctelería",
+    "level": 1,
+    "type": "category"
+  },
+  "principales-test": {
+    "parent": "menu-test",
+    "level": 1,
+    "type": "category"
+  },
+  "hamburguesas-test": {
+    "parent": "principales-test",
+    "level": 2,
+    "type": "category"
+  }
+}

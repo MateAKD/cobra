@@ -80,20 +80,8 @@ export async function POST(request: NextRequest) {
       "utf8"
     )
     
-    // También actualizar el archivo de mapeo antiguo para compatibilidad
-    try {
-      const oldMapping: any = {}
-      Object.entries(hierarchy).forEach(([key, value]: [string, any]) => {
-        oldMapping[key] = value.parent
-      })
-      await fs.writeFile(
-        MAPPING_FILE_PATH,
-        JSON.stringify(oldMapping, null, 2),
-        "utf8"
-      )
-    } catch (error) {
-      console.warn("Could not update old mapping file:", error)
-    }
+    // NO sincronizar hacia subcategory-mapping.json porque eso destruye la información de niveles
+    // El archivo subcategory-mapping.json se mantiene separado y se actualiza solo cuando es necesario
     
     return NextResponse.json({ 
       success: true, 
@@ -135,20 +123,8 @@ export async function DELETE(request: NextRequest) {
       "utf8"
     )
     
-    // También actualizar el archivo de mapeo antiguo
-    try {
-      const oldMapping: any = {}
-      Object.entries(hierarchy).forEach(([key, value]: [string, any]) => {
-        oldMapping[key] = value.parent
-      })
-      await fs.writeFile(
-        MAPPING_FILE_PATH,
-        JSON.stringify(oldMapping, null, 2),
-        "utf8"
-      )
-    } catch (error) {
-      console.warn("Could not update old mapping file:", error)
-    }
+    // NO sincronizar hacia subcategory-mapping.json porque eso destruye la información de niveles
+    // El archivo subcategory-mapping.json se mantiene separado
     
     return NextResponse.json({ 
       success: true, 

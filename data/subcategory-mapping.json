@@ -14,15 +14,12 @@
   "vinos-rosados": "coctelería",
   "copas-de-vino": "coctelería",
   "tapeos": "menu",
-  "milanesas": "menu",
-  "hamburguesas": "menu",
-  "ensaladas": "menu",
+  "milanesas": "principales",
+  "hamburguesas": "principales",
+  "ensaladas": "principales",
   "otros": "menu",
   "postres": "menu",
-  "bebidas": "promociones",
-  "rojas": "parrilla",
-  "prueba-sub-sub-categoria": "prueba-1",
-  "prueba-subsub": "prueba-subsub",
-  "subsub-test": "sub-cat-test",
-  "sub-sub": "subsub-test"
+  "botellas": "coctelería",
+  "principales-test": "menu-test",
+  "hamburguesas-test": "principales-test"
 }

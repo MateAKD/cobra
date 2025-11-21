@@ -364,46 +364,54 @@ export default function AdminPanel() {
     
     setMenuSections(sections)
 
-    // Actualizar el estado de todas las categorías basándose en el archivo JSON
-    // Y sincronizar con categories.json para asegurar que todas existan
+    // Actualizar el estado de todas las categorías
     setAllCategories(prev => {
-      // Obtener todas las categorías del archivo JSON (solo las que realmente existen)
       const jsonCategories: any[] = []
       
-      // Solo agregar categorías que están realmente en el archivo JSON
+      // 1. Primero agregar todas las categorías que están en categories.json
+      Object.keys(categories).forEach(key => {
+        const categoryInfo = categories[key]
+        
+        jsonCategories.push({
+          id: key,
+          name: categoryInfo.name || key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          isStandard: false,
+          description: categoryInfo.description || "",
+          order: categoryInfo.order ?? Number.MAX_SAFE_INTEGER
+        })
+      })
+      
+      // 2. Luego verificar si hay categorías en adminMenuData que NO están en categories.json
+      //    PERO SOLO si NO son subcategorías (no están en subcategoryMapping)
       Object.keys(adminMenuData).forEach(key => {
         const categoryData = adminMenuData[key as keyof typeof adminMenuData]
-        
-        // Verificar si es un array directo o un objeto con subcategorías
         const isArray = Array.isArray(categoryData)
-        const isObjectWithSubcategories = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
+        const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
         
-        if (isArray || isObjectWithSubcategories) {
-          // EXCLUIR SUBCATEGORÍAS: No agregar si esta clave es una subcategoría
-          const isSubcategory = Object.keys(currentSubcategoryMapping).includes(key)
+        // Solo agregar si:
+        // 1. Es un array o objeto (tiene datos)
+        // 2. NO está ya en jsonCategories
+        // 3. NO es una subcategoría (no está en las CLAVES de subcategoryMapping)
+        const alreadyAdded = jsonCategories.some(cat => cat.id === key)
+        const isSubcategory = Object.keys(currentSubcategoryMapping).includes(key)
+        
+        if ((isArray || isObject) && !alreadyAdded && !isSubcategory) {
+          // Esta categoría existe en el menú pero no en categories.json
+          // Agregarla temporalmente hasta que se sincronice
+          const categoryName = key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
           
-          if (!isSubcategory) {
-            // Obtener datos de categories.json si existen, o usar valores por defecto
-            const categoryInfo = (categories as any)?.[key] || {}
-            const categoryName = categoryInfo.name || key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-            
-            jsonCategories.push({
-              id: key,
-              name: categoryName,
-              isStandard: false,
-              description: categoryInfo.description || "",
-              order: categoryInfo.order ?? Number.MAX_SAFE_INTEGER
-            })
-          }
+          jsonCategories.push({
+            id: key,
+            name: categoryName,
+            isStandard: false,
+            description: "",
+            order: Number.MAX_SAFE_INTEGER
+          })
         }
       })
       
-      // Ordenar según el 'order' persistido en categories.json
-      jsonCategories.sort((a, b) => {
-        const aOrder = (categories as any)?.[a.id]?.order ?? a.order ?? Number.MAX_SAFE_INTEGER
-        const bOrder = (categories as any)?.[b.id]?.order ?? b.order ?? Number.MAX_SAFE_INTEGER
-        return aOrder - bOrder
-      })
+      // Ordenar según el 'order'
+      jsonCategories.sort((a, b) => a.order - b.order)
       
       return jsonCategories
     })
@@ -433,65 +441,13 @@ export default function AdminPanel() {
     }
   }, [categories])
 
-  // Sincronizar categories.json con todas las categorías de adminMenuData
-  // Eliminar categorías que no estén en adminMenuData y agregar las que falten
-  useEffect(() => {
-    if (adminMenuData && Object.keys(categories).length > 0 && isAuthenticated) {
-      // Obtener todas las categorías válidas del admin (excluyendo subcategorías)
-      const validCategoryIds = new Set<string>()
-      Object.keys(adminMenuData).forEach(key => {
-        const categoryData = adminMenuData[key as keyof typeof adminMenuData]
-        const isArray = Array.isArray(categoryData)
-        const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
-        
-        // CRÍTICO: Excluir subcategorías de TODOS los niveles
-        // Una clave es subcategoría si:
-        // 1. Está en las CLAVES de subcategoryMapping (es una subcategoría)
-        // 2. Está en los VALORES de subcategoryMapping pero NO está en categories.json (es una sub-subcategoría o subcategoría de nivel 2+)
-        const isSubcategory = Object.keys(subcategoryMapping).includes(key)
-        const isSubSubcategory = Object.values(subcategoryMapping).includes(key) && !categories[key]
-        
-        // Solo incluir si NO es subcategoría de ningún nivel Y tiene datos válidos
-        if ((isArray || isObject) && !isSubcategory && !isSubSubcategory) {
-          validCategoryIds.add(key)
-        }
-      })
-      
-      const categoriesToSync: any = {}
-      let needsSync = false
-      
-      // Agregar categorías que faltan en categories.json
-      validCategoryIds.forEach(key => {
-        if (!categories[key]) {
-          needsSync = true
-          const categoryName = key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-          categoriesToSync[key] = {
-            name: categoryName,
-            description: "",
-            order: validCategoryIds.size + Object.keys(categoriesToSync).length
-          }
-        } else {
-          // Mantener las categorías existentes que están en adminMenuData
-          categoriesToSync[key] = categories[key]
-        }
-      })
-      
-      // Verificar si hay categorías en categories.json que NO están en adminMenuData
-      const categoriesToRemove = Object.keys(categories).filter(key => !validCategoryIds.has(key))
-      if (categoriesToRemove.length > 0) {
-        needsSync = true
-        console.log("Eliminando categorías que no están en adminMenuData:", categoriesToRemove)
-      }
-      
-      // Si hay cambios (agregar nuevas o eliminar viejas), guardar
-      if (needsSync) {
-        // categoriesToSync solo contiene las categorías válidas (las del admin)
-        updateCategories(categoriesToSync).catch(err => 
-          console.warn("Error sincronizando categorías:", err)
-        )
-      }
-    }
-  }, [adminMenuData, categories, subcategoryMapping, isAuthenticated, updateCategories])
+  // DESHABILITADO: Este useEffect causaba que subcategorías se convirtieran en categorías principales
+  // La sincronización de categories.json debe hacerse MANUALMENTE solo cuando sea necesario
+  // NO automáticamente en cada cambio
+  
+  // useEffect(() => {
+  //   ... código deshabilitado ...
+  // }, [])
 
   const loadMenuData = async () => {
     try {
@@ -1397,12 +1353,18 @@ export default function AdminPanel() {
           })
         }
         
+        // Recargar categorías desde categories.json
+        await loadCategories()
+        
+        // Recargar datos del menú
+        await refetchAdminMenu()
+        
         // Limpiar y cerrar modal
         setNewCategoryName("")
         setIsAddingCategory(false)
         
-        // Recargar datos del menú
-        await refetchAdminMenu()
+        setNotificationStatus("✅ Categoría creada correctamente")
+        setTimeout(() => setNotificationStatus(""), 3000)
       }
     } catch (error) {
       console.error("Error adding category:", error)
@@ -1637,6 +1599,30 @@ export default function AdminPanel() {
       } catch (error) {
         console.error("Error guardando mapeo de subcategorías:", error)
         alert("Advertencia: La subcategoría se creó pero no se pudo guardar el mapeo")
+      }
+      
+      // TAMBIÉN GUARDAR EN category-hierarchy.json con level: 1
+      try {
+        const hierarchyResponse = await fetch("/api/admin/category-hierarchy", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            subcategoryId: finalSubcategoryId,
+            parentId: selectedCategoryForSubcategory,
+            level: 1,
+            type: "category"
+          }),
+        })
+        
+        if (!hierarchyResponse.ok) {
+          console.warn("No se pudo guardar en category-hierarchy.json")
+        } else {
+          console.log("Subcategoría guardada en category-hierarchy.json con level: 1")
+        }
+      } catch (error) {
+        console.warn("Error guardando jerarquía:", error)
       }
       
       // Limpiar y cerrar modal
@@ -2051,25 +2037,8 @@ export default function AdminPanel() {
       setSaving(true)
       setNotificationStatus(`Creando sub-subcategoría "${newSubSubName}"...`)
 
-      // Agregar al mapeo de subcategorías con el parentSubcategoryId como padre
-      const newMapping = { ...subcategoryMapping }
-      newMapping[newSubSubId] = parentSubcategoryId
-      setSubcategoryMapping(newMapping)
-
-      // Persistir el mapeo
-      const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newMapping),
-      })
-      
-      if (!mappingResponse.ok) {
-        throw new Error("Error al guardar el mapeo de subcategorías")
-      }
-
-      // Agregar a la jerarquía con level 2
+      // PASO 1: Agregar a la jerarquía con level 2 PRIMERO
+      // Esto mantiene la estructura correcta con los niveles
       const hierarchyResponse = await fetch("/api/admin/category-hierarchy", {
         method: "POST",
         headers: {
@@ -2087,7 +2056,27 @@ export default function AdminPanel() {
         throw new Error("Error al guardar la jerarquía")
       }
 
-      // Crear la sección vacía en el menú
+      // PASO 2: Agregar al mapeo de subcategorías con el parentSubcategoryId como padre
+      const newMapping = { ...subcategoryMapping }
+      newMapping[newSubSubId] = parentSubcategoryId
+
+      // Persistir el mapeo
+      const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newMapping),
+      })
+      
+      if (!mappingResponse.ok) {
+        throw new Error("Error al guardar el mapeo de subcategorías")
+      }
+
+      // Actualizar estado local del mapeo
+      setSubcategoryMapping(newMapping)
+
+      // PASO 3: Crear la sección vacía en el menú
       const menuUpdate: any = {}
       menuUpdate[newSubSubId] = []
 
@@ -2103,24 +2092,41 @@ export default function AdminPanel() {
         throw new Error("Error al crear la sección en el menú")
       }
 
-      // Actualizar estado local
+      // Actualizar estado local del menú
       setMenuSections(prev => ({
         ...prev,
         [newSubSubId]: []
       }))
 
-      setNotificationStatus(`✅ Sub-subcategoría "${newSubSubName}" creada correctamente`)
-      setTimeout(() => setNotificationStatus(""), 3000)
-
-      // Recargar datos
-      await refetchAdminMenu()
+      // PASO 4: Recargar todos los datos para asegurar sincronización
+      setNotificationStatus(`🔄 Sincronizando cambios de "${newSubSubName}"...`)
+      
+      // Esperar un momento para que el servidor termine de escribir los archivos
+      await new Promise(resolve => setTimeout(resolve, 300))
       
       // Recargar el mapeo
-      const reloadMapping = await fetch("/api/admin/subcategory-mapping")
+      const reloadMapping = await fetch("/api/admin/subcategory-mapping", {
+        cache: 'no-store'
+      })
       if (reloadMapping.ok) {
         const updatedMapping = await reloadMapping.json()
         setSubcategoryMapping(updatedMapping)
       }
+      
+      // Recargar la jerarquía
+      const reloadHierarchy = await fetch("/api/admin/category-hierarchy", {
+        cache: 'no-store'
+      })
+      if (reloadHierarchy.ok) {
+        const updatedHierarchy = await reloadHierarchy.json()
+        console.log("Jerarquía actualizada:", updatedHierarchy)
+      }
+      
+      // Recargar datos del menú
+      await refetchAdminMenu()
+
+      setNotificationStatus(`✅ Sub-subcategoría "${newSubSubName}" creada correctamente`)
+      setTimeout(() => setNotificationStatus(""), 3000)
 
     } catch (error) {
       console.error("Error creando sub-subcategoría:", error)
@@ -2485,116 +2491,22 @@ export default function AdminPanel() {
 
   // Función para confirmar y sincronizar todos los cambios
   const handleConfirmAndSync = async () => {
+    // NOTA: Los cambios se guardan automáticamente cuando se hacen.
+    // Este botón solo muestra un mensaje de confirmación sin recargar nada,
+    // para evitar que los productos desaparezcan temporalmente.
+    
     try {
       setSaving(true)
-      setNotificationStatus("🔄 Sincronizando todos los cambios...")
+      setNotificationStatus("✅ Todos los cambios están guardados correctamente")
       
-      // 1. Recargar mapeo de subcategorías PRIMERO
-      let currentSubcategoryMapping = subcategoryMapping
-      try {
-        const mappingResponse = await fetch("/api/admin/subcategory-mapping")
-        if (mappingResponse.ok) {
-          const mappingData = await mappingResponse.json()
-          currentSubcategoryMapping = mappingData
-          setSubcategoryMapping(mappingData)
-        }
-      } catch (error) {
-        console.warn("Error recargando mapeo de subcategorías:", error)
-      }
+      // Pequeña pausa para que el usuario vea el mensaje
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
-      // 2. Recargar datos del admin para asegurar que todo esté guardado
-      await refetchAdminMenu()
-      
-      // 3. Esperar un momento para que adminMenuData se actualice
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // 4. Obtener los datos más recientes del menú directamente desde la API
-      let latestMenuData = adminMenuData
-      try {
-        const menuResponse = await fetch("/api/menu")
-        if (menuResponse.ok) {
-          latestMenuData = await menuResponse.json()
-        }
-      } catch (error) {
-        console.warn("Error obteniendo datos del menú:", error)
-      }
-      
-      // 5. Limpiar y reconstruir categories.json SOLO con categorías que están en el menú
-      if (latestMenuData) {
-        // Obtener todas las categorías válidas del menú (excluyendo subcategorías)
-        const validCategoryIds = new Set<string>()
-        Object.keys(latestMenuData).forEach(key => {
-          const categoryData = (latestMenuData as any)[key]
-          const isArray = Array.isArray(categoryData)
-          const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
-          
-          // Solo incluir si no es una subcategoría
-          if ((isArray || isObject) && !currentSubcategoryMapping[key]) {
-            validCategoryIds.add(key)
-          }
-        })
-        
-        // Construir categories.json solo con categorías válidas
-        const cleanCategories: any = {}
-        let order = 1
-        validCategoryIds.forEach(key => {
-          // Obtener nombre de categories.json si existe, o generar desde el ID
-          const existingCategory = categories[key]
-          const categoryName = existingCategory?.name || key.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' ')
-          
-          cleanCategories[key] = {
-            name: categoryName,
-            description: existingCategory?.description || "",
-            order: existingCategory?.order || order,
-            timeRestricted: existingCategory?.timeRestricted || false,
-            startTime: existingCategory?.startTime,
-            endTime: existingCategory?.endTime
-          }
-          order++
-        })
-        
-        // IMPORTANTE: Solo guardar si hay categorías, nunca dejar vacío
-        if (Object.keys(cleanCategories).length > 0) {
-          // Guardar categories.json con las categorías válidas
-          await updateCategories(cleanCategories)
-          
-          // Recargar categorías
-          await loadCategories()
-        } else {
-          console.warn("No se encontraron categorías válidas para sincronizar")
-          setNotificationStatus("⚠️ No se encontraron categorías para sincronizar")
-          setTimeout(() => setNotificationStatus(""), 5000)
-          return
-        }
-      }
-      
-      // 6. Sincronizar datos locales
-      if (adminMenuData) {
-        await syncAdminData()
-      }
-      
-      // 7. Forzar recarga del menú público (invalidar caché)
-      try {
-        await fetch("/api/menu", { 
-          method: "GET",
-          cache: "no-store",
-          headers: {
-            "Cache-Control": "no-cache"
-          }
-        })
-      } catch (error) {
-        console.warn("Error refrescando menú público:", error)
-      }
-      
-      setNotificationStatus("✅ Todos los cambios han sido sincronizados correctamente")
-      setTimeout(() => setNotificationStatus(""), 5000)
-      
+      setNotificationStatus("")
     } catch (error) {
-      console.error("Error sincronizando cambios:", error)
-      setNotificationStatus("❌ Error al sincronizar cambios")
-      setTimeout(() => setNotificationStatus(""), 5000)
+      console.error("Error:", error)
+      setNotificationStatus("❌ Error")
+      setTimeout(() => setNotificationStatus(""), 3000)
     } finally {
       setSaving(false)
     }
@@ -2651,6 +2563,11 @@ export default function AdminPanel() {
             console.log(`Subcategoría ${subcatId}:`, { subcatName, productCount: subcatData.length })
           }
           
+          // Contar subsub-categorías (nivel 2) para esta subcategoría (nivel 1)
+          const subSubcategoryCount = Object.entries(subcategoryMapping)
+            .filter(([subSubId, parentId]) => parentId === subcatId)
+            .length
+          
           return (
             <div key={subcatId} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="flex justify-between items-center mb-4">
@@ -2660,6 +2577,11 @@ export default function AdminPanel() {
                   <span className="text-sm text-gray-500 font-normal">
                     ({subcatData.length} producto{subcatData.length !== 1 ? 's' : ''})
                   </span>
+                  {subSubcategoryCount > 0 && (
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full ml-2">
+                      {subSubcategoryCount} subsub
+                    </span>
+                  )}
                 </h4>
                 <div className="flex gap-2 items-center">
                   <select
@@ -2676,7 +2598,8 @@ export default function AdminPanel() {
                   </select>
                   <Button 
                     size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold"
+                    disabled={saving}
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => {
                       setSelectedSectionForProduct(subcatId)
                       setIsAddingProduct(true)
@@ -2688,7 +2611,8 @@ export default function AdminPanel() {
                   <Button 
                     size="sm"
                     variant="destructive"
-                    className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                    disabled={saving}
+                    className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ color: "#fff", letterSpacing: "0.04em" }}
                     onClick={() => handleDeleteSubcategory(subcatId)}
                   >
@@ -3280,7 +3204,7 @@ export default function AdminPanel() {
             <Button 
               onClick={handleConfirmAndSync}
               disabled={saving}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0 font-semibold admin-action-button"
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <>
@@ -3296,28 +3220,32 @@ export default function AdminPanel() {
             </Button>
             <Button 
               onClick={() => setShowPriceIncreaseModal(true)}
-              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+              disabled={saving}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="text-lg">📈</span>
               Aumentar Precios
             </Button>
             <Button 
               onClick={() => setIsReorderingCategories(true)}
-              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+              disabled={saving}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <GripVertical className="w-4 h-4" />
               <span style={{ color: "white" }}>Reordenar Categorías</span>
             </Button>
             <Button 
               onClick={() => setIsEditingCategories(true)}
-              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+              disabled={saving}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Edit className="w-4 h-4" />
               <span style={{ color: "white" }}>Editar Categorías</span>
             </Button>
             <Button 
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+              disabled={saving}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Lock className="w-4 h-4" />
               Cerrar Sesión
@@ -3327,8 +3255,36 @@ export default function AdminPanel() {
 
         {/* Indicador de estado de notificaciones */}
         {notificationStatus && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800 text-sm font-medium">{notificationStatus}</p>
+          <div className={`mb-6 p-4 rounded-lg border-2 ${
+            saving 
+              ? 'bg-yellow-50 border-yellow-400 animate-pulse' 
+              : notificationStatus.includes('✅')
+                ? 'bg-green-50 border-green-400'
+                : notificationStatus.includes('❌')
+                  ? 'bg-red-50 border-red-400'
+                  : 'bg-blue-50 border-blue-400'
+          }`}>
+            <div className="flex items-center gap-3">
+              {saving && (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-600"></div>
+              )}
+              <p className={`text-sm font-bold ${
+                saving 
+                  ? 'text-yellow-900' 
+                  : notificationStatus.includes('✅')
+                    ? 'text-green-900'
+                    : notificationStatus.includes('❌')
+                      ? 'text-red-900'
+                      : 'text-blue-900'
+              }`}>
+                {notificationStatus}
+              </p>
+            </div>
+            {saving && (
+              <p className="text-xs text-yellow-700 mt-2 font-semibold">
+                ⚠️ Por favor espera... No realices otros cambios hasta que termine el guardado.
+              </p>
+            )}
           </div>
         )}
 
@@ -3462,7 +3418,8 @@ export default function AdminPanel() {
                     {(!Object.values(subcategoryMapping).includes(category.id)) && (
                       <Button 
                         size="sm"
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                        disabled={saving}
+                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => setIsAdding(category.id)}
                       >
                         <Plus className="w-4 h-4 text-white" />
@@ -4195,7 +4152,7 @@ export default function AdminPanel() {
               {/* Gestión de subcategorías */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h4 className="text-lg font-semibold text-gray-900">Subcategorías</h4>
+                <h4 className="text-lg font-semibold text-gray-900">Subcategorías</h4>
                   <Button
                     onClick={() => {
                       setSelectedCategoryForReorder(editingCategory.id)
@@ -4219,8 +4176,8 @@ export default function AdminPanel() {
                       return (
                         <div key={subcatId} className="border rounded-lg">
                           <div className="flex justify-between items-center p-3 bg-gray-50">
-                            <span className="font-medium text-gray-700">{subcatName}</span>
-                            <div className="flex gap-2">
+                          <span className="font-medium text-gray-700">{subcatName}</span>
+                          <div className="flex gap-2">
                               <Button 
                                 variant="outline"
                                 size="sm"
@@ -4231,35 +4188,35 @@ export default function AdminPanel() {
                                     handleAddSubSubcategory(subcatId, newSubId, newSubName)
                                   }
                                 }}
-                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0 font-semibold"
+                                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white border-0 font-semibold"
                               >
                                 <Plus className="w-3 h-3" />
-                                Agregar Subcat
+                                Agregar Sub-Sub
                               </Button>
-                              <Button 
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
-                                  if (percentage && !isNaN(parseFloat(percentage))) {
-                                    handleBulkPriceIncrease(subcatId, parseFloat(percentage))
-                                  }
-                                }}
-                                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                              >
-                                <Plus className="w-3 h-3" />
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
+                                if (percentage && !isNaN(parseFloat(percentage))) {
+                                  handleBulkPriceIncrease(subcatId, parseFloat(percentage))
+                                }
+                              }}
+                              className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                            >
+                              <Plus className="w-3 h-3" />
                                 Precios
-                              </Button>
-                              <Button 
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteSubcategory(subcatId)}
-                                className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
-                              >
-                                <Trash2 className="w-3 h-3 text-white" />
-                                Eliminar
-                              </Button>
-                            </div>
+                            </Button>
+                            <Button 
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteSubcategory(subcatId)}
+                              className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                            >
+                              <Trash2 className="w-3 h-3 text-white" />
+                              Eliminar
+                            </Button>
+                          </div>
                           </div>
                           
                           {/* Sub-subcategorías */}

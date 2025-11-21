@@ -1,61 +1,18 @@
 {
   "menu": [],
-  "promociones": [],
   "desayunos-y-meriendas": [],
   "coctelería": [],
-  "parrilla": [
-    {
-      "id": "product-1763338230285-hrrd5ptdz",
-      "name": "ojo de bife",
-      "description": "320gr",
-      "price": "19200",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763338262270-h8p5nuf3l",
-      "name": "entraña",
-      "description": "250gr",
-      "price": "18500",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763338457287-fbuxju080",
-      "name": "tira de asado",
-      "description": "350gr",
-      "price": "16500",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763338482026-kwgwepehs",
-      "name": "pollo",
-      "description": "suprema de 250gr",
-      "price": "12500",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763338541248-zy1ac0fuy",
-      "name": "chorizo",
-      "description": "2 unidades",
-      "price": "5000",
-      "tags": [],
-      "hidden": false
-    }
-  ],
   "guarniciones": [
     {
-      "id": "product-1763496931307-xgt8j9ud1",
+      "id": "product-1763604692644-1a930o1il",
       "name": "ensalada mixta",
-      "description": "mix de verdesy tomates cherrys",
+      "description": "",
       "price": "6200",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763497005492-98el38ki7",
+      "id": "product-1763610715164-fbcvqic1k",
       "name": "papas fritas",
       "description": "mezcla de especias",
       "price": "6500",
@@ -63,298 +20,51 @@
       "hidden": false
     }
   ],
-  "cafeteria": [
+  "parrilla": [
     {
-      "id": "product-1763497234265-alkbiv7zu",
-      "name": "espresso",
-      "description": "espresso simple",
-      "price": "3900",
+      "id": "product-1763604713807-ax66vlu76",
+      "name": "ojo de bife",
+      "description": "320 gr",
+      "price": "19200",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763497261216-nrp8j3m5a",
-      "name": "americano",
-      "description": "doble espresso mas agua",
-      "price": "4700",
+      "id": "product-1763610454664-v9x90ss6g",
+      "name": "entraña",
+      "description": "250gr",
+      "price": "18500",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763497286861-ylmgzaamz",
-      "name": "doble espresso",
-      "description": "espresso doble",
-      "price": "4700",
+      "id": "product-1763610512239-coaba1vk3",
+      "name": "tira de asado",
+      "description": "350gr",
+      "price": "16500",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763497317386-bp46d7aja",
-      "name": "capuccino",
-      "description": "espresso simple mas leche espumada",
-      "price": "5400",
+      "id": "product-1763610562611-4ais6twji",
+      "name": "pollo",
+      "description": "suprema de 250 gr",
+      "price": "12500",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763497381026-oaxyjcaxi",
-      "name": "flat white",
-      "description": "espresso doble mas leche espumada",
-      "price": "5900",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497419404-dckel0va0",
-      "name": "latte",
-      "description": "doble espresso, leche texturizada y syrup de vainilla",
-      "price": "6100",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497491507-jn36v6zvp",
-      "name": "latte avellanas",
-      "description": "caramel doble espresso, leche texturizada y syrup de avellanas",
-      "price": "6100",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497538908-j5t3s9rco",
-      "name": "ice coffee",
-      "description": "doble espresso, mas leche espumada en frio y hielo",
-      "price": "5800",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497561200-1tak93v10",
-      "name": "adicional leche de almendras",
-      "description": "",
-      "price": "800",
+      "id": "product-1763610597185-g74wfhby9",
+      "name": "chorizo",
+      "description": "2 unidades",
+      "price": "5000",
       "tags": [],
       "hidden": false
     }
   ],
-  "pasteleria": [
-    {
-      "id": "product-1763497638642-e7f0bu9r9",
-      "name": "tostadas de masa madre",
-      "description": "con queso untable y mermelada de estacion o dulce de leche",
-      "price": "7100",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497658609-czulb7884",
-      "name": "budin de limon y arandanos",
-      "description": "",
-      "price": "6100",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497676275-g05z1z36j",
-      "name": "budin de banana y chocolate",
-      "description": "",
-      "price": "6100",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497701094-refnabg8v",
-      "name": "chipa",
-      "description": "",
-      "price": "5700",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497720422-ooij6tsbt",
-      "name": "brownie",
-      "description": "",
-      "price": "6500",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497748790-77jg91a07",
-      "name": "cookie",
-      "description": "",
-      "price": "5700",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763497770781-pkzmgvi4b",
-      "name": "cheescake de frutos rojos",
-      "description": "",
-      "price": "9500",
-      "tags": [],
-      "hidden": false
-    }
-  ],
-  "brunch": [],
-  "cervezas": [
-    {
-      "id": "product-1763498256150-71vxusdz4",
-      "name": "corona porron",
-      "description": "opcion sin alcohol",
-      "price": "7000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498282893-5mg7nhrcw",
-      "name": "stella artois porron",
-      "description": "opcion sin alcohol",
-      "price": "7500",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498313130-qx59ynb7q",
-      "name": "bucket corona x 4",
-      "description": "",
-      "price": "21000",
-      "tags": [],
-      "hidden": false
-    }
-  ],
-  "tragos-clasicos": [
-    {
-      "id": "product-1763498353513-idf98q6b2",
-      "name": "fernet branca & cola",
-      "description": "",
-      "price": "11000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498381949-mpfx010sw",
-      "name": "gin tonic",
-      "description": "",
-      "price": "11000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498570622-c1aezm9ky",
-      "name": "caipiroska",
-      "description": "smirnoff- lima/maracuya/frutos rojos",
-      "price": "12000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498606548-lhbjh28d6",
-      "name": "johnnie lemon",
-      "description": "",
-      "price": "12000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498625819-est0jnpip",
-      "name": "johnnie collins",
-      "description": "",
-      "price": "12000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498644324-qdwrd9lzj",
-      "name": "mojito",
-      "description": "",
-      "price": "12000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498656260-40hdjzusn",
-      "name": "negroni",
-      "description": "",
-      "price": "12000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498666624-2szod23q0",
-      "name": "penicilin",
-      "description": "",
-      "price": "13000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498676838-35dxcz2xw",
-      "name": "tanqueray tonic",
-      "description": "",
-      "price": "13000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763498773803-zo28y00qw",
-      "name": "tinto de verano",
-      "description": "jarra 1 litro- vino altos del plata malbec/vermut blanco/ ramazzotti/ cherry brandy/ jugo de limon y pomelo/ arandanos y almibar de frambuesa",
-      "price": "20000",
-      "tags": [],
-      "hidden": false
-    }
-  ],
-  "especiales": [
-    {
-      "id": "product-1763499072869-nmwq1tvcu",
-      "name": "supernova",
-      "description": "chandon extra brut/ jugo de pomelo/ almibar simple.",
-      "price": "11000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763499128440-pfbq4tcx3",
-      "name": "elizabeth",
-      "description": "havana 3 años/ aperol/ jugo de mandarina, pomelo, limon y maracuya.",
-      "price": "13000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763499182979-soguyfgqd",
-      "name": "cobra sour",
-      "description": "jw red/ apricot brandy/ jugo de pomelo, naranja y limon/ almibar de cedron.",
-      "price": "13000",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763499234017-s2a63pc8m",
-      "name": "lola",
-      "description": "gin gordons/ jugo de limon, arandanos y pomelo/ almibar de romero/ frutos rojos.",
-      "price": "13000",
-      "tags": [],
-      "hidden": false
-    }
-  ],
-  "shots": [],
-  "tragos-con-red-bull": [],
-  "vinos-tintos": [],
-  "vinos-blancos": [],
-  "vinos-rosados": [],
-  "copas-de-vino": [],
   "tapeos": [
     {
-      "id": "product-1763574738890-bshh4icuk",
-      "name": "papas fritas",
-      "description": "sazonadas, con un dip de alioli",
-      "price": "10400",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763574768778-x724p8bdm",
+      "id": "product-1763610955314-k6zfysvtu",
       "name": "papas sazonadas",
       "description": "mezcla de especias y queso parmesano",
       "price": "9800",
@@ -362,47 +72,52 @@
       "hidden": false
     },
     {
-      "id": "product-1763574834957-rv436aluo",
+      "id": "product-1763610992963-g2sm5jz0v",
+      "name": "papas fritas",
+      "description": "sazonadas, con un dip de alioli.",
+      "price": "10400",
+      "tags": [
+        "vegan"
+      ],
+      "hidden": false
+    },
+    {
+      "id": "product-1763611061383-5rrg9b6vk",
       "name": "empanadas de carne",
-      "description": "dos empanadas fritas de carne cortada a cuchillo, con dip de salsa llasjua",
+      "description": "dos empanadas fritas de carne cortada a cuchillo, con dip de salsa llasjua.",
       "price": "11200",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763574869000-g24txzglx",
+      "id": "product-1763611110236-njpox9ptk",
       "name": "buñuelos de verduras",
       "description": "con dip de alioli de morrones asados",
       "price": "11900",
       "tags": [],
-      "hidden": false
+      "hidden": true,
+      "hiddenReason": "agotaDO",
+      "hiddenBy": "CANDELA",
+      "hiddenAt": "2025-11-20T16:41:15.987Z"
     },
     {
-      "id": "product-1763574906559-jezfknc03",
+      "id": "product-1763611501095-w95erpzjp",
       "name": "chicken crispy",
-      "description": "pollo marinado crocante, con salsa llasjua y pico de gallo",
-      "price": "12400",
-      "tags": [],
-      "hidden": false
-    },
-    {
-      "id": "product-1763574958278-heminqigp",
-      "name": "papas cobra",
-      "description": "sazonadas, con cheddar, bacon y verdeo",
+      "description": "pollo marinado crocante, con salsa llasjua y pico de gallo.",
       "price": "12900",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763575006406-4dip1byoz",
+      "id": "product-1763611869913-3gvk086o6",
       "name": "provoleta",
-      "description": "conserva de morrones asados/ pesto/ pan de masa madre",
+      "description": "conserva de morrones asados/ pesto/ pan de masa madre.",
       "price": "14800",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763575060328-922tv7nt9",
+      "id": "product-1763612326549-0svh00ate",
       "name": "burrata",
       "description": "base de pan con manteca de romero/ mix de verdes/ tomates asados/ frutos secos/ pesto.",
       "price": "16300",
@@ -412,23 +127,23 @@
   ],
   "milanesas": [
     {
-      "id": "product-1763575464961-rdqlo9s2g",
-      "name": "napolitana",
-      "description": "jamon cocido/ mozzarella/ oreganato. con papas fritas sazonadas/ mix de verdes aderezados.",
+      "id": "product-1763612759517-v13ig0615",
+      "name": "americana",
+      "description": "queso cheddar fundido/ panceta. con papas fritas sazonadas/ mix de verdes",
       "price": "18600",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763575511149-rwiye24pj",
+      "id": "product-1763613023811-jsdwp643w",
       "name": "suiza",
-      "description": "mozarella/ parmesano. con papas fritas sazonadas/ mix de verdes aderezados.",
+      "description": "mozzarella/ parmesano. con papas fritas sazonadas/ mix de verdes aderazados.",
       "price": "18600",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763575550281-yavt99yl8",
+      "id": "product-1763613086825-1c1408j09",
       "name": "francesa",
       "description": "cebolla caramelizada/ queso azul. con papas fritas sazonadas/ mix de verdes aderezados.",
       "price": "18600",
@@ -438,23 +153,23 @@
   ],
   "hamburguesas": [
     {
-      "id": "product-1763575707456-hoy33lb0i",
+      "id": "product-1763613174508-cae6tos5y",
       "name": "doble quarter",
-      "description": "doble carne/ cheddar/ salsa estilo cuarto de libra. con papas fritas sazonadas",
+      "description": "doble carne/ cheddar/ salsa estilo doble cuarto de libra. con papas fritas sazonadas.",
       "price": "15900",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763575752418-mj1h5ob6t",
+      "id": "product-1763613371305-93jg75rcx",
       "name": "sweet island",
-      "description": "doble carne/ cheddar/ panceta/ salsa mil islas. con papas fritas sazonadas",
+      "description": "doble carne/ cheddar/ panceta/ salsa mil islas. con papas fritas sazonadas.",
       "price": "16700",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763575795922-pb8th8cho",
+      "id": "product-1763613426461-bvf6867tq",
       "name": "provo cobra",
       "description": "queso provolone/ conserva de morrones asados. con papas fritas sazonadas.",
       "price": "16500",
@@ -464,123 +179,346 @@
   ],
   "ensaladas": [
     {
-      "id": "product-1763575956993-0li9uunv6",
+      "id": "product-1763613494435-ctcwud9sc",
       "name": "ensalada caesar",
-      "description": "lechuga/ salsa caesar/ parmesano/ croutones/ pollo grillado.",
+      "description": "lechuga, salsa caesar, parmesano, croutones y pollo grillado.",
       "price": "15600",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763576011834-7ty7u2nq3",
+      "id": "product-1763613538695-iob8uhtpu",
       "name": "vegan salad",
-      "description": "hongos asados/ variedad de hojas verdes/ cherry/ palta/ mix de semillas.",
+      "description": "hongos asados, variedad de hojas verdes, cherry, palta y mix de semillas.",
       "price": "16400",
+      "tags": [],
+      "hidden": false
+    }
+  ],
+  "principales": [],
+  "postres": [
+    {
+      "id": "product-1763613872820-nm3jb17sr",
+      "name": "brownie con helado",
+      "description": "cuadrado brownie mas bocha de americana.",
+      "price": "9200",
       "tags": [],
       "hidden": false
     }
   ],
   "otros": [
     {
-      "id": "product-1763576080968-31xoxcgwq",
+      "id": "product-1763613969792-cklwvwx7l",
       "name": "pollo grillado",
-      "description": "con papas fritas sazonadas/ mix de verdes aderezados.",
+      "description": "",
       "price": "16400",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763576102893-nslfth4l5",
+      "id": "product-1763614012661-a8epgehfj",
       "name": "burritos de bondiola",
       "description": "",
       "price": "18600",
       "tags": [],
       "hidden": false
+    }
+  ],
+  "cervezas": [
+    {
+      "id": "product-1763614403539-sk68oion0",
+      "name": "corona porron",
+      "description": "opcion sin alcohol",
+      "price": "7000",
+      "tags": [],
+      "hidden": false
     },
     {
-      "id": "product-1763576125333-6y6yfbc5h",
-      "name": "ojo de bife",
+      "id": "product-1763614431178-ralcxozng",
+      "name": "stella artois porron",
+      "description": "opcion sin alcohol",
+      "price": "7500",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763614448303-o1duoola4",
+      "name": "bucket corona x 4",
       "description": "",
-      "price": "25600",
+      "price": "21000",
       "tags": [],
       "hidden": false
     }
   ],
-  "postres": [
+  "tragos-clasicos": [
     {
-      "id": "product-1763576167687-0nqrffyv1",
-      "name": "brownie con helado",
-      "description": "cuadrado de bownie mas bocha de helado de americana",
-      "price": "11000",
+      "id": "product-1763614834511-vzqr1ilku",
+      "name": "caipiroska",
+      "description": "smirnoff, lima/ maracuya/ frutos rojos.",
+      "price": "12000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763614878357-f15rz0ear",
+      "name": "aperol spritz",
+      "description": "aperol, espumante chandon y soda.",
+      "price": "12000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763614891038-dd7fre34l",
+      "name": "mojito",
+      "description": "",
+      "price": "12000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763614902694-amomvnnla",
+      "name": "negroni",
+      "description": "",
+      "price": "12000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763614916589-3bks6wpk9",
+      "name": "penicilin",
+      "description": "",
+      "price": "13000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763614928606-v9eixp327",
+      "name": "tanqueray tonic",
+      "description": "",
+      "price": "13000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763615034489-fskynojek",
+      "name": "tinto de verano",
+      "description": "jarra 1 litros- vino altos del plata malbec/ vermut blanco/ ramazzotti/ cherry brandy/ jugo de limon y pomelo/ arandanos y almibar de frambuesa.",
+      "price": "20000",
       "tags": [],
       "hidden": false
     }
   ],
-  "bebidas": [
+  "especiales": [
     {
-      "id": "product-1763576254350-f4yov1z27",
-      "name": "2 coronas",
-      "description": "",
+      "id": "product-1763615288600-4ofx4mwb7",
+      "name": "lola",
+      "description": "gin gordons/ jugo de limon, arandanos  y pomelo/ almibar de romero/ frutos rojos.",
+      "price": "13000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763615311052-zwoha72vq",
+      "name": "elizabeth",
+      "description": "havana 3 años/ aperol/ jugo de mandarina, pomelo, limon y maracuya.",
+      "price": "13000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763615324563-74jue5hy8",
+      "name": "dos reis",
+      "description": "malibu/ cherry brandy/ pulpa de anana/ jugo de frutos rojos/ cordial de lima y menta.",
+      "price": "13000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763615336633-42hjacw0h",
+      "name": "supernova",
+      "description": "chandon extra brut/ jugo de pomelo/ almibar simple.",
       "price": "11000",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763576320575-u4ti20wxq",
-      "name": "2 pintas patagonia",
-      "description": "",
-      "price": "11000",
+      "id": "product-1763615349423-5hkjlo2vr",
+      "name": "cobra sour",
+      "description": "jw red/ apricot brandy/ jugo de pomelo, naranja y limon/ almibar de cedron.",
+      "price": "13000",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763576341630-paer6l8x0",
-      "name": "2 fernet cola",
+      "id": "product-1763615365383-6ho5dotnu",
+      "name": "ofidios",
+      "description": "gin gordons/ aperol/ jugo de pomelo/ almibar de frambuesa.",
+      "price": "13000",
+      "tags": [],
+      "hidden": false
+    }
+  ],
+  "cafeteria": [
+    {
+      "id": "product-1763615564708-l32joefpp",
+      "name": "espresso",
+      "description": "espresso simple",
+      "price": "3900",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763615593239-mfez1ungz",
+      "name": "americano",
+      "description": "doble espresso mas agua",
+      "price": "4700",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763615627343-ywpnrg0h5",
+      "name": "doble espresso",
+      "description": "espresso doble",
+      "price": "4700",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763615884397-pdthbjd6v",
+      "name": "capuccino",
+      "description": "espresso simple mas leche espumada",
+      "price": "5400",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763615962923-6qu2u4y5r",
+      "name": "latte",
+      "description": "doble espresso, leche texturizada.",
+      "price": "5700",
+      "tags": [],
+      "hidden": false
+    }
+  ],
+  "shots": [
+    {
+      "id": "product-1763657747252-wkejcwem4",
+      "name": "jose cuervo",
+      "description": "blanco/ dorado.",
+      "price": "7000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763657757981-1llhv738y",
+      "name": "jagermeister",
+      "description": "",
+      "price": "14000",
+      "tags": [],
+      "hidden": false
+    }
+  ],
+  "tragos-con-red-bull": [
+    {
+      "id": "product-1763687258567-1804relp7",
+      "name": "gordons",
       "description": "",
       "price": "16000",
       "tags": [],
       "hidden": false
     },
     {
-      "id": "product-1763576357734-c01n66anl",
-      "name": "2 gin tonic",
+      "id": "product-1763687287471-mwegu5hrh",
+      "name": "tanqueray",
+      "description": "",
+      "price": "18000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763687315315-wkapuay1j",
+      "name": "jw red label",
       "description": "",
       "price": "16000",
       "tags": [],
       "hidden": false
-    }
-  ],
-  "prueba-subsub": [],
-  "sub-cat-test": [
+    },
     {
-      "id": "product-1763583245923-0ohzbbz4y",
-      "name": "test",
-      "description": "asde",
-      "price": "123",
+      "id": "product-1763687362578-8e4xca40y",
+      "name": "jw black label",
+      "description": "",
+      "price": "19500",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763687408546-c1o47qt0l",
+      "name": "sernova",
+      "description": "",
+      "price": "16000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763687436950-achbaorht",
+      "name": "absolut",
+      "description": "",
+      "price": "19500",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763687452088-fwo0royrn",
+      "name": "jagermeister",
+      "description": "",
+      "price": "20000",
       "tags": [],
       "hidden": false
     }
   ],
-  "rojas": [],
-  "prueba-sub-sub-categoria": [],
-  "subsub-test": [
+  "botellas": [
     {
-      "id": "product-1763583695009-n9xf1yfcg",
-      "name": "asd",
-      "description": "asd",
-      "price": "123",
+      "id": "product-1763689383361-gzbe119b8",
+      "name": "gin gordons",
+      "description": "con 4 latas de tonica o red bull",
+      "price": "80000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763689438272-1x0cvkz8j",
+      "name": "smirnoff",
+      "description": "con jarra de jugo o 4 latas de red bull",
+      "price": "80000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763689471332-eqrwvey26",
+      "name": "jw red label",
+      "description": "con 4 latas de gaseosa o red bull",
+      "price": "99000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763689508847-y0mjzjsak",
+      "name": "fernet branca",
+      "description": "con 4 latas de coca cola",
+      "price": "75000",
+      "tags": [],
+      "hidden": false
+    },
+    {
+      "id": "product-1763689551164-03khxqxbi",
+      "name": "champagne chandon",
+      "description": "aperitif, delice, extra brut o rose.",
+      "price": "50000",
       "tags": [],
       "hidden": false
     }
   ],
-  "sub-sub": [
-    {
-      "id": "product-1763584223937-fj3oom76i",
-      "name": "carne",
-      "description": "asdasd",
-      "price": "123",
-      "tags": [],
-      "hidden": false
-    }
-  ]
+  "menu-test": [],
+  "principales-test": [],
+  "hamburguesas-test": []
 }
