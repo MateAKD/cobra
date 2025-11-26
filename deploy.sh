@@ -51,7 +51,18 @@ git stash push -m "Backup datos antes de deploy ${BACKUP_DATE}" data/menu.json d
 
 # 1. Pull últimos cambios
 log "Descargando últimos cambios..."
-git pull origin main || error "Error al hacer pull"
+# Intentar pull normal primero
+if ! git pull origin main 2>/dev/null; then
+    # Si falla por historiales no relacionados, hacer reset hard al remoto
+    if git pull origin main --allow-unrelated-histories 2>/dev/null; then
+        log "Historiales fusionados exitosamente"
+    else
+        warn "Historiales no relacionados detectados, sincronizando con remoto..."
+        git fetch origin main
+        git reset --hard origin/main
+        log "Repositorio sincronizado con remoto"
+    fi
+fi
 
 # ⭐ Restaurar datos después del pull (si existen backups)
 log "Restaurando datos de producción..."
