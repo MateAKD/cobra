@@ -1,0 +1,1823 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  /* Configurando fuentes Bebas Neue y Podium Sharp */
+  --font-bebas: "Bebas Neue", sans-serif;
+  --font-podium: "Inter", sans-serif;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* Configurando fuentes para el menú */
+  --font-sans: var(--font-bebas);
+  --font-serif: var(--font-podium);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* SISTEMA DE COLORES CONSISTENTE - PALETA UNIFICADA */
+
+/* Colores principales de la paleta */
+.text-gold {
+  color: #f4b942; /* Amarillo dorado - para títulos, precios destacados, acentos principales */
+}
+
+.text-green {
+  color: #00ff41; /* Verde neón - para elementos veganos, divisores, acentos secundarios */
+}
+
+.text-coral {
+  color: #ff7043; /* Coral - para precios, elementos picantes, llamadas a la acción */
+}
+
+.text-gray-light {
+  color: #cccccc; /* Gris claro - para descripciones, subtítulos, texto secundario */
+}
+
+.text-white {
+  color: #ffffff; /* Blanco - para títulos principales, texto importante */
+}
+
+/* Agregando estilos para logo sin fondo */
+.logo-no-bg {
+  mix-blend-mode: screen;
+  filter: brightness(1.2) contrast(1.1);
+  transition: all 0.3s ease;
+}
+
+.logo-no-bg:hover {
+  filter: brightness(1.3) contrast(1.2) drop-shadow(0 0 10px rgba(244, 185, 66, 0.3));
+  transform: scale(1.02);
+}
+
+/* Patrón de grilla eliminado para diseño más limpio */
+
+/* Colores limpios y elegantes */
+.cobra-yellow {
+  color: #f4b942; /* Amarillo dorado consistente */
+}
+
+.cobra-gray {
+  color: #cccccc; /* Gris claro consistente */
+}
+
+.podium-text {
+  color: #cccccc; /* Gris claro para texto general */
+}
+
+.podium-soft {
+  color: #cccccc; /* Gris claro para texto suave */
+}
+
+/* Íconos con colores consistentes de la paleta */
+.icon-vegan {
+  color: #2f6f3a; /* Verde más sobrio sobre fondo claro */
+}
+
+.icon-gluten-free {
+  color: #b4703b; /* Tono cálido acorde al divisor */
+}
+
+.icon-spicy {
+  color: #c9573a; /* Coral más apagado */
+}
+
+/* Tipografías con colores consistentes */
+/* Tipografía base para títulos Bebas Neue */
+.bebas-title {
+  font-family: var(--font-bebas);
+  color: #c45a2a; /* Naranja/rojizo como en la imagen */
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+/* Categorías principales: Bebas Neue Bold 40px */
+.bebas-title-category {
+  font-family: var(--font-bebas);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 32px;
+  letter-spacing: 1.92px;
+  color: #C35C3C;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+/* Subcategorías: Bebas Neue Regular responsive */
+.bebas-title-subcategory {
+  font-family: var(--font-bebas);
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 20px;
+  letter-spacing: 1.2px;
+  color: #C35C3C;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+@media (min-width: 640px) {
+  .bebas-title-subcategory {
+    font-size: 28px;
+    line-height: 22px;
+    letter-spacing: 1.4px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bebas-title-subcategory {
+    font-size: 32px;
+    line-height: 24px;
+    letter-spacing: 1.6px;
+  }
+}
+
+/* Barra de categorías: Bebas Neue Regular 12px */
+.bebas-title-category-bar {
+  font-family: var(--font-bebas);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.96px;
+  text-align: center;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+/* Descripciones de platos: Inter Light 14px */
+.description-text {
+  font-family: var(--font-podium);
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 22.75px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: #775729;
+}
+
+.podium-text {
+  font-family: var(--font-podium);
+  font-weight: 400;
+  color: #333333; /* Gris oscuro para texto general */
+}
+
+.podium-soft {
+  font-family: var(--font-podium);
+  font-weight: 300;
+  color: #4a4a4a; /* Gris medio para texto suave */
+}
+
+/* Divisores con colores de la paleta */
+.cobra-divider {
+  background: linear-gradient(90deg, transparent 0%, #f4b942 50%, transparent 100%);
+  height: 1px;
+  border-radius: 0.5px;
+  opacity: 0.6;
+}
+
+.minimal-divider {
+  background: linear-gradient(90deg, transparent 0%, rgba(244, 185, 66, 0.4) 50%, transparent 100%);
+  height: 1px;
+  border-radius: 0.5px;
+}
+
+/* Divisores tipo línea manual como en la imagen */
+.neon-category-divider {
+  height: 4px;
+  margin: 0.5rem 0 1.5rem 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 4' preserveAspectRatio='none'><path d='M1 2c8-1 16 1 24 0s16-2 24-1 16 3 24 1 16-2 24 0' fill='none' stroke='%23C35C3C' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' opacity='0.95'/></svg>");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  width: 200px;
+  max-width: 80%;
+}
+
+/* Divisores para subcategorías - línea manual debajo del título */
+.neon-subcategory-divider {
+  height: 3px;
+  margin: 0.3rem 0 1.2rem 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 3' preserveAspectRatio='none'><path d='M1 1.5c10-1 20 1 30 0s20-1.5 30-0.5 20 2 30 1' fill='none' stroke='%23C35C3C' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round' opacity='0.9'/></svg>");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* Contenedor de categoría solo gris con líneas verdes */
+.neon-category-container {
+  border: 1px solid #AEAEAE;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+  background: transparent;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Contenedor de subcategoría con borde tipo corchete */
+.neon-subcategory-container {
+  border-left: 8px solid transparent;
+  padding-left: 2rem;
+  margin: 1.5rem 0;
+  border-radius: 0 4px 4px 0;
+  position: relative;
+}
+
+/* Borde tipo corchete dibujado a mano para subcategorías */
+.neon-subcategory-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px; /* Ancho del corchete más visible */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 100' preserveAspectRatio='none'><path d='M 6 0 C 3 5, 1 15, 1 50 C 1 85, 3 95, 6 100' fill='none' stroke='%23C35C3C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' opacity='0.95'/></svg>");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* Asterisco personalizado con el mismo estilo que las líneas */
+.geometric-accent {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  position: relative;
+  background-image: url("/Group.svg");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* Líneas industriales con gradiente de la paleta */
+.industrial-line {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #f4b942 0%, #00ff41 100%);
+  transition: width 0.3s ease;
+  transform: translateY(-50%);
+}
+
+/* Patrones geométricos con colores de la paleta */
+.geometric-pattern::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent 30%, #f4b942 30%, #f4b942 70%, transparent 70%);
+  transform: rotate(0deg);
+}
+
+.geometric-pattern::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent 30%, #00ff41 30%, #00ff41 70%, transparent 70%);
+  transform: rotate(90deg);
+}
+
+/* Header con bordes de la paleta */
+.header-texture {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(244, 185, 66, 0.3);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.industrial-accent {
+  position: relative;
+  z-index: 10;
+}
+
+/* Elementos del menú simplificados como en la imagen */
+.menu-item-hover {
+  position: relative;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 0.75rem 0;
+  margin-bottom: 0.5rem;
+  user-select: none; /* No seleccionable */
+  pointer-events: none; /* No clickeable */
+  cursor: default;
+}
+
+/* Removemos la línea industrial para un look más limpio */
+.industrial-line {
+  display: none;
+}
+
+/* Highlight de precios con color coral */
+.price-highlight {
+  color: #ff7043;
+  font-weight: 600;
+  position: relative;
+}
+
+.price-highlight::before {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #ff7043 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Caja de promociones con gradiente diagonal naranja */
+.promo-box {
+  background: linear-gradient(135deg, rgba(244, 185, 66, 0.5) 0%, rgba(244, 185, 66, 1) 100%);
+  border: 1px solid #000000; /* Borde negro fino */
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.promo-box::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent 49%, rgba(244, 185, 66, 0.05) 50%, transparent 51%);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  50% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Sistema de tabs para móvil */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Estilos para los tabs de navegación móvil */
+.mobile-tabs {
+  background: #EDE9DD82; /* Fondo sólido blanco */
+  border: 1px solid #C5C5C5; /* Borde gris claro */
+  border-radius: 0;
+  backdrop-filter: blur(12px);
+  margin: 0;
+  padding: 1rem 1.5rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+}
+
+/* Mejoras para el scroll de categorías */
+.category-scroll-container {
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Mejorar el scroll automático */
+  scroll-padding-left: 1rem;
+  scroll-padding-right: 1rem;
+  /* Mejorar scroll táctil en móvil */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+
+.category-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Transiciones suaves para los botones */
+.category-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  margin: 0 0.3rem;
+  border: 1px solid transparent;
+  /* Aplicando tipografía específica para barra de categorías */
+  font-family: var(--font-bebas);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.96px;
+  text-align: center;
+  vertical-align: middle;
+  text-transform: uppercase;
+  /* Mejorar área táctil en móvil */
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Prevenir selección de texto en móvil */
+  -webkit-tap-highlight-color: rgba(195, 92, 60, 0.2);
+  -webkit-touch-callout: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.category-button:hover {
+  transform: translateY(-1px);
+}
+
+.category-button:active {
+  transform: translateY(0);
+  transition: all 0.1s ease;
+}
+
+/* Botón activo con estilo naranja oscuro del proyecto */
+.category-button.active {
+  background: rgba(195, 92, 60, 0.2); /* Fondo naranja suave usando #C35C3C */
+  border: 2px solid #C35C3C; /* Recuadro naranja oscuro */
+  color: #C35C3C; /* Texto naranja oscuro */
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(195, 92, 60, 0.3);
+}
+
+/* Botón inactivo */
+.category-button:not(.active) {
+  color: #000000; /* Texto negro */
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.category-button:not(.active):hover {
+  color: #333333; /* Texto negro más oscuro al hover */
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid #C5C5C5;
+}
+
+.tab-button {
+  position: relative;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  margin: 0 0.25rem;
+  font-family: var(--font-bebas);
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+}
+
+.tab-button.active {
+  background: #c45a2a;
+  border-color: #a0471f;
+  color: #ffffff;
+  font-weight: 600;
+  transform: scale(1.05);
+  font-size: 1rem;
+}
+
+.tab-button:not(.active) {
+  color: #333333; /* Gris oscuro para tema claro */
+  background: transparent;
+}
+
+.tab-button:not(.active):hover {
+  color: #f4b942; /* Amarillo dorado consistente */
+  background: rgba(244, 185, 66, 0.1);
+  transform: translateY(-1px);
+}
+
+.tab-button:not(.active):active {
+  transform: translateY(0);
+}
+
+/* Optimizaciones móviles */
+@media (max-width: 640px) {
+  .menu-item-hover {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .header-texture {
+    padding: 2rem 1rem !important;
+  }
+
+  .bebas-title {
+    letter-spacing: 0.08em;
+  }
+
+  .geometric-pattern {
+    width: 40px;
+    height: 40px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .geometric-accent {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Mejoras específicas para tabs en móvil */
+  .mobile-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    margin-bottom: 2rem;
+    background: rgba(237, 233, 221, 0.95); /* Fondo semi-transparente para mejor visibilidad */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .tab-button {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    min-height: 44px; /* Área táctil mínima recomendada */
+    min-width: 44px;
+  }
+
+  /* Mejoras para botones de categoría en móvil */
+  .category-button {
+    padding: 0.625rem 1.25rem;
+    margin: 0 0.5rem;
+    font-size: 11px;
+    min-height: 44px; /* Área táctil mínima recomendada */
+    min-width: 60px; /* Ancho mínimo para mejor usabilidad */
+    flex-shrink: 0;
+  }
+
+  .category-button.active {
+    font-size: 12px;
+    padding: 0.75rem 1.5rem;
+  }
+
+  /* Mejorar el contenedor de scroll en móvil */
+  .category-scroll-container {
+    padding: 0.5rem 0;
+    scroll-padding-left: 1rem;
+    scroll-padding-right: 1rem;
+  }
+}
+
+/* Estados táctiles para móvil */
+@media (hover: none) and (pointer: coarse) {
+  .menu-item-hover:active {
+    transform: translateX(2px);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .menu-item-hover:active .industrial-line {
+    width: 3px;
+  }
+
+  /* Estados táctiles para tabs */
+  .tab-button:active {
+    transform: scale(0.95);
+  }
+
+  .tab-button.active:active {
+    transform: scale(1.02);
+  }
+
+  /* Estados táctiles mejorados para botones de categoría */
+  .category-button:active {
+    transform: scale(0.95);
+    background: rgba(195, 92, 60, 0.15);
+    transition: all 0.1s ease;
+  }
+
+  .category-button.active:active {
+    transform: scale(0.98);
+    background: rgba(195, 92, 60, 0.3);
+    box-shadow: 0 1px 2px rgba(195, 92, 60, 0.4);
+  }
+
+  .category-button:not(.active):active {
+    background: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Agregando acentos adicionales con la paleta completa */
+.section-accent {
+  border-left: 4px solid #00ff41;
+  padding-left: 1rem;
+}
+
+.special-item {
+  background: linear-gradient(90deg, rgba(244, 185, 66, 0.1) 0%, rgba(0, 255, 65, 0.05) 100%);
+  border-left: 3px solid #f4b942;
+}
+
+/* Fondo negro limpio y elegante */
+.industrial-bg {
+  background: #000000;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Fondo beige claro con imagen fusionada en modo aclarar */
+.cobra-snake-bg {
+  background-color: #EDE9DD; /* Color de fondo específico solicitado */
+  min-height: 100vh;
+  position: relative;
+  /* Asegurar que el contenedor no interfiera con mix-blend-mode */
+  overflow: visible;
+}
+
+/* Imagen de fondo con modo de fusión aclarar para el efecto de escamas */
+.cobra-snake-bg::before {
+  content: '';
+  position: fixed; /* Fixed para efecto parallax en desktop */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/Fondo sutil.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  mix-blend-mode: lighten; /* Modo de fusión aclarar como en Figma */
+  opacity: 0.68; /* 68% de opacidad */
+  z-index: 1;
+  pointer-events: none; /* Permitir interacción con el contenido */
+  /* Optimizaciones para iOS Safari */
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* En móvil, mantener fixed para que siempre cubra todo el contenido */
+@media (max-width: 1023px) {
+  .cobra-snake-bg::before {
+    position: fixed; /* Fixed para que siempre cubra todo el contenido al hacer scroll */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height para mejor soporte móvil */
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Asegurar que los filtros se apliquen correctamente */
+    mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    /* Forzar renderizado correcto en iOS Safari */
+    will-change: transform !important;
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    /* Asegurar que se renderice en una capa separada */
+    isolation: isolate;
+    -webkit-isolation: isolate;
+  }
+}
+
+/* Asegurar que el contenido esté por encima del overlay */
+.cobra-snake-bg > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Contenedor para el fondo móvil - más confiable en iOS Safari */
+.cobra-snake-bg-mobile-overlay-wrapper {
+  display: none; /* Oculto por defecto, solo visible en móvil */
+}
+
+/* Elemento real para el fondo en móvil - más confiable en iOS Safari */
+.cobra-snake-bg-mobile-overlay {
+  display: none; /* Oculto por defecto, solo visible en móvil */
+}
+
+@media (max-width: 1023px) {
+  .cobra-snake-bg-mobile-overlay-wrapper {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: #EDE9DD; /* Color de fondo base */
+    z-index: 1;
+    pointer-events: none;
+    /* Optimizaciones para iOS Safari */
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+  
+  .cobra-snake-bg-mobile-overlay {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/Fondo sutil.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* Aplicar mix-blend-mode y opacity - forzar con !important para iOS */
+    mix-blend-mode: lighten !important;
+    -webkit-mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    pointer-events: none;
+    /* Optimizaciones para iOS Safari - forzar renderizado en capa separada */
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    /* Forzar renderizado durante el scroll */
+    -webkit-perspective: 1000 !important;
+    perspective: 1000 !important;
+    /* Asegurar que se renderice correctamente durante el scroll */
+    -webkit-transform-style: preserve-3d !important;
+    transform-style: preserve-3d !important;
+  }
+  
+  /* Ocultar el pseudo-elemento ::before en móvil cuando hay un elemento real */
+  .menu-page.cobra-snake-bg::before {
+    display: none !important;
+  }
+  
+  /* Ocultar el pseudo-elemento general en móvil solo cuando hay un elemento real presente */
+  .menu-page.cobra-snake-bg:has(.cobra-snake-bg-mobile-overlay)::before {
+    display: none !important;
+  }
+}
+
+/* Asegurar que menu-page use los mismos estilos que cobra-snake-bg */
+.menu-page.cobra-snake-bg::before {
+  /* Heredar todos los estilos de .cobra-snake-bg::before */
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/Fondo sutil.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  mix-blend-mode: lighten;
+  opacity: 0.68;
+  z-index: 1;
+  pointer-events: none;
+  /* Optimizaciones para iOS Safari */
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* En móvil, asegurar que los filtros se apliquen correctamente */
+@media (max-width: 1023px) {
+  .menu-page.cobra-snake-bg::before {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Asegurar que los filtros se apliquen correctamente */
+    mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    /* Forzar renderizado correcto en iOS Safari */
+    will-change: transform !important;
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    /* Asegurar que se renderice en una capa separada */
+    isolation: isolate;
+    -webkit-isolation: isolate;
+  }
+}
+
+/* Fix específico para iOS Safari - forzar renderizado correcto del mix-blend-mode */
+@supports (-webkit-touch-callout: none) {
+  .cobra-snake-bg::before {
+    /* Forzar renderizado en capa separada en iOS usando translate3d */
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    will-change: transform !important;
+    isolation: isolate !important;
+    -webkit-isolation: isolate !important;
+    /* Asegurar que mix-blend-mode se aplique correctamente */
+    mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    /* Forzar renderizado durante el scroll */
+    -webkit-perspective: 1000;
+    perspective: 1000;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
+  
+  /* Fix específico para menu-page en iOS */
+  .menu-page.cobra-snake-bg::before {
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    will-change: transform !important;
+    isolation: isolate !important;
+    -webkit-isolation: isolate !important;
+    mix-blend-mode: lighten !important;
+    opacity: 0.68 !important;
+    /* Asegurar que se renderice correctamente durante el scroll */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    /* Forzar renderizado durante el scroll */
+    -webkit-perspective: 1000 !important;
+    perspective: 1000 !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
+}
+
+/* ==================== ANIMACIÓN DE CARGA DEL LOGO ==================== */
+
+/* Animación de llenado del logo - Compatible con móviles (incluye Safari iOS) */
+@keyframes logo-fill-slide {
+  0% {
+    transform: translate3d(0, 100%, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@-webkit-keyframes logo-fill-slide {
+  0% {
+    -webkit-transform: translate3d(0, 100%, 0);
+  }
+  100% {
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes logo-fill-reveal {
+  0% {
+    clip-path: inset(100% 0 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@-webkit-keyframes logo-fill-reveal {
+  0% {
+    -webkit-clip-path: inset(100% 0 0 0);
+  }
+  100% {
+    -webkit-clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Contenedor para la animación de llenado */
+.logo-fill-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: block;
+}
+
+.logo-fill-wrapper img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+  -webkit-transform: none;
+  transform-origin: center bottom;
+  -webkit-transform-origin: center bottom;
+  clip-path: inset(100% 0 0 0);
+  -webkit-clip-path: inset(100% 0 0 0);
+  animation: logo-fill-reveal 2.6s ease-in-out forwards;
+  -webkit-animation: logo-fill-reveal 2.6s ease-in-out forwards;
+  will-change: clip-path;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: block;
+}
+
+@supports not ((clip-path: inset(50% 0 0 0)) or (-webkit-clip-path: inset(50% 0 0 0))) {
+  .logo-fill-wrapper img {
+    clip-path: none;
+    -webkit-clip-path: none;
+    transform: translate3d(0, 100%, 0);
+    -webkit-transform: translate3d(0, 100%, 0);
+    animation: logo-fill-slide 3s ease-in-out forwards;
+    -webkit-animation: logo-fill-slide 3s ease-in-out forwards;
+    will-change: transform;
+  }
+}
+
+/* ==================== EFECTOS MINIMALISTAS PARA LA CARÁTULA ==================== */
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Eliminar scroll solo en la página principal (no en /menu) */
+/* No aplicar globalmente - se aplicará específicamente donde se necesite */
+
+/* Asegurar que el viewport height sea correcto en móviles - 100vh dinámico */
+.h-screen {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height - mejor soporte móvil */
+  width: 100%;
+  position: relative;
+}
+
+/* Safari iOS fix para altura de viewport */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+  
+  html {
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Optimizaciones para layout de pantalla completa */
+@media (max-width: 640px) {
+  /* Permitir scroll en toda la app por defecto */
+  html, body {
+    overflow-x: hidden; /* Solo prevenir scroll horizontal */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Altura segura para footer en móviles */
+  footer.pb-safe {
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  }
+
+  /* Mejorar áreas táctiles de botones en la página principal */
+  a[href], button {
+    -webkit-tap-highlight-color: rgba(195, 92, 60, 0.2);
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+
+  /* Mejorar feedback táctil en botones de navegación */
+  a[href] > div:active,
+  button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Para dispositivos iPhone con notch */
+@supports (padding: max(0px)) {
+  footer.pb-safe {
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevenir zoom en inputs en móviles */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Fix adicional para iOS Safari - smooth scrolling */
+@supports (-webkit-touch-callout: none) {
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ==================== FLECHA GRAFITI ==================== */
+
+/* Flecha grafiti para abajo */
+.graffiti-arrow-down {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+}
+
+.graffiti-arrow-down::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 12px solid #C35C3C;
+  filter: drop-shadow(0 0 8px rgba(195, 92, 60, 0.6));
+}
+
+.graffiti-arrow-down::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 10px solid #C35C3C;
+  filter: drop-shadow(0 0 6px rgba(195, 92, 60, 0.6));
+  animation: graffitiPulse 2s ease-in-out infinite;
+}
+
+@keyframes graffitiPulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* Contenedor de la flecha grafiti */
+.graffiti-arrow-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: graffitiFloat 3s ease-in-out infinite;
+}
+
+@keyframes graffitiFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Asegurar que la pulsación también sea infinita */
+.graffiti-arrow-down::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 10px solid #C35C3C;
+  filter: drop-shadow(0 0 6px rgba(195, 92, 60, 0.6));
+  animation: graffitiPulse 2s ease-in-out infinite;
+}
+
+/* ==================== ESTILOS PARA PANEL ADMIN ==================== */
+
+/* Estilos para elementos ocultos en el panel admin */
+.admin-hidden-item {
+  background: #f3f4f6 !important; /* bg-gray-200 */
+  border: 2px solid #6b7280 !important; /* border-gray-500 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important; /* shadow-md */
+}
+
+.admin-hidden-item .item-name {
+  color: #111827 !important; /* text-gray-900 */
+  font-weight: 700 !important; /* font-bold */
+}
+
+.admin-hidden-item .item-description {
+  color: #374151 !important; /* text-gray-700 */
+}
+
+.admin-hidden-item .item-details {
+  color: #4b5563 !important; /* text-gray-600 */
+}
+
+.admin-hidden-badge {
+  background: #fed7aa !important; /* bg-orange-200 */
+  color: #7c2d12 !important; /* text-orange-900 */
+  font-weight: 600 !important; /* font-semibold */
+  border: 1px solid #fdba74 !important; /* border-orange-300 */
+}
+
+/* Estilos para elementos visibles en el panel admin */
+.admin-visible-item .item-name {
+  color: #111827 !important; /* text-gray-900 */
+  font-weight: 600 !important; /* font-semibold */
+}
+
+.admin-visible-item .item-description {
+  color: #374151 !important; /* text-gray-700 */
+}
+
+.admin-visible-item .item-details {
+  color: #4b5563 !important; /* text-gray-600 */
+}
+
+/* Estilos para formularios en el panel de administración */
+.admin-panel input,
+.admin-panel textarea,
+.admin-panel select {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important; /* bg-white */
+  border-color: #d1d5db !important; /* border-gray-300 */
+}
+
+.admin-panel input:focus,
+.admin-panel textarea:focus,
+.admin-panel select:focus {
+  border-color: #3b82f6 !important; /* border-blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important; /* focus ring */
+}
+
+.admin-panel label {
+  color: #374151 !important; /* text-gray-700 */
+  font-weight: 500 !important; /* font-medium */
+}
+
+.admin-panel .card {
+  background-color: #ffffff !important; /* bg-white */
+  border-color: #e5e7eb !important; /* border-gray-200 */
+}
+
+.admin-panel .card-title {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel .card-content {
+  color: #374151 !important; /* text-gray-700 */
+}
+
+/* Estilos específicos para componentes de UI en el panel admin */
+.admin-panel [data-slot="input"],
+.admin-panel [data-slot="textarea"] {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important; /* bg-white */
+  border-color: #d1d5db !important; /* border-gray-300 */
+}
+
+.admin-panel [data-slot="input"]:focus,
+.admin-panel [data-slot="textarea"]:focus {
+  border-color: #3b82f6 !important; /* border-blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important; /* focus ring */
+}
+
+.admin-panel [data-slot="input"]::placeholder,
+.admin-panel [data-slot="textarea"]::placeholder {
+  color: #6b7280 !important; /* text-gray-500 */
+}
+
+/* Asegurar que los textos en los formularios sean legibles */
+.admin-panel form {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel form * {
+  color: inherit;
+}
+
+/* Estilos específicos para los formularios de edición y agregar */
+.admin-panel .EditForm,
+.admin-panel .AddForm {
+  background-color: #ffffff !important; /* bg-white */
+}
+
+.admin-panel .EditForm *,
+.admin-panel .AddForm * {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel .EditForm label,
+.admin-panel .AddForm label {
+  color: #374151 !important; /* text-gray-700 */
+  font-weight: 500 !important; /* font-medium */
+}
+
+.admin-panel .EditForm input,
+.admin-panel .AddForm input,
+.admin-panel .EditForm textarea,
+.admin-panel .AddForm textarea {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important; /* bg-white */
+  border-color: #d1d5db !important; /* border-gray-300 */
+}
+
+.admin-panel .EditForm input::placeholder,
+.admin-panel .AddForm input::placeholder,
+.admin-panel .EditForm textarea::placeholder,
+.admin-panel .AddForm textarea::placeholder {
+  color: #6b7280 !important; /* text-gray-500 */
+}
+
+/* Estilos para checkboxes en el panel admin */
+.admin-panel [data-slot="checkbox"] {
+  background-color: #ffffff !important; /* bg-white */
+  border-color: #d1d5db !important; /* border-gray-300 */
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="checkbox"]:checked {
+  background-color: #3b82f6 !important; /* bg-blue-500 */
+  border-color: #3b82f6 !important; /* border-blue-500 */
+  color: #ffffff !important; /* text-white */
+}
+
+.admin-panel [data-slot="checkbox"]:focus {
+  border-color: #3b82f6 !important; /* border-blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important; /* focus ring */
+}
+
+/* Estilos para botones en el panel admin */
+.admin-panel [data-slot="button"] {
+  color: inherit !important;
+}
+
+.admin-panel [data-slot="button"].bg-primary {
+  color: #ffffff !important; /* text-white */
+}
+
+.admin-panel [data-slot="button"].bg-secondary {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="button"].bg-destructive {
+  color: #ffffff !important; /* text-white */
+}
+
+.admin-panel [data-slot="button"].border {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important; /* bg-white */
+}
+
+/* Estilos para modales en el panel admin */
+.admin-panel [data-slot="dialog-content"] {
+  background-color: #ffffff !important; /* bg-white */
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="dialog-title"] {
+  color: #111827 !important; /* text-gray-900 */
+  font-weight: 600 !important; /* font-semibold */
+}
+
+.admin-panel [data-slot="dialog-description"] {
+  color: #374151 !important; /* text-gray-700 */
+}
+
+.admin-panel [data-slot="dialog-header"] {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="dialog-footer"] {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+/* Estilos para alertas en el panel admin */
+.admin-panel [data-slot="alert"] {
+  background-color: #ffffff !important; /* bg-white */
+  border-color: #e5e7eb !important; /* border-gray-200 */
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="alert"].bg-card {
+  background-color: #ffffff !important; /* bg-white */
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="alert-title"] {
+  color: #111827 !important; /* text-gray-900 */
+  font-weight: 500 !important; /* font-medium */
+}
+
+.admin-panel [data-slot="alert-description"] {
+  color: #374151 !important; /* text-gray-700 */
+}
+
+/* Estilos para alertas destructivas */
+.admin-panel [data-slot="alert"].text-destructive {
+  color: #dc2626 !important; /* text-red-600 */
+  border-color: #fecaca !important; /* border-red-200 */
+  background-color: #fef2f2 !important; /* bg-red-50 */
+}
+
+/* Estilos para pestañas en el panel admin */
+.admin-panel [data-slot="tabs-list"] {
+  background-color: #f3f4f6 !important; /* bg-gray-100 */
+  border-color: #e5e7eb !important; /* border-gray-200 */
+}
+
+.admin-panel [data-slot="tabs-trigger"] {
+  color: #374151 !important; /* text-gray-700 */
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+.admin-panel [data-slot="tabs-trigger"]:hover {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important; /* bg-white */
+}
+
+.admin-panel [data-slot="tabs-trigger"][data-state="active"] {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important; /* bg-white */
+  border-color: #d1d5db !important; /* border-gray-300 */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important; /* shadow-sm */
+}
+
+.admin-panel [data-slot="tabs-content"] {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+/* Estilos para tarjetas en el panel admin */
+.admin-panel [data-slot="card"] {
+  background-color: #ffffff !important; /* bg-white */
+  color: #111827 !important; /* text-gray-900 */
+  border-color: #e5e7eb !important; /* border-gray-200 */
+}
+
+.admin-panel [data-slot="card-header"] {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="card-title"] {
+  color: #111827 !important; /* text-gray-900 */
+  font-weight: 600 !important; /* font-semibold */
+}
+
+.admin-panel [data-slot="card-description"] {
+  color: #374151 !important; /* text-gray-700 */
+}
+
+.admin-panel [data-slot="card-content"] {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="card-footer"] {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.admin-panel [data-slot="card-action"] {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+/* Estilos para etiquetas en el panel admin */
+.admin-panel [data-slot="label"] {
+  color: #374151 !important; /* text-gray-700 */
+  font-weight: 500 !important; /* font-medium */
+}
+
+/* Estilos para badges en el panel admin */
+.admin-panel [data-slot="badge"] {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #f3f4f6 !important; /* bg-gray-100 */
+  border-color: #d1d5db !important; /* border-gray-300 */
+}
+
+.admin-panel [data-slot="badge"].bg-primary {
+  color: #ffffff !important; /* text-white */
+  background-color: #3b82f6 !important; /* bg-blue-500 */
+  border-color: #3b82f6 !important; /* border-blue-500 */
+}
+
+.admin-panel [data-slot="badge"].bg-secondary {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #f3f4f6 !important; /* bg-gray-100 */
+  border-color: #d1d5db !important; /* border-gray-300 */
+}
+
+.admin-panel [data-slot="badge"].bg-destructive {
+  color: #ffffff !important; /* text-white */
+  background-color: #dc2626 !important; /* bg-red-600 */
+  border-color: #dc2626 !important; /* border-red-600 */
+}
+
+.admin-panel [data-slot="badge"].border-transparent {
+  border-color: transparent !important;
+}
+
+/* ==================== CARRUSEL DE LOGOS INFINITO ==================== */
+
+/* Contenedor principal del carrusel */
+.logos-carousel-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 1rem 0;
+}
+
+/* Carrusel con máscara de gradiente en los bordes */
+.logos-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Máscara de gradiente para efecto de desvanecimiento en los bordes */
+.logos-carousel::before,
+.logos-carousel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.logos-carousel::before {
+  left: 0;
+  background: linear-gradient(to right, #EDE9DD, transparent);
+}
+
+.logos-carousel::after {
+  right: 0;
+  background: linear-gradient(to left, #EDE9DD, transparent);
+}
+
+/* Pista de logos que se mueve */
+.logos-track {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  animation: scrollLogos 30s linear infinite;
+  width: fit-content;
+}
+
+/* Animación de scroll infinito */
+@keyframes scrollLogos {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Los logos giran siempre sin parar - sin pausa en hover */
+
+/* Estilos individuales de cada logo */
+.logo-item {
+  flex-shrink: 0;
+  font-family: var(--font-bebas);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #666666;
+  opacity: 0.7;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none; /* No clickeable */
+  cursor: default;
+}
+
+/* Responsive para móviles */
+@media (max-width: 640px) {
+  .logos-track {
+    gap: 2rem;
+    animation-duration: 25s;
+  }
+  
+  .logo-item {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  .logos-carousel::before,
+  .logos-carousel::after {
+    width: 30px;
+  }
+}
+
+/* Responsive para tablets */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .logos-track {
+    gap: 2.5rem;
+    animation-duration: 28s;
+  }
+  
+  .logo-item {
+    font-size: 0.8rem;
+  }
+}
+
+/* Para pantallas grandes, hacer el carrusel más lento */
+@media (min-width: 1025px) {
+  .logos-track {
+    gap: 4rem;
+    animation-duration: 35s;
+  }
+  
+  .logo-item {
+    font-size: 1rem;
+    padding: 0.625rem 1.25rem;
+  }
+}
+
+/* ==================== CARRUSEL DE LOGOS GRANDE (VERSIÓN MEJORADA) ==================== */
+
+/* Contenedor principal del carrusel grande */
+.logos-carousel-container-large {
+  width: 100%;
+  max-width: 1200px;
+  overflow: hidden;
+  position: relative;
+  padding: 0.6rem 0;
+  margin: 0 auto;
+}
+
+/* Carrusel grande con máscara de gradiente en los bordes */
+.logos-carousel-large {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Máscara de gradiente para efecto de desvanecimiento en los bordes */
+.logos-carousel-large::before,
+.logos-carousel-large::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.logos-carousel-large::before {
+  left: 0;
+  background: linear-gradient(to right, #EDE9DD, transparent);
+}
+
+.logos-carousel-large::after {
+  right: 0;
+  background: linear-gradient(to left, #EDE9DD, transparent);
+}
+
+/* Pista de logos grande que se mueve */
+.logos-track-large {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  animation: scrollLogosLarge 40s linear infinite;
+  width: fit-content;
+}
+
+/* Animación de scroll infinito para carrusel grande */
+@keyframes scrollLogosLarge {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Los logos giran siempre sin parar - sin pausa en hover */
+
+/* Estilos individuales de cada logo grande */
+.logo-item-large {
+  flex-shrink: 0;
+  height: 50px;
+  width: auto;
+  max-width: 100px;
+  object-fit: contain;
+  filter: grayscale(100%) brightness(0.4) contrast(2) saturate(0);
+  opacity: 0.7;
+  user-select: none;
+  pointer-events: none; /* No clickeable */
+  cursor: default;
+}
+
+/* Logos con fondo que necesita ser removido */
+.logo-item-large.remove-background {
+  filter: grayscale(100%) brightness(0.4) contrast(2) saturate(0);
+  mix-blend-mode: multiply;
+  background: transparent;
+}
+
+/* Responsive para móviles - carrusel grande */
+@media (max-width: 640px) {
+  .logos-carousel-container-large {
+    padding: 0.45rem 0;
+  }
+  
+  .logos-track-large {
+    gap: 3rem;
+    animation-duration: 30s;
+  }
+  
+  .logo-item-large {
+    height: 35px;
+    max-width: 70px;
+  }
+  
+  .logos-carousel-large::before,
+  .logos-carousel-large::after {
+    width: 50px;
+  }
+}
+
+/* Responsive para tablets - carrusel grande */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .logos-carousel-container-large {
+    padding: 0.525rem 0;
+  }
+  
+  .logos-track-large {
+    gap: 3.5rem;
+    animation-duration: 35s;
+  }
+  
+  .logo-item-large {
+    height: 40px;
+    max-width: 80px;
+  }
+  
+  .logos-carousel-large::before,
+  .logos-carousel-large::after {
+    width: 60px;
+  }
+}
+
+/* Para pantallas grandes - carrusel grande */
+@media (min-width: 1025px) {
+  .logos-carousel-container-large {
+    padding: 0.75rem 0;
+  }
+  
+  .logos-track-large {
+    gap: 5rem;
+    animation-duration: 45s;
+  }
+  
+  .logo-item-large {
+    height: 55px;
+    max-width: 110px;
+  }
+  
+  .logos-carousel-large::before,
+  .logos-carousel-large::after {
+    width: 100px;
+  }
+}
+
+/* Test de actualización */

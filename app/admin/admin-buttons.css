@@ -1,0 +1,132 @@
+/* ===================================
+   ESTILOS GLOBALES PARA TODOS LOS BOTONES DEL ADMIN
+   Todos los botones serán negros con texto blanco, excepto los específicos
+   =================================== */
+
+/* Excepciones - botones que NO deben ser afectados por el estilo global
+   Los botones con estas clases usarán sus estilos propios definidos en Tailwind:
+   - admin-delete-button: botones rojos de eliminar
+   - admin-restore-button: botones de restaurar
+   - bg-red-*: botones rojos
+   - bg-green-*: botones verdes (visibilidad)
+   - bg-orange-*: botones naranjas (visibilidad)
+*/
+
+/* Estilo global para TODOS los botones dentro del admin (excepto los específicos) */
+.admin-layout button:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]),
+.admin-layout .btn:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]),
+.admin-layout [class*="button"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]),
+.admin-layout [class*="Button"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]) {
+  background-color: #000000 !important;
+  color: white !important;
+  border-color: #000000 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-layout button:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover,
+.admin-layout .btn:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover,
+.admin-layout [class*="button"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover,
+.admin-layout [class*="Button"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover {
+  background-color: #1f2937 !important;
+  border-color: #1f2937 !important;
+}
+
+/* Forzar estilos para botones con variant="outline" (excepto específicos) */
+.admin-layout button[data-variant="outline"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]),
+.admin-layout button.outline:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]) {
+  background-color: #000000 !important;
+  color: white !important;
+  border-color: #000000 !important;
+}
+
+.admin-layout button[data-variant="outline"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover,
+.admin-layout button.outline:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover {
+  background-color: #1f2937 !important;
+  border-color: #1f2937 !important;
+}
+
+/* Forzar estilos para botones ghost (excepto específicos) */
+.admin-layout button[data-variant="ghost"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]),
+.admin-layout button.ghost:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]) {
+  background-color: #000000 !important;
+  color: white !important;
+  border-color: #000000 !important;
+}
+
+.admin-layout button[data-variant="ghost"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover,
+.admin-layout button.ghost:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover {
+  background-color: #1f2937 !important;
+  border-color: #1f2937 !important;
+}
+
+/* Estilos específicos para clases de botones personalizados */
+.admin-edit-button,
+.admin-increase-prices-button,
+.admin-close-button,
+.admin-cancel-button {
+  background-color: #000000 !important;
+  color: white !important;
+  border-color: #000000 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-edit-button:hover,
+.admin-increase-prices-button:hover,
+.admin-close-button:hover,
+.admin-cancel-button:hover {
+  background-color: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+}
+
+/* Estilos para botones dentro del admin-panel (excepto específicos) */
+.admin-panel button:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]),
+.admin-panel .btn:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]),
+.admin-panel [class*="Button"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]) {
+  background-color: #000000 !important;
+  color: white !important;
+  border-color: #000000 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-panel button:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover,
+.admin-panel .btn:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover,
+.admin-panel [class*="Button"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover {
+  background-color: #1f2937 !important;
+  border-color: #1f2937 !important;
+}
+
+/* Estilos para botones en tabs (excepto específicos) */
+.admin-panel .TabsContent button:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]),
+.admin-panel .TabsContent [class*="Button"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]) {
+  background-color: #000000 !important;
+  color: white !important;
+  border-color: #000000 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.admin-panel .TabsContent button:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover,
+.admin-panel .TabsContent [class*="Button"]:not(.admin-delete-button):not(.admin-restore-button):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-orange"]):hover {
+  background-color: #1f2937 !important;
+  border-color: #1f2937 !important;
+}
+
+/* Estilos para productos ocultos - fondo gris suave */
+.admin-hidden-item {
+  background-color: #f3f4f6 !important;
+  opacity: 0.85;
+  transition: all 0.3s ease;
+}
+
+.admin-hidden-item:hover {
+  opacity: 1;
+}
+
+/* Estilos para elementos dentro de productos ocultos */
+.admin-hidden-item .item-name {
+  color: #6b7280 !important;
+}
+
+.admin-hidden-item .item-description,
+.admin-hidden-item .item-details {
+  color: #9ca3af !important;
+}
