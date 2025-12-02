@@ -172,20 +172,13 @@ export default function MenuPage() {
   const visibleCategories = menuData 
     ? Object.fromEntries(
         Object.entries(categories).filter(([key]) => {
+          // Debe existir en menuData
+          if (!(key in menuData)) return false
+          
           // NO debe ser una subcategoría (no debe estar en las claves de subcategoryMapping)
           if (Object.keys(subcategoryMapping).includes(key)) return false
           
-          // Debe existir en menuData O tener subcategorías que apuntan a ella
-          const hasSubcategories = Object.values(subcategoryMapping).includes(key)
-          const existsInMenuData = key in menuData
-          
-          // Si tiene subcategorías, mostrarla aunque no tenga datos directos
-          if (hasSubcategories) return true
-          
-          // Si existe en menuData, mostrarla
-          if (existsInMenuData) return true
-          
-          return false
+          return true
         })
       )
     : Object.fromEntries(
@@ -635,8 +628,6 @@ export default function MenuPage() {
         )
       case 'vinos':
         return renderSubcategoriesInCategory('vinos')
-      case 'promociones':
-        return renderSubcategoriesInCategory('promociones')
       default:
         // Para categorías personalizadas
         return renderSubcategoriesInCategory(categoryId)

@@ -33,3 +33,26 @@ data/categories.json
 data/subcategory-mapping.json
 data/subcategory-order.json
 data/category-hierarchy.json
+
+# Backups (no versionar)
+backup-*/
+backup-*
+vps-data-*/
+*.tar.gz
+*.backup.*
+
+# Scripts de desarrollo local (PowerShell)
+*.ps1
+*.exe
+
+# Archivos temporales y de desarrollo
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Carpetas de desarrollo local
+backup-local-*/
+backup-data-*/
+backup-pre-sync/
+vps-data-*/

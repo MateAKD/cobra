@@ -8,21 +8,10 @@ const categoriesFilePath = path.join(process.cwd(), 'data', 'categories.json')
 export async function GET() {
   try {
     if (!fs.existsSync(categoriesFilePath)) {
-      // Si no existe, crear archivo vacío y devolverlo
-      const emptyData = {}
-      fs.writeFileSync(categoriesFilePath, JSON.stringify(emptyData, null, 2), 'utf-8')
-      return NextResponse.json(emptyData)
+      return NextResponse.json({ error: 'Archivo de categorías no encontrado' }, { status: 404 })
     }
 
     const categoriesData = fs.readFileSync(categoriesFilePath, 'utf-8')
-    
-    // Si el archivo está vacío, devolver objeto vacío
-    if (!categoriesData.trim()) {
-      const emptyData = {}
-      fs.writeFileSync(categoriesFilePath, JSON.stringify(emptyData, null, 2), 'utf-8')
-      return NextResponse.json(emptyData)
-    }
-    
     const categories = JSON.parse(categoriesData)
     
     // Convertir a array, ordenar por 'order' y volver a convertir a objeto
@@ -36,15 +25,7 @@ export async function GET() {
     return NextResponse.json(sortedCategories)
   } catch (error) {
     console.error('Error reading categories:', error)
-    // En caso de error, intentar crear archivo vacío
-    try {
-      const emptyData = {}
-      fs.writeFileSync(categoriesFilePath, JSON.stringify(emptyData, null, 2), 'utf-8')
-      return NextResponse.json(emptyData)
-    } catch (writeError) {
-      console.error('Error creating empty categories file:', writeError)
-      return NextResponse.json({ error: 'Error al leer las categorías' }, { status: 500 })
-    }
+    return NextResponse.json({ error: 'Error al leer las categorías' }, { status: 500 })
   }
 }
 

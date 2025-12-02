@@ -74,20 +74,10 @@ export async function PUT(
     if (section.startsWith("vinos-")) {
       // Para vinos, buscar en subcategorías
       const subcategory = section.split("-")[1]
-      if (subcategory && menuData.vinos && menuData.vinos[subcategory]) {
+      if (subcategory && menuData.vinos[subcategory]) {
         const index = menuData.vinos[subcategory].findIndex((item: any) => item.id === id)
         if (index !== -1) {
           menuData.vinos[subcategory][index] = updatedItem
-          found = true
-        }
-      }
-    } else if (section.startsWith("promociones-")) {
-      // Para promociones, buscar en subcategorías
-      const subcategory = section.split("-")[1]
-      if (subcategory && menuData.promociones && menuData.promociones[subcategory]) {
-        const index = menuData.promociones[subcategory].findIndex((item: any) => item.id === id)
-        if (index !== -1) {
-          menuData.promociones[subcategory][index] = updatedItem
           found = true
         }
       }
@@ -148,20 +138,10 @@ export async function DELETE(
     if (section.startsWith("vinos-")) {
       // Para vinos, buscar en subcategorías
       const subcategory = section.split("-")[1]
-      if (subcategory && menuData.vinos && menuData.vinos[subcategory]) {
+      if (subcategory && menuData.vinos[subcategory]) {
         const index = menuData.vinos[subcategory].findIndex((item: any) => item.id === id)
         if (index !== -1) {
           menuData.vinos[subcategory].splice(index, 1)
-          found = true
-        }
-      }
-    } else if (section.startsWith("promociones-")) {
-      // Para promociones, buscar en subcategorías
-      const subcategory = section.split("-")[1]
-      if (subcategory && menuData.promociones && menuData.promociones[subcategory]) {
-        const index = menuData.promociones[subcategory].findIndex((item: any) => item.id === id)
-        if (index !== -1) {
-          menuData.promociones[subcategory].splice(index, 1)
           found = true
         }
       }
@@ -237,23 +217,12 @@ export async function POST(
       } else if (section.startsWith("promociones-")) {
         // Para promociones, agregar a subcategoría
         const subcategory = section.split("-")[1]
-        
-        // Inicializar promociones si no existe
-        if (!menuData.promociones) {
-          menuData.promociones = {}
-        }
-        
-        // Inicializar la subcategoría si no existe
-        if (!menuData.promociones[subcategory]) {
-          menuData.promociones[subcategory] = []
-        }
-        
-        if (subcategory) {
+        if (subcategory && menuData.promociones && menuData.promociones[subcategory]) {
           menuData.promociones[subcategory].push(newItem)
         } else {
           return NextResponse.json(
-            { error: `Subcategoría de promociones no especificada` },
-            { status: 400 }
+            { error: `Subcategoría de promociones no encontrada: ${subcategory}` },
+            { status: 404 }
           )
         }
       } else {

@@ -7,42 +7,16 @@ const MENU_FILE_PATH = path.join(process.cwd(), "data", "menu.json")
 // GET - Obtener todos los datos del menú
 export async function GET() {
   try {
-    // Verificar si el archivo existe
-    try {
-      await fs.access(MENU_FILE_PATH)
-    } catch {
-      // Si no existe, crear un archivo vacío y devolverlo
-      const emptyData = {}
-      await fs.writeFile(MENU_FILE_PATH, JSON.stringify(emptyData, null, 2), "utf8")
-      return NextResponse.json(emptyData)
-    }
-
     const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
-    
-    // Si el archivo está vacío, devolver objeto vacío
-    if (!fileContents.trim()) {
-      const emptyData = {}
-      await fs.writeFile(MENU_FILE_PATH, JSON.stringify(emptyData, null, 2), "utf8")
-      return NextResponse.json(emptyData)
-    }
-    
     const menuData = JSON.parse(fileContents)
     
     return NextResponse.json(menuData)
   } catch (error) {
     console.error("Error reading menu data:", error)
-    // En caso de error, devolver objeto vacío en lugar de error 500
-    try {
-      const emptyData = {}
-      await fs.writeFile(MENU_FILE_PATH, JSON.stringify(emptyData, null, 2), "utf8")
-      return NextResponse.json(emptyData)
-    } catch (writeError) {
-      console.error("Error creating empty menu file:", writeError)
-      return NextResponse.json(
-        { error: "Error al leer los datos del menú" },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json(
+      { error: "Error al leer los datos del menú" },
+      { status: 500 }
+    )
   }
 }
 
