@@ -707,29 +707,8 @@ export default function AdminPanel() {
       setIsEditing(null)
       setEditingItem(null)
       
-      // Enviar notificación por email
-      setNotificationStatus("Enviando notificación...")
-      const emailSent = await sendProductNotification('EDITAR', {
-        name: updatedItem.name,
-        description: updatedItem.description,
-        price: updatedItem.price,
-        section: section,
-        tags: updatedItem.tags,
-        ingredients: updatedItem.ingredients,
-        glass: updatedItem.glass,
-        technique: updatedItem.technique,
-        garnish: updatedItem.garnish
-      }, getUserInfo())
-      
-      if (emailSent) {
-        setNotificationStatus("✅ Notificación enviada")
-        alert("Elemento actualizado exitosamente - Notificación enviada por email")
-      } else {
-        setNotificationStatus("⚠️ Error en notificación")
-        alert("Elemento actualizado exitosamente - Error al enviar notificación")
-      }
-      
-      setTimeout(() => setNotificationStatus(""), 3000)
+      // Notificación deshabilitada para edición (solo se notifica ocultar/mostrar)
+      alert("Elemento actualizado exitosamente")
     } catch (error) {
       console.error("Error saving item:", error)
       alert("Error al guardar el elemento")
@@ -830,29 +809,8 @@ export default function AdminPanel() {
       
       setIsAdding(null)
       
-      // Enviar notificación por email
-      setNotificationStatus("Enviando notificación...")
-      const emailSent = await sendProductNotification('AGREGAR', {
-        name: addedItem.name,
-        description: addedItem.description,
-        price: addedItem.price,
-        section: section,
-        tags: addedItem.tags,
-        ingredients: addedItem.ingredients,
-        glass: addedItem.glass,
-        technique: addedItem.technique,
-        garnish: addedItem.garnish
-      }, getUserInfo())
-      
-      if (emailSent) {
-        setNotificationStatus("✅ Notificación enviada")
-        alert("Elemento agregado exitosamente - Notificación enviada por email")
-      } else {
-        setNotificationStatus("⚠️ Error en notificación")
-        alert("Elemento agregado exitosamente - Error al enviar notificación")
-      }
-      
-      setTimeout(() => setNotificationStatus(""), 3000)
+      // Notificación deshabilitada para agregar (solo se notifica ocultar/mostrar)
+      alert("Elemento agregado exitosamente")
     } catch (error) {
       console.error("Error adding item:", error)
       alert("Error al agregar el elemento")
@@ -1235,33 +1193,8 @@ export default function AdminPanel() {
              }
          }
         
-        // Enviar notificación por email si se encontró el item
-        if (itemToDelete) {
-          setNotificationStatus("Enviando notificación...")
-          const emailSent = await sendProductNotification('ELIMINAR', {
-            name: itemToDelete.name,
-            description: itemToDelete.description,
-            price: itemToDelete.price,
-            section: section,
-            tags: itemToDelete.tags,
-            ingredients: itemToDelete.ingredients,
-            glass: itemToDelete.glass,
-            technique: itemToDelete.technique,
-            garnish: itemToDelete.garnish
-          }, getUserInfo())
-          
-          if (emailSent) {
-            setNotificationStatus("✅ Notificación enviada")
-            alert("Elemento eliminado exitosamente - Notificación enviada por email")
-          } else {
-            setNotificationStatus("⚠️ Error en notificación")
-            alert("Elemento eliminado exitosamente - Error al enviar notificación")
-          }
-          
-          setTimeout(() => setNotificationStatus(""), 3000)
-        } else {
-          alert("Elemento eliminado exitosamente")
-        }
+        // Notificación deshabilitada para eliminar (solo se notifica ocultar/mostrar)
+        alert("Elemento eliminado exitosamente")
       } catch (error) {
         console.error("Error deleting item:", error)
         alert("Error al eliminar el elemento")
