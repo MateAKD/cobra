@@ -45,7 +45,7 @@ export default function AddForm({ section, onAdd, onCancel }: AddFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    const newItem = {
+    const newItem: any = {
       id: Date.now().toString(), // ID temporal
       name: formData.name,
       price: formData.price,

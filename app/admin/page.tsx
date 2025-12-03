@@ -687,7 +687,7 @@ export default function AdminPanel() {
          default:
            if (section.startsWith("vinos-")) {
              const category = section.split("-")[1]
-             setVinos(prev => ({
+             setVinos((prev: any) => ({
                ...prev,
                [category]: prev[category as keyof typeof prev].map((item: any) => 
                  item.id === updatedItem.id ? updatedItem : item
@@ -792,12 +792,12 @@ export default function AdminPanel() {
            setBotellas(prev => [...prev, addedItem])
            break
          default:
-           if (section.startsWith("vinos-")) {
-             const category = section.split("-")[1]
-             setVinos(prev => ({
-               ...prev,
-               [category]: [...prev[category as keyof typeof prev], addedItem]
-             }))
+          if (section.startsWith("vinos-")) {
+            const category = section.split("-")[1]
+            setVinos((prev: any) => ({
+              ...prev,
+              [category]: [...prev[category as keyof typeof prev], addedItem]
+            }))
           } else {
              // Para categorías personalizadas dinámicas
              setMenuSections(prev => ({
@@ -914,7 +914,7 @@ export default function AdminPanel() {
         default:
           if (selectedSection.startsWith("vinos-")) {
             const category = selectedSection.split("-")[1]
-            setVinos(prev => ({
+            setVinos((prev: any) => ({
               ...prev,
               [category]: prev[category as keyof typeof prev].map((item: any) => 
                 item.id === selectedItem.id ? updatedItem : item
@@ -1178,12 +1178,12 @@ export default function AdminPanel() {
              setBotellas(prev => prev.filter(item => item.id !== id))
              break
            default:
-             if (section.startsWith("vinos-")) {
-               const category = section.split("-")[1]
-               setVinos(prev => ({
-                 ...prev,
-                 [category]: prev[category as keyof typeof prev].filter((item: any) => item.id !== id)
-               }))
+            if (section.startsWith("vinos-")) {
+              const category = section.split("-")[1]
+              setVinos((prev: any) => ({
+                ...prev,
+                [category]: prev[category as keyof typeof prev].filter((item: any) => item.id !== id)
+              }))
             } else {
                // Para categorías personalizadas dinámicas
                setMenuSections(prev => ({
@@ -1408,7 +1408,7 @@ export default function AdminPanel() {
       if (selectedSectionForProduct.startsWith("vinos-")) {
         // Para subcategorías de vinos
         const subcat = selectedSectionForProduct.split("-")[1] as keyof typeof vinos
-        setVinos(prev => ({
+        setVinos((prev: any) => ({
           ...prev,
           [subcat]: [...(prev[subcat] || []), newProductItem]
         }))
@@ -2362,7 +2362,7 @@ export default function AdminPanel() {
           // Los vinos tienen subcategorías, actualizar cada una
           if (categoryId.startsWith("vinos-")) {
             const subCategory = categoryId.split("-")[1]
-            setVinos(prev => ({
+            setVinos((prev: any) => ({
               ...prev,
               [subCategory]: updatedItems
             }))

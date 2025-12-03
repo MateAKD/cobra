@@ -16,7 +16,7 @@ export async function GET() {
     
     // Convertir a array, ordenar por 'order' y volver a convertir a objeto
     const sortedCategories = Object.entries(categories)
-      .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
+      .sort(([, a], [, b]) => ((a as any).order || 0) - ((b as any).order || 0))
       .reduce((acc, [key, value]) => {
         acc[key] = value
         return acc
