@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
+import { promises as fs } from 'fs'
 import path from 'path'
+import { readJsonFileWithCache, fileCache } from '@/lib/cache'
 
 const categoriesFilePath = path.join(process.cwd(), 'data', 'categories.json')
 
 // GET - Obtener todas las categorías
+// OPTIMIZACIÓN: Convertido de síncrono a asíncrono con cache
 export async function GET() {
   try {
-    if (!fs.existsSync(categoriesFilePath)) {
-      return NextResponse.json({ error: 'Archivo de categorías no encontrado' }, { status: 404 })
-    }
-
-    const categoriesData = fs.readFileSync(categoriesFilePath, 'utf-8')
-    const categories = JSON.parse(categoriesData)
+    // OPTIMIZACIÓN: Usar cache en memoria (5 segundos)
+    const categories = await readJsonFileWithCache<Record<string, any>>(categoriesFilePath, 5000)
     
     // Convertir a array, ordenar por 'order' y volver a convertir a objeto
+    // OPTIMIZACIÓN: Esta operación es rápida, pero podría cachearse si fuera más costosa
     const sortedCategories = Object.entries(categories)
       .sort(([, a], [, b]) => ((a as any).order || 0) - ((b as any).order || 0))
       .reduce((acc, [key, value]) => {
@@ -22,7 +21,11 @@ export async function GET() {
         return acc
       }, {} as any)
     
-    return NextResponse.json(sortedCategories)
+    // Headers de cache HTTP
+    const response = NextResponse.json(sortedCategories)
+    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
+    
+    return response
   } catch (error) {
     console.error('Error reading categories:', error)
     return NextResponse.json({ error: 'Error al leer las categorías' }, { status: 500 })
@@ -30,6 +33,7 @@ export async function GET() {
 }
 
 // PUT - Actualizar categorías
+// OPTIMIZACIÓN: Convertido de síncrono a asíncrono con cache
 export async function PUT(request: NextRequest) {
   try {
     const categories = await request.json()
@@ -45,11 +49,13 @@ export async function PUT(request: NextRequest) {
     let subcategoryMapping: Record<string, string> = {}
     
     try {
-      if (fs.existsSync(subcategoryMappingPath)) {
-        const mappingData = fs.readFileSync(subcategoryMappingPath, 'utf-8')
-        subcategoryMapping = JSON.parse(mappingData)
-      }
+      // OPTIMIZACIÓN: Usar cache en lugar de existsSync + readFileSync
+      subcategoryMapping = await readJsonFileWithCache<Record<string, string>>(
+        subcategoryMappingPath,
+        5000
+      )
     } catch (error) {
+      // Si el archivo no existe, continuar con mapeo vacío
       console.warn('Error leyendo subcategory-mapping.json:', error)
     }
     
@@ -64,8 +70,11 @@ export async function PUT(request: NextRequest) {
       }
     })
 
-    // Escribir las categorías filtradas al archivo
-    fs.writeFileSync(categoriesFilePath, JSON.stringify(filteredCategories, null, 2), 'utf-8')
+    // OPTIMIZACIÓN: Escribir de forma asíncrona
+    await fs.writeFile(categoriesFilePath, JSON.stringify(filteredCategories, null, 2), 'utf-8')
+    
+    // OPTIMIZACIÓN: Invalidar cache después de escribir
+    fileCache.invalidate(categoriesFilePath)
     
     return NextResponse.json({ message: 'Categorías actualizadas exitosamente', categories: filteredCategories })
   } catch (error) {

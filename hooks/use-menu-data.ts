@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { fetchMenuData, filterHiddenItems, fetchCategories, filterCategoriesByTime } from "@/lib/menuUtils"
 
 interface MenuItem {
@@ -67,10 +67,12 @@ export function useMenuData() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = async () => {
+  // OPTIMIZACIÓN: useCallback para evitar recrear la función en cada render
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       // Usar la función compartida que ya filtra productos ocultos
+      // OPTIMIZACIÓN: fetchMenuData y fetchCategories ya usan cache con revalidación
       let data = await fetchMenuData(false) // false = no incluir productos ocultos
       
       // Obtener categorías y filtrar por horario
@@ -85,15 +87,16 @@ export function useMenuData() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
 
-  const refetch = () => {
+  // OPTIMIZACIÓN: useCallback para evitar recrear la función en cada render
+  const refetch = useCallback(() => {
     fetchData()
-  }
+  }, [fetchData])
 
   return {
     menuData,

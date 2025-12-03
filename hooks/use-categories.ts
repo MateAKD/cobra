@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 
 interface Category {
   name: string
@@ -22,12 +22,16 @@ export function useCategories() {
     loadCategories()
   }, [])
 
-  const loadCategories = async () => {
+  // OPTIMIZACIÓN: useCallback para evitar recrear la función en cada render
+  const loadCategories = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await fetch('/api/categories')
+      // OPTIMIZACIÓN: Agregar cache con revalidación
+      const response = await fetch('/api/categories', {
+        next: { revalidate: 5 }, // Revalidar cada 5 segundos
+      })
       
       if (!response.ok) {
         throw new Error('Error al cargar las categorías')
@@ -41,9 +45,10 @@ export function useCategories() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const updateCategories = async (updatedCategories: Categories) => {
+  // OPTIMIZACIÓN: useCallback para evitar recrear la función en cada render
+  const updateCategories = useCallback(async (updatedCategories: Categories) => {
     try {
       setLoading(true)
       setError(null)
@@ -70,9 +75,10 @@ export function useCategories() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const updateCategory = async (categoryId: string, updates: Partial<Category>) => {
+  // OPTIMIZACIÓN: useCallback para evitar recrear la función en cada render
+  const updateCategory = useCallback(async (categoryId: string, updates: Partial<Category>) => {
     const updatedCategories = {
       ...categories,
       [categoryId]: {
@@ -82,7 +88,7 @@ export function useCategories() {
     }
     
     return await updateCategories(updatedCategories)
-  }
+  }, [categories, updateCategories])
 
   return {
     categories,

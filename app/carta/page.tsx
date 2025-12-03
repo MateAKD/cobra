@@ -218,6 +218,8 @@ export default function CartaPage() {
                 <h3 className="bebas-title">Chorizo bombón</h3>
                 <p className="carta-description">Dos unidades.</p>
               </div>
+
+              <p style={{fontSize: '0.85em', fontStyle: 'italic', color: '#666', fontWeight: '300', marginTop: '12px', marginBottom: '0'}}>Pedí tu guarnición aparte</p>
             </section>
 
             {/* GUARNICIONES */}
@@ -237,10 +239,8 @@ export default function CartaPage() {
 
             {/* MILANESAS */}
             <section className="carta-category">
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px'}}>
-                <h2 className="carta-category-title bebas-title" style={{marginBottom: '0'}}>Milanesas</h2>
-                <span style={{fontSize: '0.75em', fontStyle: 'italic', color: '#666', fontWeight: '300'}}>Todas salen con papas fritas y mix de verdes</span>
-              </div>
+              <h2 className="carta-category-title bebas-title">Milanesas</h2>
+              <p style={{fontSize: '0.85em', fontStyle: 'italic', color: '#666', fontWeight: '300', marginTop: '4px', marginBottom: '8px'}}> Todas salen con papas fritas y mix de verdes</p>
               <div className="carta-divider"></div>
               
               <div className="carta-item">
@@ -296,6 +296,11 @@ export default function CartaPage() {
               <div className="carta-item">
                 <h3 className="bebas-title">Burritos</h3>
                 <p className="carta-description">De bondiola desmenuzada con guacamole y muzzarella. Con papas fritas.</p>
+              </div>
+
+              <div className="carta-item">
+                <h3 className="bebas-title">Ciabatta de hongos</h3>
+                <p className="carta-description">Girgolas asadas, rucula, pickle de cebolla morada y alioli de berenjena. Con papas fritas.</p>
               </div>
             </section>
           </div>
@@ -603,6 +608,11 @@ export default function CartaPage() {
                 <h3 className="bebas-title">Jarra de tinto de verano</h3>
               </div>
             </section>
+
+            {/* Texto antes del QR */}
+            <div style={{textAlign: 'center', marginBottom: 0, marginTop: '4px'}}>
+              <p style={{fontSize: '0.9em', fontStyle: 'italic', color: '#666', fontWeight: 300, marginBottom: 0}}>Escaneando este QR podés ver nuestros tragos de autor</p>
+            </div>
 
             {/* QR CODE */}
             <div className="carta-qr-container">

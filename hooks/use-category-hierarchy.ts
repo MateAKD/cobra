@@ -12,8 +12,10 @@ export function useCategoryHierarchy() {
 
   const loadHierarchy = async () => {
     try {
+      // OPTIMIZACIÓN: Usar cache con revalidación en lugar de no-store
+      // Reduce requests al servidor mientras mantiene datos relativamente frescos
       const response = await fetch("/api/admin/category-hierarchy", {
-        cache: "no-store",
+        next: { revalidate: 5 }, // Revalidar cada 5 segundos
       })
       
       if (response.ok) {

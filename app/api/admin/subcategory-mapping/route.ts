@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
+import { readJsonFileWithCache, fileCache } from "@/lib/cache"
 
 const MAPPING_FILE_PATH = path.join(process.cwd(), "data", "subcategory-mapping.json")
 
 // GET - Obtener el mapeo de subcategorías
+// OPTIMIZACIÓN: Usa cache en memoria
 export async function GET() {
   try {
-    const fileContents = await fs.readFile(MAPPING_FILE_PATH, "utf8")
-    const mappingData = JSON.parse(fileContents)
+    // OPTIMIZACIÓN: Usar cache en lugar de leer directamente
+    const mappingData = await readJsonFileWithCache<any>(MAPPING_FILE_PATH, 5000)
     
-    return NextResponse.json(mappingData)
+    const response = NextResponse.json(mappingData)
+    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
+    
+    return response
   } catch (error) {
     console.error("Error reading subcategory mapping:", error)
     // Si el archivo no existe, devolver un mapeo vacío
@@ -33,6 +38,9 @@ export async function POST(request: NextRequest) {
     
     // Escribir el nuevo mapeo al archivo
     await fs.writeFile(MAPPING_FILE_PATH, JSON.stringify(newMapping, null, 2), "utf8")
+    
+    // OPTIMIZACIÓN: Invalidar cache después de escribir
+    fileCache.invalidate(MAPPING_FILE_PATH)
     
     return NextResponse.json({ 
       message: "Mapeo de subcategorías actualizado exitosamente",

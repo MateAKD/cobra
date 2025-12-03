@@ -9,20 +9,42 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Deshabilitar caché en producción para asegurar que los cambios se apliquen
+  // Optimización: Aumentar tiempo de cache de páginas en memoria
+  // Esto reduce la regeneración innecesaria de páginas
   onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
+    maxInactiveAge: 60 * 1000, // 60 segundos (antes 25s) - reduce regeneraciones
+    pagesBufferLength: 5, // Aumentar buffer (antes 2) - mantiene más páginas en memoria
   },
-  // Headers para evitar caché en desarrollo
+  // Headers optimizados: Cache inteligente según el tipo de contenido
   async headers() {
     return [
       {
+        // API routes: Cache corto con revalidación (5 minutos)
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=300, stale-while-revalidate=600',
+          },
+        ],
+      },
+      {
+        // Assets estáticos: Cache largo
+        source: '/:path*\\.(jpg|jpeg|png|gif|svg|ico|webp|woff|woff2|ttf|eot)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // Páginas: Cache con revalidación (1 minuto)
         source: '/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
+            value: 'public, s-maxage=60, stale-while-revalidate=300',
           },
         ],
       },

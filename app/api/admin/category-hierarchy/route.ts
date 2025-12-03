@@ -1,23 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
+import { readJsonFileWithCache, fileCache } from "@/lib/cache"
 
 const HIERARCHY_FILE_PATH = path.join(process.cwd(), "data", "category-hierarchy.json")
 const MAPPING_FILE_PATH = path.join(process.cwd(), "data", "subcategory-mapping.json")
 
 // GET - Obtener la jerarquía completa
+// OPTIMIZACIÓN: Usa cache en memoria
 export async function GET() {
   try {
-    const fileContents = await fs.readFile(HIERARCHY_FILE_PATH, "utf8")
-    const hierarchy = JSON.parse(fileContents)
+    // OPTIMIZACIÓN: Usar cache en lugar de leer directamente
+    const hierarchy = await readJsonFileWithCache<any>(HIERARCHY_FILE_PATH, 5000)
     
-    return NextResponse.json(hierarchy)
+    const response = NextResponse.json(hierarchy)
+    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
+    
+    return response
   } catch (error) {
     console.error("Error reading category hierarchy:", error)
     // Si el archivo no existe, intentar migrar desde el antiguo formato
     try {
-      const oldMapping = await fs.readFile(MAPPING_FILE_PATH, "utf8")
-      const mapping = JSON.parse(oldMapping)
+      const mapping = await readJsonFileWithCache<Record<string, string>>(MAPPING_FILE_PATH, 5000)
       
       // Convertir al nuevo formato
       const hierarchy: any = {}
@@ -35,6 +39,9 @@ export async function GET() {
         JSON.stringify(hierarchy, null, 2),
         "utf8"
       )
+      
+      // Invalidar cache después de escribir
+      fileCache.invalidate(HIERARCHY_FILE_PATH)
       
       return NextResponse.json(hierarchy)
     } catch (migrationError) {
@@ -57,11 +64,10 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Leer el archivo actual
+    // OPTIMIZACIÓN: Leer el archivo actual usando cache
     let hierarchy: any = {}
     try {
-      const fileContents = await fs.readFile(HIERARCHY_FILE_PATH, "utf8")
-      hierarchy = JSON.parse(fileContents)
+      hierarchy = await readJsonFileWithCache<any>(HIERARCHY_FILE_PATH, 5000)
     } catch (error) {
       console.log("Creating new category-hierarchy.json file")
     }
@@ -79,6 +85,9 @@ export async function POST(request: NextRequest) {
       JSON.stringify(hierarchy, null, 2),
       "utf8"
     )
+    
+    // OPTIMIZACIÓN: Invalidar cache después de escribir
+    fileCache.invalidate(HIERARCHY_FILE_PATH)
     
     // NO sincronizar hacia subcategory-mapping.json porque eso destruye la información de niveles
     // El archivo subcategory-mapping.json se mantiene separado y se actualiza solo cuando es necesario
@@ -109,9 +118,8 @@ export async function DELETE(request: NextRequest) {
       )
     }
     
-    // Leer el archivo actual
-    const fileContents = await fs.readFile(HIERARCHY_FILE_PATH, "utf8")
-    const hierarchy = JSON.parse(fileContents)
+    // OPTIMIZACIÓN: Leer el archivo actual usando cache
+    const hierarchy = await readJsonFileWithCache<any>(HIERARCHY_FILE_PATH, 5000)
     
     // Eliminar la subcategoría
     delete hierarchy[subcategoryId]
@@ -122,6 +130,9 @@ export async function DELETE(request: NextRequest) {
       JSON.stringify(hierarchy, null, 2),
       "utf8"
     )
+    
+    // OPTIMIZACIÓN: Invalidar cache después de escribir
+    fileCache.invalidate(HIERARCHY_FILE_PATH)
     
     // NO sincronizar hacia subcategory-mapping.json porque eso destruye la información de niveles
     // El archivo subcategory-mapping.json se mantiene separado

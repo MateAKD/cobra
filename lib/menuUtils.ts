@@ -71,10 +71,13 @@ export function filterHiddenItems(data: any): any {
 }
 
 // Función para obtener datos del menú con filtrado opcional
+// OPTIMIZACIÓN: Usa cache con revalidación en lugar de no-store
 export async function fetchMenuData(includeHidden: boolean = false) {
   try {
+    // OPTIMIZACIÓN: Cache de 5 segundos con revalidación en background
+    // Esto reduce significativamente las requests al servidor
     const response = await fetch("/api/menu", {
-      cache: "no-store", // Siempre obtener datos frescos
+      next: { revalidate: 5 }, // Revalidar cada 5 segundos
     })
     
     if (!response.ok) {
@@ -169,10 +172,12 @@ export function filterCategoriesByTime(menuData: any, categories: Record<string,
 }
 
 // Función para obtener categorías
+// OPTIMIZACIÓN: Usa cache con revalidación en lugar de no-store
 export async function fetchCategories(): Promise<Record<string, Category>> {
   try {
+    // OPTIMIZACIÓN: Cache de 5 segundos con revalidación en background
     const response = await fetch("/api/categories", {
-      cache: "no-store",
+      next: { revalidate: 5 }, // Revalidar cada 5 segundos
     })
     
     if (!response.ok) {

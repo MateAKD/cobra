@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
+import { readJsonFileWithCache, fileCache } from "@/lib/cache"
 
 const MENU_FILE_PATH = path.join(process.cwd(), "data", "menu.json")
 
 // GET - Obtener una sección específica del menú
+// OPTIMIZACIÓN: Usa cache en memoria
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ section: string }> }
 ) {
   try {
-    const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
-    const menuData = JSON.parse(fileContents)
+    // OPTIMIZACIÓN: Usar cache en lugar de leer directamente
+    const menuData = await readJsonFileWithCache<any>(MENU_FILE_PATH, 5000)
     const { section } = await params
     
     if (!menuData[section]) {
@@ -21,7 +23,10 @@ export async function GET(
       )
     }
     
-    return NextResponse.json(menuData[section])
+    const response = NextResponse.json(menuData[section])
+    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
+    
+    return response
   } catch (error) {
     console.error("Error reading menu section:", error)
     return NextResponse.json(
@@ -42,15 +47,17 @@ export async function PUT(
     const sectionData = await request.json()
     const { section } = await params
     
-    // Leer datos actuales
-    const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
-    const menuData = JSON.parse(fileContents)
+    // OPTIMIZACIÓN: Leer datos actuales usando cache
+    const menuData = await readJsonFileWithCache<any>(MENU_FILE_PATH, 5000)
     
     // Crear o actualizar la sección (no verificar si existe)
     menuData[section] = sectionData
     
     // Escribir los datos actualizados
     await fs.writeFile(MENU_FILE_PATH, JSON.stringify(menuData, null, 2), "utf8")
+    
+    // OPTIMIZACIÓN: Invalidar cache después de escribir
+    fileCache.invalidate(MENU_FILE_PATH)
     
     return NextResponse.json({ 
       message: `Sección ${section} ${menuData.hasOwnProperty(section) ? 'actualizada' : 'creada'} exitosamente`,
@@ -73,9 +80,8 @@ export async function DELETE(
   try {
     const { section } = await params
     
-    // Leer datos actuales
-    const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
-    const menuData = JSON.parse(fileContents)
+    // OPTIMIZACIÓN: Leer datos actuales usando cache
+    const menuData = await readJsonFileWithCache<any>(MENU_FILE_PATH, 5000)
     
     if (!menuData.hasOwnProperty(section)) {
       return NextResponse.json(
@@ -89,6 +95,9 @@ export async function DELETE(
     
     // Escribir los datos actualizados
     await fs.writeFile(MENU_FILE_PATH, JSON.stringify(menuData, null, 2), "utf8")
+    
+    // OPTIMIZACIÓN: Invalidar cache después de escribir
+    fileCache.invalidate(MENU_FILE_PATH)
     
     return NextResponse.json({ 
       message: `Sección ${section} eliminada exitosamente`,

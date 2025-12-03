@@ -7,8 +7,10 @@ export function useSubcategoryOrder() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
+        // OPTIMIZACIÓN: Usar cache con revalidación en lugar de no-store
+        // Reduce requests al servidor mientras mantiene datos relativamente frescos
         const response = await fetch("/api/admin/subcategory-order", {
-          cache: "no-store",
+          next: { revalidate: 5 }, // Revalidar cada 5 segundos
         })
         
         if (response.ok) {
