@@ -169,22 +169,31 @@ export default function MenuPage() {
   
   // Filtrar categorías para incluir solo las que están en menuData (visibles por horario)
   // Y excluir subcategorías (que están en subcategoryMapping como claves)
+  // También incluir categorías que tienen subcategorías aunque no tengan productos directos
   const visibleCategories = menuData 
     ? Object.fromEntries(
         Object.entries(categories).filter(([key]) => {
-          // Debe existir en menuData
-          if (!(key in menuData)) return false
-          
           // NO debe ser una subcategoría (no debe estar en las claves de subcategoryMapping)
           if (Object.keys(subcategoryMapping).includes(key)) return false
           
-          return true
+          // Verificar si tiene subcategorías asociadas
+          const hasSubcategories = Object.values(subcategoryMapping).includes(key)
+          
+          // Debe existir en menuData O tener subcategorías
+          if (key in menuData || hasSubcategories) {
+            return true
+          }
+          
+          return false
         })
       )
     : Object.fromEntries(
         Object.entries(categories).filter(([key]) => {
           // Excluir subcategorías incluso cuando no hay menuData cargado
-          return !Object.keys(subcategoryMapping).includes(key)
+          // Pero incluir si tiene subcategorías
+          if (Object.keys(subcategoryMapping).includes(key)) return false
+          const hasSubcategories = Object.values(subcategoryMapping).includes(key)
+          return hasSubcategories
         })
       )
   
