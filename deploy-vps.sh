@@ -22,9 +22,19 @@ if git diff HEAD@{1} HEAD --name-only | grep -q "package.json\|pnpm-lock.yaml"; 
     npm install
 fi
 
-# 3. Build del proyecto
-echo -e "${BLUE}🔨 Construyendo proyecto...${NC}"
-npm run build
+# 2.5 Verificar Swap (Preventivo)
+if [ -f "./setup-swap.sh" ]; then
+    if ! grep -q "/swapfile" /proc/swaps; then
+        echo -e "${BLUE}🔧 Configurando Swap por primera vez...${NC}"
+        chmod +x ./setup-swap.sh
+        sudo ./setup-swap.sh
+    fi
+fi
+
+# 3. Build del proyecto (con baja prioridad CPU para no colgar el servidor)
+echo -e "${BLUE}🔨 Construyendo proyecto (Low CPU Priority)...${NC}"
+# Usamos 'nice' para que el build no acapare toda la CPU
+nice -n 10 npm run build
 
 # 4. Reiniciar aplicación
 echo -e "${BLUE}🔄 Reiniciando aplicación...${NC}"
