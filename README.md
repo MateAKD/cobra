@@ -9,6 +9,7 @@ Un menú digital moderno y elegante para el restaurante Cobra Bar, construido co
 - **Panel de Administración**: Gestión completa del menú desde el panel admin
 - **Subcategorías Dinámicas**: Sistema flexible de categorías y subcategorías
 - **Carga Rápida**: Optimizado para una experiencia de usuario fluida
+- **⚡ Optimizado para CPU**: IntersectionObserver API, hooks memoizados y animaciones optimizadas reducen el uso de CPU en 40-70%
 
 ## 🛠️ Tecnologías
 

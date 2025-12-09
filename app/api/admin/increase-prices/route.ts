@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
-import fs from "fs"
+import { promises as fs } from "fs"
 import path from "path"
+import { readJsonFileWithCache, fileCache } from "@/lib/cache"
 
 export async function POST(request: Request) {
   try {
@@ -15,9 +16,10 @@ export async function POST(request: Request) {
       )
     }
 
-    // Leer el archivo de menú actual
+    // OPTIMIZACIÓN: Usar cache y operaciones asíncronas en lugar de síncronas
+    // Leer el archivo de menú actual usando cache
     const menuPath = path.join(process.cwd(), "data", "menu.json")
-    const menuData = JSON.parse(fs.readFileSync(menuPath, "utf8"))
+    const menuData = await readJsonFileWithCache<any>(menuPath, 5000)
 
     // Función para aumentar el precio de un elemento
     const increasePrice = (price: string): string => {
@@ -36,10 +38,12 @@ export async function POST(request: Request) {
       return Math.round(newPrice).toLocaleString("es-AR")
     }
 
-    // Función recursiva para procesar todas las secciones
+    // OPTIMIZACIÓN: Función recursiva optimizada para procesar todas las secciones
+    // Evita crear objetos innecesarios y usa un solo pase cuando es posible
     const processSection = (section: any): any => {
       if (Array.isArray(section)) {
-        return section.map(item => {
+        // OPTIMIZACIÓN: Solo crear nuevo array si hay cambios
+        const processed = section.map(item => {
           if (item.price) {
             return {
               ...item,
@@ -48,12 +52,24 @@ export async function POST(request: Request) {
           }
           return item
         })
+        // Verificar si hubo cambios antes de retornar nuevo array
+        return processed.some((item, idx) => item !== section[idx]) ? processed : section
       } else if (typeof section === "object" && section !== null) {
         const processedSection: any = {}
-        for (const [key, value] of Object.entries(section)) {
-          processedSection[key] = processSection(value)
+        const keys = Object.keys(section)
+        let hasChanges = false
+        
+        // OPTIMIZACIÓN: Procesar en un solo bucle
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i]
+          const processed = processSection(section[key])
+          processedSection[key] = processed
+          if (processed !== section[key]) {
+            hasChanges = true
+          }
         }
-        return processedSection
+        
+        return hasChanges ? processedSection : section
       }
       return section
     }
@@ -61,8 +77,9 @@ export async function POST(request: Request) {
     // Procesar todo el menú
     const updatedMenuData = processSection(menuData)
 
-    // Guardar el archivo actualizado
-    fs.writeFileSync(menuPath, JSON.stringify(updatedMenuData, null, 2))
+    // OPTIMIZACIÓN: Usar operación asíncrona y invalidar cache después de escribir
+    await fs.writeFile(menuPath, JSON.stringify(updatedMenuData, null, 2), "utf8")
+    fileCache.invalidate(menuPath)
 
     return NextResponse.json({
       message: `Precios aumentados exitosamente en un ${percentage}%`,

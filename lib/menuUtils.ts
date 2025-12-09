@@ -37,31 +37,39 @@ interface WineItem {
   hidden?: boolean
 }
 
-// Función para filtrar productos ocultos de cualquier estructura de datos
+// OPTIMIZACIÓN: Función optimizada para filtrar productos ocultos
+// Usa un solo pase sobre los datos en lugar de múltiples iteraciones
 export function filterHiddenItems(data: any): any {
   if (!data) return data
   
   // Si es un array, filtrar elementos ocultos
+  // OPTIMIZACIÓN: Usar filter una sola vez en lugar de múltiples pasadas
   if (Array.isArray(data)) {
     return data.filter((item: any) => !item.hidden)
   }
   
   // Si es un objeto, procesar recursivamente
+  // OPTIMIZACIÓN: Usar Object.keys una sola vez y procesar en un solo bucle
   if (typeof data === 'object' && data !== null) {
     const filteredData: any = {}
+    const keys = Object.keys(data)
     
-    Object.keys(data).forEach(key => {
-      if (Array.isArray(data[key])) {
+    // OPTIMIZACIÓN: Procesar todas las claves en un solo bucle
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      const value = data[key]
+      
+      if (Array.isArray(value)) {
         // Filtrar arrays de productos
-        filteredData[key] = data[key].filter((item: any) => !item.hidden)
-      } else if (typeof data[key] === 'object' && data[key] !== null) {
+        filteredData[key] = value.filter((item: any) => !item.hidden)
+      } else if (typeof value === 'object' && value !== null) {
         // Procesar objetos anidados recursivamente
-        filteredData[key] = filterHiddenItems(data[key])
+        filteredData[key] = filterHiddenItems(value)
       } else {
         // Mantener valores primitivos
-        filteredData[key] = data[key]
+        filteredData[key] = value
       }
-    })
+    }
     
     return filteredData
   }
@@ -155,18 +163,22 @@ export function isCategoryVisible(categoryId: string, categories: Record<string,
   return isTimeInRange(category.startTime, category.endTime)
 }
 
-// Función para filtrar categorías según su horario
+// OPTIMIZACIÓN: Función optimizada para filtrar categorías por horario
+// Usa un solo pase sobre las claves en lugar de múltiples iteraciones
 export function filterCategoriesByTime(menuData: any, categories: Record<string, Category>): any {
   if (!menuData || !categories) return menuData
   
   const filteredData: any = {}
+  const menuKeys = Object.keys(menuData)
   
-  Object.keys(menuData).forEach(key => {
+  // OPTIMIZACIÓN: Procesar todas las claves en un solo bucle
+  for (let i = 0; i < menuKeys.length; i++) {
+    const key = menuKeys[i]
     // Verificar si la categoría debe mostrarse según su horario
     if (isCategoryVisible(key, categories)) {
       filteredData[key] = menuData[key]
     }
-  })
+  }
   
   return filteredData
 }

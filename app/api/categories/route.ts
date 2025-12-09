@@ -59,16 +59,21 @@ export async function PUT(request: NextRequest) {
       console.warn('Error leyendo subcategory-mapping.json:', error)
     }
     
-    // Filtrar: remover cualquier categoría que esté en subcategoryMapping (es una subcategoría)
+    // OPTIMIZACIÓN: Filtrar usando un bucle for en lugar de forEach
+    // Remover cualquier categoría que esté en subcategoryMapping (es una subcategoría)
     const filteredCategories: any = {}
-    Object.keys(categories).forEach(key => {
+    const categoryKeys = Object.keys(categories)
+    
+    // OPTIMIZACIÓN: Procesar en un solo bucle for en lugar de forEach
+    for (let i = 0; i < categoryKeys.length; i++) {
+      const key = categoryKeys[i]
       // Solo incluir si NO es una subcategoría
       if (!subcategoryMapping[key]) {
         filteredCategories[key] = categories[key]
       } else {
         console.warn(`⚠️ Prevenido: Se intentó agregar la subcategoría "${key}" a categories.json. Fue filtrada automáticamente.`)
       }
-    })
+    }
 
     // OPTIMIZACIÓN: Escribir de forma asíncrona
     await fs.writeFile(categoriesFilePath, JSON.stringify(filteredCategories, null, 2), 'utf-8')
