@@ -181,7 +181,7 @@ export default function MenuPage() {
           
           // Debe existir en menuData O tener subcategorías
           if (key in menuData || hasSubcategories) {
-            return true
+          return true
           }
           
           return false

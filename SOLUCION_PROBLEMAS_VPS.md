@@ -208,3 +208,5 @@ pm2 logs cobramenu
 - **Directorio en VPS:** /var/www/cobra
 - **Nombre de la app en PM2:** cobramenu
 
+
+
