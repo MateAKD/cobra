@@ -88,7 +88,11 @@ log "Restaurando datos de producción..."
 log "Instalando dependencias..."
 pnpm install || error "Error al instalar dependencias"
 
-# 3. Build
+# 3. Liberar memoria (Detener app temporalmente)
+log "Deteniendo aplicación para liberar memoria RAM..."
+pm2 stop cobramenu 2>/dev/null || warn "La aplicación no estaba corriendo"
+
+# 4. Build
 log "Compilando aplicación..."
 
 # Optimización de memoria para el build
@@ -102,15 +106,15 @@ fi
 
 pnpm build || error "Error en el build"
 
-# 4. Reiniciar PM2
+# 5. Reiniciar PM2
 log "Reiniciando aplicación..."
-pm2 restart cobramenu || error "Error al reiniciar PM2"
+pm2 restart cobramenu || pm2 start ecosystem.config.js || error "Error al reiniciar PM2"
 
-# 5. Verificar estado
+# 6. Verificar estado
 log "Verificando estado..."
 pm2 status cobramenu
 
-# 6. Mostrar logs
+# 7. Mostrar logs
 warn "Mostrando logs (CTRL+C para salir)..."
 sleep 2
 pm2 logs cobramenu --lines 20
