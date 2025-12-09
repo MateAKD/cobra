@@ -90,6 +90,16 @@ pnpm install || error "Error al instalar dependencias"
 
 # 3. Build
 log "Compilando aplicación..."
+
+# Optimización de memoria para el build
+export NODE_OPTIONS="--max-old-space-size=1536"
+warn "Límite de memoria Node ajustado a 1.5GB"
+
+# Recordatorio de swap
+if [ ! -f "/swapfile" ] && [ ! -f "/swap/file" ]; then
+    warn "⚠️  No se detectó archivo swap. Si el build falla, ejecuta: sudo bash scripts/setup-vps-memory.sh"
+fi
+
 pnpm build || error "Error en el build"
 
 # 4. Reiniciar PM2
