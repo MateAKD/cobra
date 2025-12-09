@@ -9,7 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  swcMinify: true, // Minificación más rápida usando SWC
   cleanDistDir: true, // Limpiar carpeta .next antes de build
   poweredByHeader: false, // Por seguridad y ahorro de bytes
   compiler: {
