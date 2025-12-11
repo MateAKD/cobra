@@ -90,10 +90,25 @@ export function useAdminMenuData() {
     fetchData()
   }, [fetchData])
 
-  // OPTIMIZACIÓN CPU: useCallback para evitar recrear la función en cada render
+  // FIXED: useCallback para refetch con bypass de caché
+  // Esto asegura que después de guardar cambios, se obtengan datos frescos
   const refetch = useCallback(() => {
-    fetchData()
-  }, [fetchData])
+    const fetchDataWithBypass = async () => {
+      try {
+        setLoading(true)
+        // FIXED: Bypass cache para obtener datos frescos del servidor
+        const data = await fetchMenuData(true, true) // true = incluir ocultos, true = bypass cache
+        setMenuData(data)
+        setError(null)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido")
+        console.error("Error fetching admin menu data:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDataWithBypass()
+  }, [])
 
   // Función para obtener estadísticas de una categoría
   const getCategoryStats = (items: (MenuItem | DrinkItem | WineItem)[]) => {

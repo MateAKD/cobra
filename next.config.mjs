@@ -24,12 +24,75 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Headers de seguridad globales
+        source: '/:path*',
+        headers: [
+          // Protección contra clickjacking
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          // Protección contra MIME type sniffing
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          // Protección XSS (legacy, pero útil para navegadores antiguos)
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          // Forzar HTTPS
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+          // Política de referrer
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          // Política de permisos
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+          // Content Security Policy (CSP) - CRÍTICO para prevenir XSS y ataques de inyección
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-inline necesario para Next.js
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: blob: https:",
+              "media-src 'self' blob:",
+              "connect-src 'self' https:",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "upgrade-insecure-requests",
+            ].join('; '),
+          },
+          // Cache con revalidación (1 minuto)
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=60, stale-while-revalidate=300',
+          },
+        ],
+      },
+      {
         // API routes: Cache corto con revalidación (5 minutos)
         source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, s-maxage=300, stale-while-revalidate=600',
+          },
+          // Rate limiting hint (para proxies que lo soporten)
+          {
+            key: 'X-RateLimit-Limit',
+            value: '100',
           },
         ],
       },
@@ -43,18 +106,9 @@ const nextConfig = {
           },
         ],
       },
-      {
-        // Páginas: Cache con revalidación (1 minuto)
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=60, stale-while-revalidate=300',
-          },
-        ],
-      },
     ]
   },
 }
 
 export default nextConfig
+

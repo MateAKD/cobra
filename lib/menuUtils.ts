@@ -41,24 +41,24 @@ interface WineItem {
 // Usa un solo pase sobre los datos en lugar de múltiples iteraciones
 export function filterHiddenItems(data: any): any {
   if (!data) return data
-  
+
   // Si es un array, filtrar elementos ocultos
   // OPTIMIZACIÓN: Usar filter una sola vez en lugar de múltiples pasadas
   if (Array.isArray(data)) {
     return data.filter((item: any) => !item.hidden)
   }
-  
+
   // Si es un objeto, procesar recursivamente
   // OPTIMIZACIÓN: Usar Object.keys una sola vez y procesar en un solo bucle
   if (typeof data === 'object' && data !== null) {
     const filteredData: any = {}
     const keys = Object.keys(data)
-    
+
     // OPTIMIZACIÓN: Procesar todas las claves en un solo bucle
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i]
       const value = data[key]
-      
+
       if (Array.isArray(value)) {
         // Filtrar arrays de productos
         filteredData[key] = value.filter((item: any) => !item.hidden)
@@ -70,35 +70,37 @@ export function filterHiddenItems(data: any): any {
         filteredData[key] = value
       }
     }
-    
+
     return filteredData
   }
-  
+
   // Para valores primitivos, devolver tal como están
   return data
 }
 
 // Función para obtener datos del menú con filtrado opcional
 // OPTIMIZACIÓN: Usa cache con revalidación en lugar de no-store
-export async function fetchMenuData(includeHidden: boolean = false) {
+// FIXED: Agregado parámetro bypassCache para forzar datos frescos cuando sea necesario
+export async function fetchMenuData(includeHidden: boolean = false, bypassCache: boolean = false) {
   try {
-    // OPTIMIZACIÓN: Cache de 5 segundos con revalidación en background
-    // Esto reduce significativamente las requests al servidor
-    const response = await fetch("/api/menu", {
-      next: { revalidate: 5 }, // Revalidar cada 5 segundos
-    })
-    
+    // FIXED: Si bypassCache es true, usar no-store para obtener datos frescos
+    const fetchOptions: RequestInit = bypassCache
+      ? { cache: 'no-store' }
+      : { next: { revalidate: 5 } }
+
+    const response = await fetch("/api/menu", fetchOptions)
+
     if (!response.ok) {
       throw new Error("Error al cargar los datos del menú")
     }
-    
+
     const data = await response.json()
-    
+
     // Si no se incluyen productos ocultos, filtrarlos
     if (!includeHidden) {
       return filterHiddenItems(data)
     }
-    
+
     return data
   } catch (error) {
     console.error("Error fetching menu data:", error)
@@ -127,60 +129,104 @@ export function isTimeInRange(startTime: string, endTime: string): boolean {
   const currentHour = now.getHours()
   const currentMinute = now.getMinutes()
   const currentTimeInMinutes = currentHour * 60 + currentMinute
-  
+
   // Parsear hora de inicio
   const [startHour, startMinute] = startTime.split(':').map(Number)
   const startTimeInMinutes = startHour * 60 + startMinute
-  
+
   // Parsear hora de fin
   const [endHour, endMinute] = endTime.split(':').map(Number)
   const endTimeInMinutes = endHour * 60 + endMinute
-  
+
   // Si el rango cruza la medianoche (ej: 22:00 a 02:00)
   if (startTimeInMinutes > endTimeInMinutes) {
     return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes <= endTimeInMinutes
   }
-  
+
   // Rango normal dentro del mismo día
   return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes
 }
 
-// Función para verificar si una categoría debe mostrarse según su horario
+// FIXED: Función para verificar si una categoría debe mostrarse según su horario
+// CAMBIO CRÍTICO: Ahora es fail-safe - retorna true si la configuración es inválida
+// Esto previene que categorías desaparezcan por configuraciones incorrectas
 export function isCategoryVisible(categoryId: string, categories: Record<string, Category>): boolean {
   const category = categories[categoryId]
-  
+
   // Si la categoría no existe o no tiene restricción horaria, mostrarla
   if (!category || !category.timeRestricted) {
     return true
   }
-  
-  // Si tiene restricción horaria pero no tiene horarios configurados, ocultarla por seguridad
+
+  // FIXED: Si tiene restricción horaria pero no tiene horarios configurados,
+  // MOSTRARLA en lugar de ocultarla (fail-safe approach)
+  // Esto previene que categorías queden invisibles permanentemente
   if (!category.startTime || !category.endTime) {
-    return false
+    console.warn(`⚠️ Categoría "${categoryId}" tiene timeRestricted=true pero horarios inválidos. Mostrando por defecto.`)
+    return true
   }
-  
+
   // Verificar si la hora actual está dentro del rango
   return isTimeInRange(category.startTime, category.endTime)
 }
 
-// OPTIMIZACIÓN: Función optimizada para filtrar categorías por horario
-// Usa un solo pase sobre las claves en lugar de múltiples iteraciones
+// DEPRECATED: Esta función ya no se usa para filtrar categorías del menú
+// Las categorías ahora siempre se muestran, con indicadores de disponibilidad
+// Mantenida solo para compatibilidad hacia atrás
 export function filterCategoriesByTime(menuData: any, categories: Record<string, Category>): any {
-  if (!menuData || !categories) return menuData
-  
-  const filteredData: any = {}
-  const menuKeys = Object.keys(menuData)
-  
-  // OPTIMIZACIÓN: Procesar todas las claves en un solo bucle
-  for (let i = 0; i < menuKeys.length; i++) {
-    const key = menuKeys[i]
-    // Verificar si la categoría debe mostrarse según su horario
-    if (isCategoryVisible(key, categories)) {
-      filteredData[key] = menuData[key]
+  console.warn('⚠️ filterCategoriesByTime está deprecated y no debería usarse. Las categorías ya no se ocultan automáticamente.')
+  // Retornar todos los datos sin filtrar
+  return menuData
+}
+
+// NUEVA FUNCIÓN: Obtener información de disponibilidad sin ocultar categorías
+export interface CategoryAvailabilityStatus {
+  categoryId: string
+  isAvailable: boolean
+  timeRestricted: boolean
+  startTime?: string
+  endTime?: string
+  availabilityMessage?: string
+}
+
+export function getCategoryAvailabilityStatus(
+  categoryId: string,
+  categories: Record<string, Category>
+): CategoryAvailabilityStatus {
+  const category = categories[categoryId]
+
+  // Si no existe o no tiene restricción, está disponible
+  if (!category || !category.timeRestricted) {
+    return {
+      categoryId,
+      isAvailable: true,
+      timeRestricted: false
     }
   }
-  
-  return filteredData
+
+  // Si tiene restricción pero horarios inválidos, marcar como disponible con advertencia
+  if (!category.startTime || !category.endTime) {
+    return {
+      categoryId,
+      isAvailable: true,
+      timeRestricted: true,
+      availabilityMessage: 'Configuración de horario inválida'
+    }
+  }
+
+  // Verificar disponibilidad según horario
+  const isAvailable = isTimeInRange(category.startTime, category.endTime)
+
+  return {
+    categoryId,
+    isAvailable,
+    timeRestricted: true,
+    startTime: category.startTime,
+    endTime: category.endTime,
+    availabilityMessage: isAvailable
+      ? undefined
+      : `Disponible de ${category.startTime} a ${category.endTime}`
+  }
 }
 
 // Función para obtener categorías
@@ -191,11 +237,11 @@ export async function fetchCategories(): Promise<Record<string, Category>> {
     const response = await fetch("/api/categories", {
       next: { revalidate: 5 }, // Revalidar cada 5 segundos
     })
-    
+
     if (!response.ok) {
       throw new Error("Error al cargar las categorías")
     }
-    
+
     return await response.json()
   } catch (error) {
     console.error("Error fetching categories:", error)

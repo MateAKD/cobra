@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
+import { promises as fs } from 'fs'
 import path from 'path'
+import { fileCache } from '@/lib/cache'
 
-// Función para leer el archivo de datos
-const readMenuData = () => {
+const MENU_FILE_PATH = path.join(process.cwd(), 'data', 'menu.json')
+
+// Función para leer el archivo de datos (ahora async)
+const readMenuData = async () => {
   try {
-    const dataPath = path.join(process.cwd(), 'data', 'menu.json')
-    const data = fs.readFileSync(dataPath, 'utf8')
+    const data = await fs.readFile(MENU_FILE_PATH, 'utf8')
     return JSON.parse(data)
   } catch (error) {
     console.error('Error reading menu data:', error)
@@ -14,11 +16,12 @@ const readMenuData = () => {
   }
 }
 
-// Función para escribir el archivo de datos
-const writeMenuData = (data: any) => {
+// Función para escribir el archivo de datos (ahora async)
+const writeMenuData = async (data: any) => {
   try {
-    const dataPath = path.join(process.cwd(), 'data', 'menu.json')
-    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8')
+    await fs.writeFile(MENU_FILE_PATH, JSON.stringify(data, null, 2), 'utf8')
+    // FIXED: Invalidar cache después de escribir
+    fileCache.invalidate(MENU_FILE_PATH)
     return true
   } catch (error) {
     console.error('Error writing menu data:', error)
@@ -80,8 +83,8 @@ export async function PATCH(
       )
     }
 
-    // Leer datos actuales
-    const menuData = readMenuData()
+    // Leer datos actuales (ahora async)
+    const menuData = await readMenuData()
     if (!menuData) {
       return NextResponse.json(
         { error: 'Error al leer los datos del menú' },
@@ -104,8 +107,8 @@ export async function PATCH(
       )
     }
 
-    // Guardar cambios
-    const saveSuccess = writeMenuData(menuData)
+    // Guardar cambios (ahora async con cache invalidation)
+    const saveSuccess = await writeMenuData(menuData)
     if (!saveSuccess) {
       return NextResponse.json(
         { error: 'Error al guardar los cambios' },

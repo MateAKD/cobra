@@ -56,3 +56,15 @@ backup-local-*/
 backup-data-*/
 backup-pre-sync/
 vps-data-*/
+
+# Protección contra malware (CRÍTICO - NO ELIMINAR)
+hash
+kdevtmpfsi
+kinsing
+xmrig
+.*miner*
+.*crypto*
+.*hash*
+*.mining
+kworker*
+bioset*

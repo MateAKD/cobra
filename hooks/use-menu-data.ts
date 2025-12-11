@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { fetchMenuData, filterHiddenItems, fetchCategories, filterCategoriesByTime } from "@/lib/menuUtils"
+import { fetchMenuData, fetchCategories } from "@/lib/menuUtils"
 
 interface MenuItem {
   id: string
@@ -71,14 +71,15 @@ export function useMenuData() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
-      // Usar la función compartida que ya filtra productos ocultos
-      // OPTIMIZACIÓN: fetchMenuData y fetchCategories ya usan cache con revalidación
-      let data = await fetchMenuData(false) // false = no incluir productos ocultos
-      
-      // Obtener categorías y filtrar por horario
-      const categories = await fetchCategories()
-      data = filterCategoriesByTime(data, categories)
-      
+      // FIXED: No filtrar categorías por horario - siempre mostrar todas las categorías
+      // El filtrado de productos ocultos se mantiene (false = no incluir productos ocultos)
+      const data = await fetchMenuData(false)
+
+      // REMOVED: Ya no filtramos categorías por horario
+      // Las categorías siempre se muestran, con indicadores de disponibilidad en el UI
+      // const categories = await fetchCategories()
+      // data = filterCategoriesByTime(data, categories)
+
       setMenuData(data)
       setError(null)
     } catch (err) {
