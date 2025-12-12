@@ -182,9 +182,10 @@ export function shouldHideCategory(
 ): boolean {
   const category = categories[categoryId]
 
-  // Si la categoría no existe, ocultarla
+  // CRITICAL FIX: Si la categoría no existe en metadata, NO ocultarla
+  // Muchas categorías pueden no tener metadata pero sí tener productos
   if (!category) {
-    return true
+    return false // NO ocultar si no hay metadata
   }
 
   // 1. Verificar restricción de horario
