@@ -2139,7 +2139,16 @@ export default function AdminPanel() {
     }
     try {
       // Verificar si la subcategoría tiene productos
-      const products = menuSections[subcategoryId] || []
+      let products = menuSections[subcategoryId] || []
+
+      // Si no encontramos, buscar por keys compuestos
+      if (products.length === 0) {
+        const foundKey = Object.keys(menuSections).find(k => k.endsWith(`-${subcategoryId}`))
+        if (foundKey) {
+          products = menuSections[foundKey]
+        }
+      }
+
       const hasProducts = products.length > 0
       const productCount = products.length
 
@@ -2165,6 +2174,13 @@ export default function AdminPanel() {
       setMenuSections(prev => {
         const newSections = { ...prev }
         delete newSections[subcategoryId]
+
+        // También limpiar claves compuestas que puedan existir
+        const compoundKey = Object.keys(newSections).find(k => k.endsWith(`-${subcategoryId}`))
+        if (compoundKey) {
+          delete newSections[compoundKey]
+        }
+
         return newSections
       })
 
@@ -2325,7 +2341,25 @@ export default function AdminPanel() {
           break
         default:
           // Para categorías personalizadas
-          categoryItems = menuSections[categoryId] || []
+          // Intento buscar por ID simple, si no, buscar en las claves del objeto
+          // para ver si existe alguna clave compuesta que termine con este ID
+          // (Aunque lo ideal es tener el ID exacto, el user может pasar solo el subcatId)
+          let items = menuSections[categoryId]
+
+          if (!items || items.length === 0) {
+            // Buscar si existe como parte de una clave compuesta (ej: promociones-tapeos)
+            const foundKey = Object.keys(menuSections).find(k => k.endsWith(`-${categoryId}`))
+            if (foundKey) {
+              items = menuSections[foundKey]
+              // IMPORTANTE: Si encontramos por clave compuesta, deberíamos actualizar usando esa clave
+              // Pero aquí `categoryId` se usa para la API call.
+              // Si la API espera el ID del padre/sección correcta, esto podría fallar si enviamos solo `categoryId`
+              // Sin embargo, el endpoint PUT /api/menu/:section/:id usa `section` más como namespace.
+              // Si el item tiene ID único, MongoDB lo encuentra igual.
+            }
+          }
+
+          categoryItems = items || []
       }
 
       if (categoryItems.length === 0) {
@@ -2561,161 +2595,179 @@ export default function AdminPanel() {
           </h3>
         </div>
 
-        {subcategories.map(subcatId => {
-          // Asegurar que subcatData siempre sea un array válido
-          const subcatData = Array.isArray(menuSections[subcatId]) ? menuSections[subcatId] : []
-          // Generar nombre desde el ID usando la función helper
-          const subcatName = getSubcategoryDisplayName(subcatId, categoryId)
+          // FIXED: Lookup robusto para sub-subcategorías
+        // Determinar qué clave se está usando realmente en menuSections
+        const compoundId = `${categoryId}-${subcatId}`
+        const hasSimpleData = Array.isArray(menuSections[subcatId])
+        const hasCompoundData = Array.isArray(menuSections[compoundId])
 
-          // Debug: mostrar información de cada subcategoría
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`Subcategoría ${subcatId}:`, { subcatName, productCount: subcatData.length })
-          }
+        const subcatData = hasSimpleData
+        ? menuSections[subcatId]
+        : hasCompoundData
+        ? menuSections[compoundId]
+        : []
+
+        // Usar la clave correcta para operaciones (agregar, editar, etc.)
+        const realSectionKey = hasSimpleData ? subcatId : (hasCompoundData ? compoundId : subcatId)
+
+        // Generar nombre desde el ID usando la función helper
+        const subcatName = getSubcategoryDisplayName(subcatId, categoryId)
+
+        // Debug: mostrar información de cada subcategoría
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Subcategoría ${subcatId}:`, { subcatName, productCount: subcatData.length, realKey: realSectionKey })
+        }
 
           // Contar subsub-categorías (nivel 2) para esta subcategoría (nivel 1)
-          const subSubcategoryCount = Object.entries(subcategoryMapping)
+        const subSubcategoryCount = Object.entries(subcategoryMapping)
             .filter(([subSubId, parentId]) => parentId === subcatId)
-            .length
+        .length
 
-          return (
-            <div key={subcatId} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <span className="text-[#8bc34a]">🔹</span>
-                  {subcatName}
-                  <span className="text-sm text-gray-500 font-normal">
-                    ({subcatData.length} producto{subcatData.length !== 1 ? 's' : ''})
-                  </span>
-                  {subSubcategoryCount > 0 && (
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full ml-2">
-                      {subSubcategoryCount} subsub
-                    </span>
-                  )}
-                </h4>
-                <div className="flex gap-2 items-center">
-                  <select
-                    className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
-                    defaultValue="none"
-                    onChange={(e) => applySortToSection(subcatId, e.target.value as any)}
-                    aria-label="Ordenar subcategoría"
-                  >
-                    <option value="none">Orden original</option>
-                    <option value="priceDesc">Precio ↓</option>
-                    <option value="priceAsc">Precio ↑</option>
-                    <option value="nameAsc">A-Z</option>
-                    <option value="nameDesc">Z-A</option>
-                  </select>
-                  <Button
-                    size="sm"
-                    disabled={saving}
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => {
-                      setSelectedSectionForProduct(subcatId)
-                      setIsAddingProduct(true)
-                    }}
-                  >
-                    <Plus className="w-4 h-4 text-white" />
-                    <span className="text-white">Agregar Producto</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={saving}
-                    className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ color: "#fff", letterSpacing: "0.04em" }}
-                    onClick={() => handleDeleteSubcategory(subcatId)}
-                  >
-                    <Trash2 className="w-4 h-4 text-white" />
-                    <span style={{ color: "#fff", letterSpacing: "0.04em" }}>Eliminar</span>
-                  </Button>
-                </div>
-              </div>
-
-              {Array.isArray(subcatData) && subcatData.length > 0 ? (
-                <div className="space-y-3">
-                  {subcatData.map((item) => renderMenuItem(item, subcatId))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-gray-500 bg-white rounded border-2 border-dashed border-gray-300">
-                  <p className="text-sm">No hay productos en esta subcategoría aún.</p>
-                  <p className="text-xs mt-1">Haz clic en "Agregar Producto" para comenzar.</p>
-                </div>
+        return (
+        <div key={subcatId} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <span className="text-[#8bc34a]">🔹</span>
+              {subcatName}
+              <span className="text-sm text-gray-500 font-normal">
+                ({subcatData.length} producto{subcatData.length !== 1 ? 's' : ''})
+              </span>
+              {subSubcategoryCount > 0 && (
+                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full ml-2">
+                  {subSubcategoryCount} subsub
+                </span>
               )}
-
-              {/* Renderizar sub-subcategorías (nivel 2) */}
-              {(() => {
-                const subSubcategories = Object.entries(subcategoryMapping)
-                  .filter(([subsubId, parentId]) => parentId === subcatId)
-                  .map(([subsubId]) => subsubId)
-
-                if (subSubcategories.length === 0) return null
-
-                return (
-                  <div className="mt-4 ml-4 space-y-4 border-l-2 border-blue-300 pl-4">
-                    {subSubcategories.map(subsubId => {
-                      const subsubData = Array.isArray(menuSections[subsubId]) ? menuSections[subsubId] : []
-                      let subsubName = subsubId.split('-').map(word => {
-                        if (/^\d+$/.test(word)) return null
-                        return word.charAt(0).toUpperCase() + word.slice(1)
-                      }).filter(Boolean).join(' ')
-
-                      if (!subsubName) {
-                        subsubName = subsubId.split('-').map(word =>
-                          word.charAt(0).toUpperCase() + word.slice(1)
-                        ).join(' ')
-                      }
-
-                      return (
-                        <div key={subsubId} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                          <div className="flex justify-between items-center mb-3">
-                            <h5 className="text-md font-semibold text-gray-800 flex items-center gap-2">
-                              <span className="text-blue-500">↳</span>
-                              {subsubName}
-                              <span className="text-sm text-gray-500 font-normal">
-                                ({subsubData.length} producto{subsubData.length !== 1 ? 's' : ''})
-                              </span>
-                            </h5>
-                            <div className="flex gap-2 items-center">
-                              <Button
-                                size="sm"
-                                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold text-xs h-8"
-                                onClick={() => {
-                                  setSelectedSectionForProduct(subsubId)
-                                  setIsAddingProduct(true)
-                                }}
-                              >
-                                <Plus className="w-3 h-3 text-white" />
-                                <span className="text-white">Agregar</span>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white border-0 font-semibold text-xs h-8"
-                                onClick={() => handleDeleteSubcategory(subsubId)}
-                              >
-                                <Trash2 className="w-3 h-3 text-white" />
-                                <span>Eliminar</span>
-                              </Button>
-                            </div>
-                          </div>
-
-                          {Array.isArray(subsubData) && subsubData.length > 0 ? (
-                            <div className="space-y-2">
-                              {subsubData.map((item) => renderMenuItem(item, subsubId))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-4 text-gray-500 bg-white rounded border-2 border-dashed border-blue-200">
-                              <p className="text-xs">No hay productos en esta sub-subcategoría aún.</p>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })()}
+            </h4>
+            <div className="flex gap-2 items-center">
+              <select
+                className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                defaultValue="none"
+                onChange={(e) => applySortToSection(realSectionKey, e.target.value as any)}
+                aria-label="Ordenar subcategoría"
+              >
+                <option value="none">Orden original</option>
+                <option value="priceDesc">Precio ↓</option>
+                <option value="priceAsc">Precio ↑</option>
+                <option value="nameAsc">A-Z</option>
+                <option value="nameDesc">Z-A</option>
+              </select>
+              <Button
+                size="sm"
+                disabled={saving}
+                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  setSelectedSectionForProduct(realSectionKey)
+                  setIsAddingProduct(true)
+                }}
+              >
+                <Plus className="w-4 h-4 text-white" />
+                <span className="text-white">Agregar Producto</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={saving}
+                className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ color: "#fff", letterSpacing: "0.04em" }}
+                onClick={() => handleDeleteSubcategory(subcatId)} // Delete maneja el mapping ID, no el key de datos
+              >
+                <Trash2 className="w-4 h-4 text-white" />
+                <span style={{ color: "#fff", letterSpacing: "0.04em" }}>Eliminar</span>
+              </Button>
             </div>
-          )
+          </div>
+
+          {Array.isArray(subcatData) && subcatData.length > 0 ? (
+            <div className="space-y-3">
+              {subcatData.map((item) => renderMenuItem(item, realSectionKey))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-gray-500 bg-white rounded border-2 border-dashed border-gray-300">
+              <p className="text-sm">No hay productos en esta subcategoría aún.</p>
+              <p className="text-xs mt-1">Haz clic en "Agregar Producto" para comenzar.</p>
+            </div>
+          )}
+
+
+          {/* Renderizar sub-subcategorías (nivel 2) */}
+          {(() => {
+            const subSubcategories = Object.entries(subcategoryMapping)
+              .filter(([subsubId, parentId]) => parentId === subcatId)
+              .map(([subsubId]) => subsubId)
+
+            if (subSubcategories.length === 0) return null
+
+            return (
+              <div className="mt-4 ml-4 space-y-4 border-l-2 border-blue-300 pl-4">
+                {subSubcategories.map(subsubId => {
+                  // FIXED: Lookup robusto para sub-subcategorías
+                  const subsubData = Array.isArray(menuSections[subsubId])
+                    ? menuSections[subsubId]
+                    : Array.isArray(menuSections[`${subcatId}-${subsubId}`])
+                      ? menuSections[`${subcatId}-${subsubId}`]
+                      : []
+                  let subsubName = subsubId.split('-').map(word => {
+                    if (/^\d+$/.test(word)) return null
+                    return word.charAt(0).toUpperCase() + word.slice(1)
+                  }).filter(Boolean).join(' ')
+
+                  if (!subsubName) {
+                    subsubName = subsubId.split('-').map(word =>
+                      word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join(' ')
+                  }
+
+                  return (
+                    <div key={subsubId} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                      <div className="flex justify-between items-center mb-3">
+                        <h5 className="text-md font-semibold text-gray-800 flex items-center gap-2">
+                          <span className="text-blue-500">↳</span>
+                          {subsubName}
+                          <span className="text-sm text-gray-500 font-normal">
+                            ({subsubData.length} producto{subsubData.length !== 1 ? 's' : ''})
+                          </span>
+                        </h5>
+                        <div className="flex gap-2 items-center">
+                          <Button
+                            size="sm"
+                            className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold text-xs h-8"
+                            onClick={() => {
+                              setSelectedSectionForProduct(subsubId)
+                              setIsAddingProduct(true)
+                            }}
+                          >
+                            <Plus className="w-3 h-3 text-white" />
+                            <span className="text-white">Agregar</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white border-0 font-semibold text-xs h-8"
+                            onClick={() => handleDeleteSubcategory(subsubId)}
+                          >
+                            <Trash2 className="w-3 h-3 text-white" />
+                            <span>Eliminar</span>
+                          </Button>
+                        </div>
+                      </div>
+
+                      {Array.isArray(subsubData) && subsubData.length > 0 ? (
+                        <div className="space-y-2">
+                          {subsubData.map((item) => renderMenuItem(item, subsubId))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-gray-500 bg-white rounded border-2 border-dashed border-blue-200">
+                          <p className="text-xs">No hay productos en esta sub-subcategoría aún.</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
+        </div>
+        )
         })}
       </div>
     )
