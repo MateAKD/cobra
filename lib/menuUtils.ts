@@ -170,6 +170,83 @@ export function isCategoryVisible(categoryId: string, categories: Record<string,
   return isTimeInRange(category.startTime, category.endTime)
 }
 
+// NUEVA FUNCIÓN: Verificar si una categoría debe ocultarse completamente
+// Retorna true si la categoría debe ocultarse por:
+// 1. Restricción de horario (fuera del horario permitido)
+// 2. Todos los productos están ocultos
+export function shouldHideCategory(
+  categoryId: string,
+  categories: Record<string, Category>,
+  categoryData: any,
+  subcategoryMapping?: Record<string, string>
+): boolean {
+  const category = categories[categoryId]
+
+  // Si la categoría no existe, ocultarla
+  if (!category) {
+    return true
+  }
+
+  // 1. Verificar restricción de horario
+  if (category.timeRestricted && category.startTime && category.endTime) {
+    const isInTimeRange = isTimeInRange(category.startTime, category.endTime)
+    if (!isInTimeRange) {
+      return true // Ocultar si está fuera del horario
+    }
+  }
+
+  // 2. Verificar si todos los productos están ocultos
+  // Si la categoría tiene datos (productos)
+  if (categoryData && Array.isArray(categoryData)) {
+    // Si no hay productos visibles, ocultar la categoría
+    const visibleProducts = categoryData.filter((item: any) => !item.hidden)
+    if (visibleProducts.length === 0) {
+      // Solo ocultar si no tiene subcategorías
+      if (subcategoryMapping) {
+        const hasSubcategories = Object.values(subcategoryMapping).includes(categoryId)
+        if (!hasSubcategories) {
+          return true // Ocultar si no tiene productos visibles ni subcategorías
+        }
+      } else {
+        return true // Ocultar si no hay productos visibles
+      }
+    }
+  }
+
+  return false // No ocultar
+}
+
+// NUEVA FUNCIÓN: Verificar si una subcategoría debe ocultarse
+// Una subcategoría se oculta si:
+// 1. Su categoría padre está oculta por horario
+// 2. Todos sus productos están ocultos
+export function shouldHideSubcategory(
+  subcategoryId: string,
+  parentCategoryId: string,
+  categories: Record<string, Category>,
+  subcategoryData: any
+): boolean {
+  // 1. Si la categoría padre está oculta por horario, ocultar la subcategoría
+  const parentCategory = categories[parentCategoryId]
+  if (parentCategory && parentCategory.timeRestricted && parentCategory.startTime && parentCategory.endTime) {
+    const isInTimeRange = isTimeInRange(parentCategory.startTime, parentCategory.endTime)
+    if (!isInTimeRange) {
+      return true // Ocultar si el padre está fuera del horario
+    }
+  }
+
+  // 2. Verificar si todos los productos de la subcategoría están ocultos
+  if (subcategoryData && Array.isArray(subcategoryData)) {
+    const visibleProducts = subcategoryData.filter((item: any) => !item.hidden)
+    if (visibleProducts.length === 0) {
+      return true // Ocultar si no hay productos visibles
+    }
+  }
+
+  return false // No ocultar
+}
+
+
 // DEPRECATED: Esta función ya no se usa para filtrar categorías del menú
 // Las categorías ahora siempre se muestran, con indicadores de disponibilidad
 // Mantenida solo para compatibilidad hacia atrás

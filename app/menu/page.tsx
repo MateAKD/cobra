@@ -7,6 +7,7 @@ import { useMenuData } from "@/hooks/use-menu-data"
 import { useCategories } from "@/hooks/use-categories"
 import { useSubcategoryMapping } from "@/hooks/use-subcategory-mapping"
 import { useSubcategoryOrder } from "@/hooks/use-subcategory-order"
+import { shouldHideCategory, shouldHideSubcategory } from "@/lib/menuUtils"
 
 // Componente de carga con logo de Cobra
 const CobraLoadingScreen = ({ isLoading }: { isLoading: boolean }) => {
@@ -167,14 +168,26 @@ export default function MenuPage() {
   const { subcategoryMapping, loading: subcategoryLoading } = useSubcategoryMapping()
   const { subcategoryOrder } = useSubcategoryOrder()
 
-  // Filtrar categorías para incluir solo las que están en menuData (visibles por horario)
-  // Y excluir subcategorías (que están en subcategoryMapping como claves)
-  // También incluir categorías que tienen subcategorías aunque no tengan productos directos
+  // Filtrar categorías para incluir solo las que NO deben ocultarse
+  // Excluir:
+  // 1. Subcategorías (que están en subcategoryMapping como claves)
+  // 2. Categorías fuera de horario
+  // 3. Categorías con todos los productos ocultos (sin subcategorías)
   const visibleCategories = menuData
     ? Object.fromEntries(
       Object.entries(categories).filter(([key]) => {
         // NO debe ser una subcategoría (no debe estar en las claves de subcategoryMapping)
         if (Object.keys(subcategoryMapping).includes(key)) return false
+
+        // Obtener datos de la categoría
+        const categoryData = (menuData as any)[key]
+
+        // Verificar si debe ocultarse por horario o productos ocultos
+        const shouldHide = shouldHideCategory(key, categories, categoryData, subcategoryMapping)
+
+        if (shouldHide) {
+          return false // Ocultar esta categoría
+        }
 
         // Verificar si tiene subcategorías asociadas
         const hasSubcategories = Object.values(subcategoryMapping).includes(key)
@@ -696,7 +709,15 @@ export default function MenuPage() {
   }
 
   // Función helper para renderizar una subcategoría con sus sub-subcategorías
-  const renderSubcategoryWithChildren = (subcatId: string, subcatData: any[], subcatName: string) => {
+  const renderSubcategoryWithChildren = (subcatId: string, subcatData: any[], subcatName: string, parentCategoryId?: string) => {
+    // Verificar si la subcategoría debe ocultarse
+    const parentId = parentCategoryId || subcategoryMapping[subcatId] || ''
+    const shouldHide = shouldHideSubcategory(subcatId, parentId, categories, subcatData)
+
+    if (shouldHide) {
+      return null // No renderizar esta subcategoría
+    }
+
     // Buscar sub-subcategorías de esta subcategoría
     const subSubcategories = sortSubcategories(
       Object.entries(subcategoryMapping)
@@ -721,6 +742,13 @@ export default function MenuPage() {
             || ((menuData as any)?.[subsubId])
             || ((menuData as any)?.[subsubAltId])
             || []
+
+          // Verificar si la sub-subcategoría debe ocultarse
+          const shouldHideSubSub = shouldHideSubcategory(subsubId, subcatId, categories, subsubData)
+
+          if (shouldHideSubSub) {
+            return null // No renderizar esta sub-subcategoría
+          }
 
           if (!Array.isArray(subsubData) || subsubData.length === 0) return null
 
@@ -774,10 +802,10 @@ export default function MenuPage() {
 
             // Si es "guarniciones", usar los datos de la sección hardcodeada
             if (subcatId === 'guarniciones') {
-              return renderSubcategoryWithChildren(subcatId, guarniciones || [], subcatName)
+              return renderSubcategoryWithChildren(subcatId, guarniciones || [], subcatName, 'parrilla')
             }
 
-            return renderSubcategoryWithChildren(subcatId, subcatData || [], subcatName)
+            return renderSubcategoryWithChildren(subcatId, subcatData || [], subcatName, 'parrilla')
           })}
         </>
       );
@@ -816,7 +844,7 @@ export default function MenuPage() {
             else if (subcatId === 'ensaladas') dataToUse = ensaladas || []
             else if (subcatId === 'otros') dataToUse = otros || []
 
-            return renderSubcategoryWithChildren(subcatId, dataToUse, subcatName)
+            return renderSubcategoryWithChildren(subcatId, dataToUse, subcatName, 'principales')
           })}
         </>
       );
@@ -846,7 +874,7 @@ export default function MenuPage() {
 
       const subcatName = getSubcategoryDisplayName(subcatId, categoryName)
 
-      return renderSubcategoryWithChildren(subcatId, subcatData || [], subcatName)
+      return renderSubcategoryWithChildren(subcatId, subcatData || [], subcatName, categoryName)
     })
 
     // Obtener productos directos de la categoría principal
