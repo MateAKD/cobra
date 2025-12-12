@@ -1,53 +1,34 @@
 import { NextRequest, NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
-import { readJsonFileWithCache, fileCache } from "@/lib/cache"
-
-const HIERARCHY_FILE_PATH = path.join(process.cwd(), "data", "category-hierarchy.json")
-const MAPPING_FILE_PATH = path.join(process.cwd(), "data", "subcategory-mapping.json")
+import connectDB from "@/lib/db"
+import Category from "@/models/Category"
 
 // GET - Obtener la jerarquía completa
-// OPTIMIZACIÓN: Usa cache en memoria
 export async function GET() {
   try {
-    // OPTIMIZACIÓN: Usar cache en lugar de leer directamente
-    const hierarchy = await readJsonFileWithCache<any>(HIERARCHY_FILE_PATH, 5000)
-    
+    await connectDB()
+
+    // Obtener todas las categorías que son subcategorías
+    const subcats = await Category.find({
+      parentCategory: { $exists: true, $ne: null }
+    }).lean()
+
+    // Construir la jerarquía
+    const hierarchy: any = {}
+    subcats.forEach((cat: any) => {
+      hierarchy[cat.id] = {
+        parent: cat.parentCategory,
+        level: 1, // Por ahora backend flat level 1
+        type: "category"
+      }
+    })
+
     const response = NextResponse.json(hierarchy)
     response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
-    
+
     return response
   } catch (error) {
-    console.error("Error reading category hierarchy:", error)
-    // Si el archivo no existe, intentar migrar desde el antiguo formato
-    try {
-      const mapping = await readJsonFileWithCache<Record<string, string>>(MAPPING_FILE_PATH, 5000)
-      
-      // Convertir al nuevo formato
-      const hierarchy: any = {}
-      Object.entries(mapping).forEach(([subcatId, parentId]) => {
-        hierarchy[subcatId] = {
-          parent: parentId,
-          level: 1,
-          type: "category"
-        }
-      })
-      
-      // Guardar el nuevo formato
-      await fs.writeFile(
-        HIERARCHY_FILE_PATH,
-        JSON.stringify(hierarchy, null, 2),
-        "utf8"
-      )
-      
-      // Invalidar cache después de escribir
-      fileCache.invalidate(HIERARCHY_FILE_PATH)
-      
-      return NextResponse.json(hierarchy)
-    } catch (migrationError) {
-      console.error("Error migrating to new format:", migrationError)
-      return NextResponse.json({})
-    }
+    console.error("Error reading category hierarchy from DB:", error)
+    return NextResponse.json({})
   }
 }
 
@@ -56,48 +37,42 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { subcategoryId, parentId, level, type } = body
-    
+
     if (!subcategoryId || !parentId) {
       return NextResponse.json(
         { error: "subcategoryId y parentId son requeridos" },
         { status: 400 }
       )
     }
-    
-    // OPTIMIZACIÓN: Leer el archivo actual usando cache
-    let hierarchy: any = {}
-    try {
-      hierarchy = await readJsonFileWithCache<any>(HIERARCHY_FILE_PATH, 5000)
-    } catch (error) {
-      console.log("Creating new category-hierarchy.json file")
-    }
-    
-    // Agregar o actualizar la subcategoría
-    hierarchy[subcategoryId] = {
-      parent: parentId,
-      level: level || 1,
-      type: type || "category"
-    }
-    
-    // Guardar de vuelta al archivo
-    await fs.writeFile(
-      HIERARCHY_FILE_PATH,
-      JSON.stringify(hierarchy, null, 2),
-      "utf8"
+
+    await connectDB()
+
+    // Actualizar la categoría para asignarle el padre
+    const updated = await Category.findOneAndUpdate(
+      { id: subcategoryId },
+      {
+        $set: {
+          parentCategory: parentId,
+          isSubcategory: true
+        }
+      },
+      { new: true }
     )
-    
-    // OPTIMIZACIÓN: Invalidar cache después de escribir
-    fileCache.invalidate(HIERARCHY_FILE_PATH)
-    
-    // NO sincronizar hacia subcategory-mapping.json porque eso destruye la información de niveles
-    // El archivo subcategory-mapping.json se mantiene separado y se actualiza solo cuando es necesario
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: "Subcategoría agregada correctamente" 
+
+    if (!updated) {
+      // Si no existe, se podría crear, pero este endpoint asume que organizamos algo existente.
+      return NextResponse.json(
+        { error: "Categoría no encontrada" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Subcategoría agregada correctamente en MongoDB"
     })
   } catch (error) {
-    console.error("Error adding subcategory:", error)
+    console.error("Error adding subcategory to DB:", error)
     return NextResponse.json(
       { error: "Error al agregar subcategoría" },
       { status: 500 }
@@ -110,39 +85,31 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const subcategoryId = searchParams.get("id")
-    
+
     if (!subcategoryId) {
       return NextResponse.json(
         { error: "subcategoryId es requerido" },
         { status: 400 }
       )
     }
-    
-    // OPTIMIZACIÓN: Leer el archivo actual usando cache
-    const hierarchy = await readJsonFileWithCache<any>(HIERARCHY_FILE_PATH, 5000)
-    
-    // Eliminar la subcategoría
-    delete hierarchy[subcategoryId]
-    
-    // Guardar de vuelta al archivo
-    await fs.writeFile(
-      HIERARCHY_FILE_PATH,
-      JSON.stringify(hierarchy, null, 2),
-      "utf8"
+
+    await connectDB()
+
+    // Desvincular del padre
+    await Category.findOneAndUpdate(
+      { id: subcategoryId },
+      {
+        $unset: { parentCategory: "" },
+        $set: { isSubcategory: false }
+      }
     )
-    
-    // OPTIMIZACIÓN: Invalidar cache después de escribir
-    fileCache.invalidate(HIERARCHY_FILE_PATH)
-    
-    // NO sincronizar hacia subcategory-mapping.json porque eso destruye la información de niveles
-    // El archivo subcategory-mapping.json se mantiene separado
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: "Subcategoría eliminada correctamente" 
+
+    return NextResponse.json({
+      success: true,
+      message: "Subcategoría eliminada correctamente de la jerarquía en MongoDB"
     })
   } catch (error) {
-    console.error("Error deleting subcategory:", error)
+    console.error("Error deleting subcategory from hierarchy DB:", error)
     return NextResponse.json(
       { error: "Error al eliminar subcategoría" },
       { status: 500 }

@@ -1,70 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
-import { fileCache } from '@/lib/cache'
-
-const MENU_FILE_PATH = path.join(process.cwd(), 'data', 'menu.json')
-
-// Función para leer el archivo de datos (ahora async)
-const readMenuData = async () => {
-  try {
-    const data = await fs.readFile(MENU_FILE_PATH, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('Error reading menu data:', error)
-    return null
-  }
-}
-
-// Función para escribir el archivo de datos (ahora async)
-const writeMenuData = async (data: any) => {
-  try {
-    await fs.writeFile(MENU_FILE_PATH, JSON.stringify(data, null, 2), 'utf8')
-    // FIXED: Invalidar cache después de escribir
-    fileCache.invalidate(MENU_FILE_PATH)
-    return true
-  } catch (error) {
-    console.error('Error writing menu data:', error)
-    return false
-  }
-}
-
-// Función para encontrar y actualizar un item en cualquier sección
-const findAndUpdateItem = (menuData: any, section: string, id: string, updates: any) => {
-  // Buscar en secciones simples
-  if (menuData[section] && Array.isArray(menuData[section])) {
-    const itemIndex = menuData[section].findIndex((item: any) => item.id === id)
-    if (itemIndex !== -1) {
-      menuData[section][itemIndex] = { ...menuData[section][itemIndex], ...updates }
-      return true
-    }
-  }
-
-  // Buscar en secciones anidadas (vinos, promociones)
-  if (section.startsWith('vinos-')) {
-    const category = section.split('-')[1]
-    if (menuData.vinos && menuData.vinos[category]) {
-      const itemIndex = menuData.vinos[category].findIndex((item: any) => item.id === id)
-      if (itemIndex !== -1) {
-        menuData.vinos[category][itemIndex] = { ...menuData.vinos[category][itemIndex], ...updates }
-        return true
-      }
-    }
-  }
-
-  if (section.startsWith('promociones-')) {
-    const category = section.split('-')[1]
-    if (menuData.promociones && menuData.promociones[category]) {
-      const itemIndex = menuData.promociones[category].findIndex((item: any) => item.id === id)
-      if (itemIndex !== -1) {
-        menuData.promociones[category][itemIndex] = { ...menuData.promociones[category][itemIndex], ...updates }
-        return true
-      }
-    }
-  }
-
-  return false
-}
+import Product from '@/models/Product'
+import connectDB from '@/lib/db'
 
 export async function PATCH(
   request: NextRequest,
@@ -83,36 +19,27 @@ export async function PATCH(
       )
     }
 
-    // Leer datos actuales (ahora async)
-    const menuData = await readMenuData()
-    if (!menuData) {
-      return NextResponse.json(
-        { error: 'Error al leer los datos del menú' },
-        { status: 500 }
-      )
-    }
+    await connectDB()
 
-    // Buscar y actualizar el item
-    const itemUpdated = findAndUpdateItem(menuData, section, id, {
-      hidden,
-      hiddenReason: reason,
-      hiddenBy,
-      hiddenAt: timestamp
-    })
+    // Actualizar producto en DB
+    // Buscamos por ID. La sección es útil para verificación pero el ID debería ser único.
+    const updatedProduct = await Product.findOneAndUpdate(
+      { id: id },
+      {
+        $set: {
+          hidden: hidden,
+          hiddenReason: reason,
+          hiddenBy: hiddenBy,
+          hiddenAt: timestamp
+        }
+      },
+      { new: true } // Devolver el documento actualizado
+    )
 
-    if (!itemUpdated) {
+    if (!updatedProduct) {
       return NextResponse.json(
         { error: 'Producto no encontrado' },
         { status: 404 }
-      )
-    }
-
-    // Guardar cambios (ahora async con cache invalidation)
-    const saveSuccess = await writeMenuData(menuData)
-    if (!saveSuccess) {
-      return NextResponse.json(
-        { error: 'Error al guardar los cambios' },
-        { status: 500 }
       )
     }
 
@@ -121,16 +48,16 @@ export async function PATCH(
       message: `Producto ${hidden ? 'ocultado' : 'mostrado'} exitosamente`,
       item: {
         id,
-        section,
-        hidden,
-        reason,
-        hiddenBy,
-        timestamp
+        section: updatedProduct.section,
+        hidden: updatedProduct.hidden,
+        reason: updatedProduct.hiddenReason,
+        hiddenBy: updatedProduct.hiddenBy,
+        timestamp: updatedProduct.hiddenAt
       }
     })
 
   } catch (error) {
-    console.error('Error updating item visibility:', error)
+    console.error('Error updating item visibility in DB:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

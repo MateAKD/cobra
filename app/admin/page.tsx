@@ -370,6 +370,9 @@ export default function AdminPanel() {
 
       // 1. Primero agregar todas las categorías que están en categories.json
       Object.keys(categories).forEach(key => {
+        // CRÍTICO: Si es una subcategoría, NO mostrarla como categoría principal
+        if (Object.keys(currentSubcategoryMapping).includes(key)) return
+
         const categoryInfo = categories[key]
 
         jsonCategories.push({
@@ -394,10 +397,10 @@ export default function AdminPanel() {
         // 2. NO está ya en jsonCategories
         const alreadyAdded = jsonCategories.some(cat => cat.id === key)
 
-        // FIXED: Removida la exclusión por isSubcategory
-        // ANTES: if ((isArray || isObject) && !alreadyAdded && !isSubcategory)
-        // AHORA: Siempre agregar si tiene datos
-        if ((isArray || isObject) && !alreadyAdded) {
+        // FIXED: Restaurada la exclusión de subcategorías
+        const isSubcategory = Object.keys(currentSubcategoryMapping).includes(key)
+
+        if ((isArray || isObject) && !alreadyAdded && !isSubcategory) {
           // Esta categoría existe en el menú pero no en categories.json
           // Agregarla para que sea visible
           const categoryName = key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
@@ -1525,6 +1528,7 @@ export default function AdminPanel() {
     }
   }
 
+
   // Función para agregar nueva subcategoría
   const handleAddNewSubcategory = async () => {
     if (!newSubcategoryName.trim() || !selectedCategoryForSubcategory) return
@@ -1640,1807 +1644,1893 @@ export default function AdminPanel() {
           // Mostrar mensaje de éxito
           setNotificationStatus("✅ Subcategoría creada exitosamente")
           setTimeout(() => setNotificationStatus(""), 3000)
-        } catch (error) {
-          console.error("Error adding subcategory:", error)
-          alert("Error al agregar la subcategoría")
         }
+      } catch (error) {
+        console.error("Error adding subcategory:", error)
+        alert("Error al agregar la subcategoría")
       }
+    } catch (error) {
+      console.error("Error adding subcategory:", error)
+    }
+  }
 
   // Función para editar categoría
   const handleEditCategory = (category: any) => {
-        setEditingCategory(category)
-        // Cargar la descripción actual de la categoría desde el hook useCategories
-        const categoryData = categories[category.id]
-        setEditingCategoryDescription(categoryData?.description || "")
+    setEditingCategory(category)
+    // Cargar la descripción actual de la categoría desde el hook useCategories
+    const categoryData = categories[category.id]
+    setEditingCategoryDescription(categoryData?.description || "")
+  }
+
+  // Función para guardar cambios de categoría
+  const handleSaveCategory = async (updatedCategory: any) => {
+    try {
+      setSaving(true)
+      setNotificationStatus("Guardando cambios de categoría...")
+
+      // Actualizar la descripción de la categoría usando el hook useCategories
+      if (updatedCategory.description !== undefined) {
+        await updateCategory(updatedCategory.id, {
+          name: updatedCategory.name,
+          description: updatedCategory.description || "",
+          order: updatedCategory.order || 1
+        })
       }
 
-      // Función para guardar cambios de categoría
-      const handleSaveCategory = async (updatedCategory: any) => {
-        try {
-          setSaving(true)
-          setNotificationStatus("Guardando cambios de categoría...")
+      // Actualizar el estado local
+      setAllCategories(prev =>
+        prev.map(cat =>
+          cat.id === updatedCategory.id ? updatedCategory : cat
+        )
+      )
 
-          // Actualizar la descripción de la categoría usando el hook useCategories
-          if (updatedCategory.description !== undefined) {
-            await updateCategory(updatedCategory.id, {
-              name: updatedCategory.name,
-              description: updatedCategory.description || "",
-              order: updatedCategory.order || 1
-            })
-          }
-
-          // Actualizar el estado local
-          setAllCategories(prev =>
-            prev.map(cat =>
-              cat.id === updatedCategory.id ? updatedCategory : cat
-            )
-          )
-
-          // Si se cambió el nombre de la categoría, actualizar también el mapeo de subcategorías
-          if (updatedCategory.name !== editingCategory?.name) {
-            setSubcategoryMapping(prev => {
-              const newMapping = { ...prev }
-              Object.keys(newMapping).forEach(key => {
-                if (newMapping[key] === updatedCategory.id) {
-                  // Aquí podrías implementar la lógica para renombrar la subcategoría
-                  // Por ahora solo actualizamos el mapeo
-                }
-              })
-              return newMapping
-            })
-          }
-
-          // Si se ocultó la categoría, ocultar también todos los productos
-          if (updatedCategory.hidden && !editingCategory?.hidden) {
-            // Ocultar todos los productos de la categoría
-            const categoryItems = getCategoryItems(updatedCategory.id)
-            if (categoryItems.length > 0) {
-              for (const item of categoryItems) {
-                try {
-                  await fetch(`/api/menu/${updatedCategory.id}/${item.id}/visibility`, {
-                    method: "PATCH",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      hidden: true,
-                      reason: "Categoría oculta",
-                      hiddenBy: "admin",
-                      timestamp: new Date().toISOString()
-                    }),
-                  })
-                } catch (error) {
-                  console.warn("No se pudo ocultar el producto:", item.id)
-                }
-              }
+      // Si se cambió el nombre de la categoría, actualizar también el mapeo de subcategorías
+      if (updatedCategory.name !== editingCategory?.name) {
+        setSubcategoryMapping(prev => {
+          const newMapping = { ...prev }
+          Object.keys(newMapping).forEach(key => {
+            if (newMapping[key] === updatedCategory.id) {
+              // Aquí podrías implementar la lógica para renombrar la subcategoría
+              // Por ahora solo actualizamos el mapeo
             }
-          }
-
-          setEditingCategory(null)
-          setEditingCategoryDescription("")
-          setNotificationStatus("✅ Categoría actualizada")
-          setTimeout(() => setNotificationStatus(""), 3000)
-        } catch (error) {
-          console.error("Error saving category:", error)
-          alert("Error al guardar la categoría")
-        } finally {
-          setSaving(false)
-        }
-      }
-
-      // Función para eliminar categoría
-      const handleDeleteCategory = async (categoryId: string) => {
-        try {
-          // Verificar si la categoría tiene productos
-          let hasProducts = false
-          let productCount = 0
-
-          switch (categoryId) {
-            case "parrilla":
-              hasProducts = parrilla.length > 0
-              productCount = parrilla.length
-              break
-            case "guarniciones":
-              hasProducts = guarniciones.length > 0
-              productCount = guarniciones.length
-              break
-            case "tapeo":
-              hasProducts = tapeo.length > 0
-              productCount = tapeo.length
-              break
-            case "milanesas":
-              hasProducts = milanesas.length > 0
-              productCount = milanesas.length
-              break
-            case "hamburguesas":
-              hasProducts = hamburguesas.length > 0
-              productCount = hamburguesas.length
-              break
-            case "ensaladas":
-              hasProducts = ensaladas.length > 0
-              productCount = ensaladas.length
-              break
-            case "otros":
-              hasProducts = otros.length > 0
-              productCount = otros.length
-              break
-            case "postres":
-              hasProducts = postres.length > 0
-              productCount = postres.length
-              break
-            case "sandwicheria":
-              hasProducts = sandwicheria.length > 0
-              productCount = sandwicheria.length
-              break
-            case "cafeteria":
-              hasProducts = cafeteria.length > 0
-              productCount = cafeteria.length
-              break
-            case "pasteleria":
-              hasProducts = pasteleria.length > 0
-              productCount = pasteleria.length
-              break
-            case "bebidasSinAlcohol":
-              hasProducts = bebidasSinAlcohol.length > 0
-              productCount = bebidasSinAlcohol.length
-              break
-            case "cervezas":
-              hasProducts = cervezas.length > 0
-              productCount = cervezas.length
-              break
-            case "tragosClasicos":
-              hasProducts = tragosClasicos.length > 0
-              productCount = tragosClasicos.length
-              break
-            case "tragosEspeciales":
-              hasProducts = tragosEspeciales.length > 0
-              productCount = tragosEspeciales.length
-              break
-            case "tragosRedBull":
-              hasProducts = tragosRedBull.length > 0
-              productCount = tragosRedBull.length
-              break
-            case "botellas":
-              hasProducts = botellas.length > 0
-              productCount = botellas.length
-              break
-            default:
-              hasProducts = (menuSections[categoryId] || []).length > 0
-              productCount = (menuSections[categoryId] || []).length
-          }
-
-          let confirmMessage = `¿Estás seguro de que quieres eliminar la categoría "${categoryId}"?`
-          if (hasProducts) {
-            confirmMessage += `\n\n⚠️ ADVERTENCIA: Esta categoría contiene ${productCount} producto(s). Al eliminar la categoría, todos los productos se perderán permanentemente.`
-          }
-          confirmMessage += "\n\nEsta acción no se puede deshacer."
-
-          if (!confirm(confirmMessage)) {
-            return
-          }
-
-          setSaving(true)
-          setNotificationStatus("Eliminando categoría...")
-
-          // Guardar la categoría eliminada para posible restauración
-          const deletedCategory = allCategories.find(cat => cat.id === categoryId)
-          if (deletedCategory) {
-            setDeletedCategories(prev => [...prev, { ...deletedCategory, deletedAt: new Date().toISOString() }])
-          }
-
-          // Eliminar la categoría del estado local
-          setAllCategories(prev => prev.filter(cat => cat.id !== categoryId))
-
-          // Eliminar del mapeo de subcategorías
-          setSubcategoryMapping(prev => {
-            const newMapping = { ...prev }
-            Object.keys(newMapping).forEach(key => {
-              if (newMapping[key] === categoryId) {
-                delete newMapping[key]
-              }
-            })
-            return newMapping
           })
+          return newMapping
+        })
+      }
 
-          // Limpiar los estados locales de las categorías eliminadas
-          switch (categoryId) {
-            case "parrilla":
-              setParrilla([])
-              break
-            case "guarniciones":
-              setGuarniciones([])
-              break
-            case "tapeo":
-              setTapeo([])
-              break
-            case "milanesas":
-              setMilanesas([])
-              break
-            case "hamburguesas":
-              setHamburguesas([])
-              break
-            case "ensaladas":
-              setEnsaladas([])
-              break
-            case "otros":
-              setOtros([])
-              break
-            case "postres":
-              setPostres([])
-              break
-            case "sandwicheria":
-              setSandwicheria([])
-              break
-            case "cafeteria":
-              setCafeteria([])
-              break
-            case "pasteleria":
-              setPasteleria([])
-              break
-            case "bebidasSinAlcohol":
-              setBebidasSinAlcohol([])
-              break
-            case "cervezas":
-              setCervezas([])
-              break
-            case "tragosClasicos":
-              setTragosClasicos([])
-              break
-            case "tragosEspeciales":
-              setTragosEspeciales([])
-              break
-            case "tragosRedBull":
-              setTragosRedBull([])
-              break
-            case "botellas":
-              setBotellas([])
-              break
-            default:
-              // Para categorías personalizadas
-              setMenuSections(prev => {
-                const newSections = { ...prev }
-                delete newSections[categoryId]
-                return newSections
-              })
-          }
-
-          // Eliminar del servidor solo si la categoría existe en el archivo JSON
-          try {
-            const response = await fetch(`/api/menu/${categoryId}`, {
-              method: "DELETE",
-            })
-
-            if (!response.ok && response.status !== 404) {
-              console.warn("Error al eliminar del servidor:", response.statusText)
-            }
-          } catch (error) {
-            console.warn("No se pudo eliminar del servidor:", error)
-          }
-
-          // Actualizar el archivo de categorías para eliminar la categoría
-          try {
-            const response = await fetch('/api/categories')
-            if (response.ok) {
-              const categoriesData = await response.json()
-              const updatedCategories = { ...categoriesData }
-              delete updatedCategories[categoryId]
-
-              console.log("Eliminando categoría del archivo categories.json:", categoryId)
-              console.log("Categorías actualizadas:", updatedCategories)
-
-              const updateResponse = await fetch('/api/categories', {
-                method: 'PUT',
+      // Si se ocultó la categoría, ocultar también todos los productos
+      if (updatedCategory.hidden && !editingCategory?.hidden) {
+        // Ocultar todos los productos de la categoría
+        const categoryItems = getCategoryItems(updatedCategory.id)
+        if (categoryItems.length > 0) {
+          for (const item of categoryItems) {
+            try {
+              await fetch(`/api/menu/${updatedCategory.id}/${item.id}/visibility`, {
+                method: "PATCH",
                 headers: {
-                  'Content-Type': 'application/json',
+                  "Content-Type": "application/json",
                 },
-                body: JSON.stringify(updatedCategories),
+                body: JSON.stringify({
+                  hidden: true,
+                  reason: "Categoría oculta",
+                  hiddenBy: "admin",
+                  timestamp: new Date().toISOString()
+                }),
               })
-
-              if (updateResponse.ok) {
-                console.log("Categoría eliminada exitosamente del archivo categories.json")
-                // Recargar los datos del admin para sincronizar
-                await refetchAdminMenu()
-              } else {
-                console.error("Error al actualizar categories.json:", updateResponse.statusText)
-              }
+            } catch (error) {
+              console.warn("No se pudo ocultar el producto:", item.id)
             }
-          } catch (error) {
-            console.warn("No se pudo actualizar el archivo de categorías:", error)
           }
-
-          setNotificationStatus("✅ Categoría eliminada")
-          setTimeout(() => setNotificationStatus(""), 3000)
-        } catch (error) {
-          console.error("Error deleting category:", error)
-          alert("Error al eliminar la categoría")
-        } finally {
-          setSaving(false)
         }
       }
 
-      // Función para restaurar categoría eliminada
-      const handleRestoreCategory = async (deletedCategory: any) => {
-        try {
-          setSaving(true)
-          setNotificationStatus("Restaurando categoría...")
+      setEditingCategory(null)
+      setEditingCategoryDescription("")
+      setNotificationStatus("✅ Categoría actualizada")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } catch (error) {
+      console.error("Error saving category:", error)
+      alert("Error al guardar la categoría")
+    } finally {
+      setSaving(false)
+    }
+  }
 
-          // Restaurar la categoría al estado principal
-          setAllCategories(prev => [...prev, { ...deletedCategory, deletedAt: undefined }])
+  // Función para eliminar categoría
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      // Verificar si la categoría tiene productos
+      let hasProducts = false
+      let productCount = 0
 
-          // Remover de la lista de categorías eliminadas
-          setDeletedCategories(prev => prev.filter(cat => cat.id !== deletedCategory.id))
-
-          setNotificationStatus("✅ Categoría restaurada")
-          setTimeout(() => setNotificationStatus(""), 3000)
-        } catch (error) {
-          console.error("Error restoring category:", error)
-          alert("Error al restaurar la categoría")
-        } finally {
-          setSaving(false)
-        }
+      switch (categoryId) {
+        case "parrilla":
+          hasProducts = parrilla.length > 0
+          productCount = parrilla.length
+          break
+        case "guarniciones":
+          hasProducts = guarniciones.length > 0
+          productCount = guarniciones.length
+          break
+        case "tapeo":
+          hasProducts = tapeo.length > 0
+          productCount = tapeo.length
+          break
+        case "milanesas":
+          hasProducts = milanesas.length > 0
+          productCount = milanesas.length
+          break
+        case "hamburguesas":
+          hasProducts = hamburguesas.length > 0
+          productCount = hamburguesas.length
+          break
+        case "ensaladas":
+          hasProducts = ensaladas.length > 0
+          productCount = ensaladas.length
+          break
+        case "otros":
+          hasProducts = otros.length > 0
+          productCount = otros.length
+          break
+        case "postres":
+          hasProducts = postres.length > 0
+          productCount = postres.length
+          break
+        case "sandwicheria":
+          hasProducts = sandwicheria.length > 0
+          productCount = sandwicheria.length
+          break
+        case "cafeteria":
+          hasProducts = cafeteria.length > 0
+          productCount = cafeteria.length
+          break
+        case "pasteleria":
+          hasProducts = pasteleria.length > 0
+          productCount = pasteleria.length
+          break
+        case "bebidasSinAlcohol":
+          hasProducts = bebidasSinAlcohol.length > 0
+          productCount = bebidasSinAlcohol.length
+          break
+        case "cervezas":
+          hasProducts = cervezas.length > 0
+          productCount = cervezas.length
+          break
+        case "tragosClasicos":
+          hasProducts = tragosClasicos.length > 0
+          productCount = tragosClasicos.length
+          break
+        case "tragosEspeciales":
+          hasProducts = tragosEspeciales.length > 0
+          productCount = tragosEspeciales.length
+          break
+        case "tragosRedBull":
+          hasProducts = tragosRedBull.length > 0
+          productCount = tragosRedBull.length
+          break
+        case "botellas":
+          hasProducts = botellas.length > 0
+          productCount = botellas.length
+          break
+        default:
+          hasProducts = (menuSections[categoryId] || []).length > 0
+          productCount = (menuSections[categoryId] || []).length
       }
 
-      // Función auxiliar para obtener productos de una categoría
-      const getCategoryItems = (categoryId: string) => {
-        switch (categoryId) {
-          case "parrilla":
-            return parrilla
-          case "guarniciones":
-            return guarniciones
-          case "tapeo":
-            return tapeo
-          case "milanesas":
-            return milanesas
-          case "hamburguesas":
-            return hamburguesas
-          case "ensaladas":
-            return ensaladas
-          case "otros":
-            return otros
-          case "postres":
-            return postres
-          case "sandwicheria":
-            return sandwicheria
-          case "cafeteria":
-            return cafeteria
-          case "pasteleria":
-            return pasteleria
-          case "bebidasSinAlcohol":
-            return bebidasSinAlcohol
-          case "cervezas":
-            return cervezas
-          case "tragosClasicos":
-            return tragosClasicos
-          case "tragosEspeciales":
-            return tragosEspeciales
-          case "tragosRedBull":
-            return tragosRedBull
-          case "botellas":
-            return botellas
-          default:
-            return menuSections[categoryId] || []
-        }
+      let confirmMessage = `¿Estás seguro de que quieres eliminar la categoría "${categoryId}"?`
+      if (hasProducts) {
+        confirmMessage += `\n\n⚠️ ADVERTENCIA: Esta categoría contiene ${productCount} producto(s). Al eliminar la categoría, todos los productos se perderán permanentemente.`
+      }
+      confirmMessage += "\n\nEsta acción no se puede deshacer."
+
+      if (!confirm(confirmMessage)) {
+        return
       }
 
-      // Función para agregar sub-subcategoría (nivel 2)
-      const handleAddSubSubcategory = async (parentSubcategoryId: string, newSubSubId: string, newSubSubName: string) => {
-        try {
-          setSaving(true)
-          setNotificationStatus(`Creando sub-subcategoría "${newSubSubName}"...`)
+      setSaving(true)
+      setNotificationStatus("Eliminando categoría...")
 
-          // PASO 1: Agregar a la jerarquía con level 2 PRIMERO
-          // Esto mantiene la estructura correcta con los niveles
-          const hierarchyResponse = await fetch("/api/admin/category-hierarchy", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              subcategoryId: newSubSubId,
-              parentId: parentSubcategoryId,
-              level: 2,
-              type: "category"
-            }),
-          })
-
-          if (!hierarchyResponse.ok) {
-            throw new Error("Error al guardar la jerarquía")
-          }
-
-          // PASO 2: Agregar al mapeo de subcategorías con el parentSubcategoryId como padre
-          const newMapping = { ...subcategoryMapping }
-          newMapping[newSubSubId] = parentSubcategoryId
-
-          // Persistir el mapeo
-          const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newMapping),
-          })
-
-          if (!mappingResponse.ok) {
-            throw new Error("Error al guardar el mapeo de subcategorías")
-          }
-
-          // Actualizar estado local del mapeo
-          setSubcategoryMapping(newMapping)
-
-          // PASO 3: Crear la sección vacía en el menú
-          const menuUpdate: any = {}
-          menuUpdate[newSubSubId] = []
-
-          const menuResponse = await fetch("/api/menu", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(menuUpdate),
-          })
-
-          if (!menuResponse.ok) {
-            throw new Error("Error al crear la sección en el menú")
-          }
-
-          // Actualizar estado local del menú
-          setMenuSections(prev => ({
-            ...prev,
-            [newSubSubId]: []
-          }))
-
-          // PASO 4: Recargar todos los datos para asegurar sincronización
-          setNotificationStatus(`🔄 Sincronizando cambios de "${newSubSubName}"...`)
-
-          // Esperar un momento para que el servidor termine de escribir los archivos
-          await new Promise(resolve => setTimeout(resolve, 300))
-
-          // Recargar el mapeo
-          const reloadMapping = await fetch("/api/admin/subcategory-mapping", {
-            cache: 'no-store'
-          })
-          if (reloadMapping.ok) {
-            const updatedMapping = await reloadMapping.json()
-            setSubcategoryMapping(updatedMapping)
-          }
-
-          // Recargar la jerarquía
-          const reloadHierarchy = await fetch("/api/admin/category-hierarchy", {
-            cache: 'no-store'
-          })
-          if (reloadHierarchy.ok) {
-            const updatedHierarchy = await reloadHierarchy.json()
-            console.log("Jerarquía actualizada:", updatedHierarchy)
-          }
-
-          // Recargar datos del menú
-          await refetchAdminMenu()
-
-          setNotificationStatus(`✅ Sub-subcategoría "${newSubSubName}" creada correctamente`)
-          setTimeout(() => setNotificationStatus(""), 3000)
-
-        } catch (error) {
-          console.error("Error creando sub-subcategoría:", error)
-          setNotificationStatus("❌ Error al crear la sub-subcategoría")
-          setTimeout(() => setNotificationStatus(""), 3000)
-        } finally {
-          setSaving(false)
-        }
+      // Guardar la categoría eliminada para posible restauración
+      const deletedCategory = allCategories.find(cat => cat.id === categoryId)
+      if (deletedCategory) {
+        setDeletedCategories(prev => [...prev, { ...deletedCategory, deletedAt: new Date().toISOString() }])
       }
 
-      // Función para eliminar subcategoría
-      const handleDeleteSubcategory = async (subcategoryId: string) => {
-        // Verificar que la subcategoría existe en el mapeo
-        if (!subcategoryMapping[subcategoryId]) {
-          alert(`La subcategoría "${subcategoryId}" no existe en el mapeo`)
-          return
-        }
-        try {
-          // Verificar si la subcategoría tiene productos
-          const products = menuSections[subcategoryId] || []
-          const hasProducts = products.length > 0
-          const productCount = products.length
+      // Eliminar la categoría del estado local
+      setAllCategories(prev => prev.filter(cat => cat.id !== categoryId))
 
-          let confirmMessage = `¿Estás seguro de que quieres eliminar la subcategoría "${subcategoryId}"?`
-          if (hasProducts) {
-            confirmMessage += `\n\n⚠️ ADVERTENCIA: Esta subcategoría contiene ${productCount} producto(s). Al eliminar la subcategoría, todos los productos se perderán permanentemente.`
+      // Eliminar del mapeo de subcategorías
+      setSubcategoryMapping(prev => {
+        const newMapping = { ...prev }
+        Object.keys(newMapping).forEach(key => {
+          if (newMapping[key] === categoryId) {
+            delete newMapping[key]
           }
-          confirmMessage += "\n\nEsta acción no se puede deshacer."
+        })
+        return newMapping
+      })
 
-          if (!confirm(confirmMessage)) {
-            return
-          }
-
-          setSaving(true)
-          setNotificationStatus("Eliminando subcategoría...")
-
-          // Eliminar del mapeo de subcategorías
-          const newMapping = { ...subcategoryMapping }
-          delete newMapping[subcategoryId]
-          setSubcategoryMapping(newMapping)
-
-          // Eliminar del estado local de secciones del menú
+      // Limpiar los estados locales de las categorías eliminadas
+      switch (categoryId) {
+        case "parrilla":
+          setParrilla([])
+          break
+        case "guarniciones":
+          setGuarniciones([])
+          break
+        case "tapeo":
+          setTapeo([])
+          break
+        case "milanesas":
+          setMilanesas([])
+          break
+        case "hamburguesas":
+          setHamburguesas([])
+          break
+        case "ensaladas":
+          setEnsaladas([])
+          break
+        case "otros":
+          setOtros([])
+          break
+        case "postres":
+          setPostres([])
+          break
+        case "sandwicheria":
+          setSandwicheria([])
+          break
+        case "cafeteria":
+          setCafeteria([])
+          break
+        case "pasteleria":
+          setPasteleria([])
+          break
+        case "bebidasSinAlcohol":
+          setBebidasSinAlcohol([])
+          break
+        case "cervezas":
+          setCervezas([])
+          break
+        case "tragosClasicos":
+          setTragosClasicos([])
+          break
+        case "tragosEspeciales":
+          setTragosEspeciales([])
+          break
+        case "tragosRedBull":
+          setTragosRedBull([])
+          break
+        case "botellas":
+          setBotellas([])
+          break
+        default:
+          // Para categorías personalizadas
           setMenuSections(prev => {
             const newSections = { ...prev }
-            delete newSections[subcategoryId]
+            delete newSections[categoryId]
             return newSections
           })
+      }
 
-          // PERSISTIR EL MAPEO DE SUBCATEGORÍAS EN EL ARCHIVO JSON
+      // Eliminar del servidor solo si la categoría existe en el archivo JSON
+      try {
+        const response = await fetch(`/api/menu/${categoryId}`, {
+          method: "DELETE",
+        })
+
+        if (!response.ok && response.status !== 404) {
+          console.warn("Error al eliminar del servidor:", response.statusText)
+        }
+      } catch (error) {
+        console.warn("No se pudo eliminar del servidor:", error)
+      }
+
+      // Actualizar el archivo de categorías para eliminar la categoría
+      try {
+        const response = await fetch('/api/categories')
+        if (response.ok) {
+          const categoriesData = await response.json()
+          const updatedCategories = { ...categoriesData }
+          delete updatedCategories[categoryId]
+
+          console.log("Eliminando categoría del archivo categories.json:", categoryId)
+          console.log("Categorías actualizadas:", updatedCategories)
+
+          const updateResponse = await fetch('/api/categories', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedCategories),
+          })
+
+          if (updateResponse.ok) {
+            console.log("Categoría eliminada exitosamente del archivo categories.json")
+            // Recargar los datos del admin para sincronizar
+            await refetchAdminMenu()
+          } else {
+            console.error("Error al actualizar categories.json:", updateResponse.statusText)
+          }
+        }
+      } catch (error) {
+        console.warn("No se pudo actualizar el archivo de categorías:", error)
+      }
+
+      setNotificationStatus("✅ Categoría eliminada")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } catch (error) {
+      console.error("Error deleting category:", error)
+      alert("Error al eliminar la categoría")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Función para restaurar categoría eliminada
+  const handleRestoreCategory = async (deletedCategory: any) => {
+    try {
+      setSaving(true)
+      setNotificationStatus("Restaurando categoría...")
+
+      // Restaurar la categoría al estado principal
+      setAllCategories(prev => [...prev, { ...deletedCategory, deletedAt: undefined }])
+
+      // Remover de la lista de categorías eliminadas
+      setDeletedCategories(prev => prev.filter(cat => cat.id !== deletedCategory.id))
+
+      setNotificationStatus("✅ Categoría restaurada")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } catch (error) {
+      console.error("Error restoring category:", error)
+      alert("Error al restaurar la categoría")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Función auxiliar para obtener productos de una categoría
+  const getCategoryItems = (categoryId: string) => {
+    switch (categoryId) {
+      case "parrilla":
+        return parrilla
+      case "guarniciones":
+        return guarniciones
+      case "tapeo":
+        return tapeo
+      case "milanesas":
+        return milanesas
+      case "hamburguesas":
+        return hamburguesas
+      case "ensaladas":
+        return ensaladas
+      case "otros":
+        return otros
+      case "postres":
+        return postres
+      case "sandwicheria":
+        return sandwicheria
+      case "cafeteria":
+        return cafeteria
+      case "pasteleria":
+        return pasteleria
+      case "bebidasSinAlcohol":
+        return bebidasSinAlcohol
+      case "cervezas":
+        return cervezas
+      case "tragosClasicos":
+        return tragosClasicos
+      case "tragosEspeciales":
+        return tragosEspeciales
+      case "tragosRedBull":
+        return tragosRedBull
+      case "botellas":
+        return botellas
+      default:
+        return menuSections[categoryId] || []
+    }
+  }
+
+  // Función para agregar sub-subcategoría (nivel 2)
+  const handleAddSubSubcategory = async (parentSubcategoryId: string, newSubSubId: string, newSubSubName: string) => {
+    try {
+      setSaving(true)
+      setNotificationStatus(`Creando sub-subcategoría "${newSubSubName}"...`)
+
+      // PASO 1: Agregar a la jerarquía con level 2 PRIMERO
+      // Esto mantiene la estructura correcta con los niveles
+      const hierarchyResponse = await fetch("/api/admin/category-hierarchy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subcategoryId: newSubSubId,
+          parentId: parentSubcategoryId,
+          level: 2,
+          type: "category"
+        }),
+      })
+
+      if (!hierarchyResponse.ok) {
+        throw new Error("Error al guardar la jerarquía")
+      }
+
+      // PASO 2: Agregar al mapeo de subcategorías con el parentSubcategoryId como padre
+      const newMapping = { ...subcategoryMapping }
+      newMapping[newSubSubId] = parentSubcategoryId
+
+      // Persistir el mapeo
+      const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newMapping),
+      })
+
+      if (!mappingResponse.ok) {
+        throw new Error("Error al guardar el mapeo de subcategorías")
+      }
+
+      // Actualizar estado local del mapeo
+      setSubcategoryMapping(newMapping)
+
+      // PASO 3: Crear la sección vacía en el menú
+      const menuUpdate: any = {}
+      menuUpdate[newSubSubId] = []
+
+      const menuResponse = await fetch("/api/menu", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(menuUpdate),
+      })
+
+      if (!menuResponse.ok) {
+        throw new Error("Error al crear la sección en el menú")
+      }
+
+      // Actualizar estado local del menú
+      setMenuSections(prev => ({
+        ...prev,
+        [newSubSubId]: []
+      }))
+
+      // PASO 4: Recargar todos los datos para asegurar sincronización
+      setNotificationStatus(`🔄 Sincronizando cambios de "${newSubSubName}"...`)
+
+      // Esperar un momento para que el servidor termine de escribir los archivos
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      // Recargar el mapeo
+      const reloadMapping = await fetch("/api/admin/subcategory-mapping", {
+        cache: 'no-store'
+      })
+      if (reloadMapping.ok) {
+        const updatedMapping = await reloadMapping.json()
+        setSubcategoryMapping(updatedMapping)
+      }
+
+      // Recargar la jerarquía
+      const reloadHierarchy = await fetch("/api/admin/category-hierarchy", {
+        cache: 'no-store'
+      })
+      if (reloadHierarchy.ok) {
+        const updatedHierarchy = await reloadHierarchy.json()
+        console.log("Jerarquía actualizada:", updatedHierarchy)
+      }
+
+      // Recargar datos del menú
+      await refetchAdminMenu()
+
+      setNotificationStatus(`✅ Sub-subcategoría "${newSubSubName}" creada correctamente`)
+      setTimeout(() => setNotificationStatus(""), 3000)
+
+    } catch (error) {
+      console.error("Error creando sub-subcategoría:", error)
+      setNotificationStatus("❌ Error al crear la sub-subcategoría")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Función para eliminar subcategoría
+  const handleDeleteSubcategory = async (subcategoryId: string) => {
+    // Verificar que la subcategoría existe en el mapeo
+    if (!subcategoryMapping[subcategoryId]) {
+      alert(`La subcategoría "${subcategoryId}" no existe en el mapeo`)
+      return
+    }
+    try {
+      // Verificar si la subcategoría tiene productos
+      const products = menuSections[subcategoryId] || []
+      const hasProducts = products.length > 0
+      const productCount = products.length
+
+      let confirmMessage = `¿Estás seguro de que quieres eliminar la subcategoría "${subcategoryId}"?`
+      if (hasProducts) {
+        confirmMessage += `\n\n⚠️ ADVERTENCIA: Esta subcategoría contiene ${productCount} producto(s). Al eliminar la subcategoría, todos los productos se perderán permanentemente.`
+      }
+      confirmMessage += "\n\nEsta acción no se puede deshacer."
+
+      if (!confirm(confirmMessage)) {
+        return
+      }
+
+      setSaving(true)
+      setNotificationStatus("Eliminando subcategoría...")
+
+      // Eliminar del mapeo de subcategorías
+      const newMapping = { ...subcategoryMapping }
+      delete newMapping[subcategoryId]
+      setSubcategoryMapping(newMapping)
+
+      // Eliminar del estado local de secciones del menú
+      setMenuSections(prev => {
+        const newSections = { ...prev }
+        delete newSections[subcategoryId]
+        return newSections
+      })
+
+      // PERSISTIR EL MAPEO DE SUBCATEGORÍAS EN EL ARCHIVO JSON
+      try {
+        const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newMapping),
+        })
+
+        if (!mappingResponse.ok) {
+          throw new Error("Error al guardar el mapeo de subcategorías")
+        }
+
+        console.log("Mapeo de subcategorías actualizado exitosamente")
+      } catch (error) {
+        console.error("Error guardando mapeo de subcategorías:", error)
+        alert("Advertencia: La subcategoría se eliminó localmente pero no se pudo guardar el mapeo")
+      }
+
+      // Eliminar del servidor (si existe la API)
+      try {
+        const deleteResponse = await fetch(`/api/menu/${subcategoryId}`, {
+          method: "DELETE",
+        })
+
+        if (deleteResponse.ok) {
+          console.log(`Subcategoría ${subcategoryId} eliminada del archivo de menú`)
+        } else {
+          console.warn(`No se pudo eliminar ${subcategoryId} del archivo de menú:`, deleteResponse.status)
+        }
+      } catch (error) {
+        console.warn("Error eliminando del servidor:", error)
+      }
+
+      setNotificationStatus(`✅ Subcategoría "${subcategoryId}" eliminada completamente`)
+      setTimeout(() => setNotificationStatus(""), 4000)
+
+      // Recargar el mapeo de subcategorías para asegurar sincronización
+      try {
+        const mappingResponse = await fetch("/api/admin/subcategory-mapping")
+        if (mappingResponse.ok) {
+          const mappingData = await mappingResponse.json()
+          setSubcategoryMapping(mappingData)
+          console.log("Mapeo de subcategorías recargado después de eliminar:", mappingData)
+        }
+      } catch (error) {
+        console.warn("Error recargando mapeo de subcategorías:", error)
+      }
+
+      // Recargar datos del menú para asegurar sincronización completa
+      await refetchAdminMenu()
+
+      // Limpiar mapeos inválidos (subcategorías que apuntan a categorías inexistentes)
+      // validCategories incluye: categorías principales + subcategorías (que pueden ser padres de sub-subcategorías)
+      const validCategories = (allCategories || []).map(cat => cat.id)
+      const validParents = [...validCategories, ...Object.keys(subcategoryMapping)]
+      const invalidMappings = Object.entries(subcategoryMapping).filter(
+        ([subcatId, parentId]) => !validParents.includes(parentId)
+      )
+
+      if (invalidMappings.length > 0) {
+        console.warn("Mapeos inválidos encontrados:", invalidMappings)
+        const cleanedMapping = { ...subcategoryMapping }
+        invalidMappings.forEach(([subcatId]) => {
+          delete cleanedMapping[subcatId]
+        })
+
+        if (Object.keys(cleanedMapping).length !== Object.keys(subcategoryMapping).length) {
+          setSubcategoryMapping(cleanedMapping)
+
+          // Guardar el mapeo limpio
           try {
             const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(newMapping),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(cleanedMapping),
             })
-
-            if (!mappingResponse.ok) {
-              throw new Error("Error al guardar el mapeo de subcategorías")
-            }
-
-            console.log("Mapeo de subcategorías actualizado exitosamente")
-          } catch (error) {
-            console.error("Error guardando mapeo de subcategorías:", error)
-            alert("Advertencia: La subcategoría se eliminó localmente pero no se pudo guardar el mapeo")
-          }
-
-          // Eliminar del servidor (si existe la API)
-          try {
-            const deleteResponse = await fetch(`/api/menu/${subcategoryId}`, {
-              method: "DELETE",
-            })
-
-            if (deleteResponse.ok) {
-              console.log(`Subcategoría ${subcategoryId} eliminada del archivo de menú`)
-            } else {
-              console.warn(`No se pudo eliminar ${subcategoryId} del archivo de menú:`, deleteResponse.status)
-            }
-          } catch (error) {
-            console.warn("Error eliminando del servidor:", error)
-          }
-
-          setNotificationStatus(`✅ Subcategoría "${subcategoryId}" eliminada completamente`)
-          setTimeout(() => setNotificationStatus(""), 4000)
-
-          // Recargar el mapeo de subcategorías para asegurar sincronización
-          try {
-            const mappingResponse = await fetch("/api/admin/subcategory-mapping")
             if (mappingResponse.ok) {
-              const mappingData = await mappingResponse.json()
-              setSubcategoryMapping(mappingData)
-              console.log("Mapeo de subcategorías recargado después de eliminar:", mappingData)
+              console.log("Mapeo de subcategorías limpiado y guardado")
             }
           } catch (error) {
-            console.warn("Error recargando mapeo de subcategorías:", error)
+            console.warn("Error guardando mapeo limpio:", error)
           }
-
-          // Recargar datos del menú para asegurar sincronización completa
-          await refetchAdminMenu()
-
-          // Limpiar mapeos inválidos (subcategorías que apuntan a categorías inexistentes)
-          // validCategories incluye: categorías principales + subcategorías (que pueden ser padres de sub-subcategorías)
-          const validCategories = (allCategories || []).map(cat => cat.id)
-          const validParents = [...validCategories, ...Object.keys(subcategoryMapping)]
-          const invalidMappings = Object.entries(subcategoryMapping).filter(
-            ([subcatId, parentId]) => !validParents.includes(parentId)
-          )
-
-          if (invalidMappings.length > 0) {
-            console.warn("Mapeos inválidos encontrados:", invalidMappings)
-            const cleanedMapping = { ...subcategoryMapping }
-            invalidMappings.forEach(([subcatId]) => {
-              delete cleanedMapping[subcatId]
-            })
-
-            if (Object.keys(cleanedMapping).length !== Object.keys(subcategoryMapping).length) {
-              setSubcategoryMapping(cleanedMapping)
-
-              // Guardar el mapeo limpio
-              try {
-                const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(cleanedMapping),
-                })
-                if (mappingResponse.ok) {
-                  console.log("Mapeo de subcategorías limpiado y guardado")
-                }
-              } catch (error) {
-                console.warn("Error guardando mapeo limpio:", error)
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Error deleting subcategory:", error)
-          alert("Error al eliminar la subcategoría")
-        } finally {
-          setSaving(false)
         }
       }
+    } catch (error) {
+      console.error("Error deleting subcategory:", error)
+      alert("Error al eliminar la subcategoría")
+    } finally {
+      setSaving(false)
+    }
+  }
 
-      // Función para aumentar precios masivamente por categoría
-      const handleBulkPriceIncrease = async (categoryId: string, percentage: number) => {
-        try {
-          setSaving(true)
-          setNotificationStatus(`Aumentando precios en ${percentage}%...`)
+  // Función para aumentar precios masivamente por categoría
+  const handleBulkPriceIncrease = async (categoryId: string, percentage: number) => {
+    try {
+      setSaving(true)
+      setNotificationStatus(`Aumentando precios en ${percentage}%...`)
 
-          // Obtener todos los productos de la categoría
-          let categoryItems: any[] = []
+      // Obtener todos los productos de la categoría
+      let categoryItems: any[] = []
 
-          switch (categoryId) {
-            case "parrilla":
-              categoryItems = parrilla
-              break
-            case "guarniciones":
-              categoryItems = guarniciones
-              break
-            case "tapeo":
-              categoryItems = tapeo
-              break
-            case "milanesas":
-              categoryItems = milanesas
-              break
-            case "hamburguesas":
-              categoryItems = hamburguesas
-              break
-            case "ensaladas":
-              categoryItems = ensaladas
-              break
-            case "otros":
-              categoryItems = otros
-              break
-            case "postres":
-              categoryItems = postres
-              break
-            case "sandwicheria":
-              categoryItems = sandwicheria
-              break
-            case "cafeteria":
-              categoryItems = cafeteria
-              break
-            case "pasteleria":
-              categoryItems = pasteleria
-              break
-            case "bebidasSinAlcohol":
-              categoryItems = bebidasSinAlcohol
-              break
-            case "cervezas":
-              categoryItems = cervezas
-              break
-            case "tragosClasicos":
-              categoryItems = tragosClasicos
-              break
-            case "tragosEspeciales":
-              categoryItems = tragosEspeciales
-              break
-            case "tragosRedBull":
-              categoryItems = tragosRedBull
-              break
-            case "botellas":
-              categoryItems = botellas
-              break
-            default:
-              // Para categorías personalizadas
-              categoryItems = menuSections[categoryId] || []
+      switch (categoryId) {
+        case "parrilla":
+          categoryItems = parrilla
+          break
+        case "guarniciones":
+          categoryItems = guarniciones
+          break
+        case "tapeo":
+          categoryItems = tapeo
+          break
+        case "milanesas":
+          categoryItems = milanesas
+          break
+        case "hamburguesas":
+          categoryItems = hamburguesas
+          break
+        case "ensaladas":
+          categoryItems = ensaladas
+          break
+        case "otros":
+          categoryItems = otros
+          break
+        case "postres":
+          categoryItems = postres
+          break
+        case "sandwicheria":
+          categoryItems = sandwicheria
+          break
+        case "cafeteria":
+          categoryItems = cafeteria
+          break
+        case "pasteleria":
+          categoryItems = pasteleria
+          break
+        case "bebidasSinAlcohol":
+          categoryItems = bebidasSinAlcohol
+          break
+        case "cervezas":
+          categoryItems = cervezas
+          break
+        case "tragosClasicos":
+          categoryItems = tragosClasicos
+          break
+        case "tragosEspeciales":
+          categoryItems = tragosEspeciales
+          break
+        case "tragosRedBull":
+          categoryItems = tragosRedBull
+          break
+        case "botellas":
+          categoryItems = botellas
+          break
+        default:
+          // Para categorías personalizadas
+          categoryItems = menuSections[categoryId] || []
+      }
+
+      if (categoryItems.length === 0) {
+        alert("No hay productos en esta categoría para actualizar")
+        return
+      }
+
+      // Actualizar precios de todos los productos
+      const updatedItems = categoryItems.map(item => ({
+        ...item,
+        price: (parseFloat(item.price) * (1 + percentage / 100)).toFixed(2)
+      }))
+
+      // Guardar cambios en el servidor
+      for (const item of updatedItems) {
+        await fetch(`/api/menu/${categoryId}/${item.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(item),
+        })
+      }
+
+      // Actualizar estado local según la categoría
+      switch (categoryId) {
+        case "parrilla":
+          setParrilla(updatedItems)
+          break
+        case "guarniciones":
+          setGuarniciones(updatedItems)
+          break
+        case "tapeo":
+          setTapeo(updatedItems)
+          break
+        case "milanesas":
+          setMilanesas(updatedItems)
+          break
+        case "hamburguesas":
+          setHamburguesas(updatedItems)
+          break
+        case "ensaladas":
+          setEnsaladas(updatedItems)
+          break
+        case "otros":
+          setOtros(updatedItems)
+          break
+        case "postres":
+          setPostres(updatedItems)
+          break
+        case "sandwicheria":
+          setSandwicheria(updatedItems)
+          break
+        case "cafeteria":
+          setCafeteria(updatedItems)
+          break
+        case "pasteleria":
+          setPasteleria(updatedItems)
+          break
+        case "bebidasSinAlcohol":
+          setBebidasSinAlcohol(updatedItems)
+          break
+        case "cervezas":
+          setCervezas(updatedItems)
+          break
+        case "tragosClasicos":
+          setTragosClasicos(updatedItems)
+          break
+        case "tragosEspeciales":
+          setTragosEspeciales(updatedItems)
+          break
+        case "tragosRedBull":
+          setTragosRedBull(updatedItems)
+          break
+        case "botellas":
+          setBotellas(updatedItems)
+          break
+        case "vinos":
+          // Los vinos tienen subcategorías, actualizar cada una
+          if (categoryId.startsWith("vinos-")) {
+            const subCategory = categoryId.split("-")[1]
+            setVinos((prev: any) => ({
+              ...prev,
+              [subCategory]: updatedItems
+            }))
           }
-
-          if (categoryItems.length === 0) {
-            alert("No hay productos en esta categoría para actualizar")
-            return
-          }
-
-          // Actualizar precios de todos los productos
-          const updatedItems = categoryItems.map(item => ({
-            ...item,
-            price: (parseFloat(item.price) * (1 + percentage / 100)).toFixed(2)
+          break
+        default:
+          // Para categorías personalizadas
+          setMenuSections(prev => ({
+            ...prev,
+            [categoryId]: updatedItems
           }))
-
-          // Guardar cambios en el servidor
-          for (const item of updatedItems) {
-            await fetch(`/api/menu/${categoryId}/${item.id}`, {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(item),
-            })
-          }
-
-          // Actualizar estado local según la categoría
-          switch (categoryId) {
-            case "parrilla":
-              setParrilla(updatedItems)
-              break
-            case "guarniciones":
-              setGuarniciones(updatedItems)
-              break
-            case "tapeo":
-              setTapeo(updatedItems)
-              break
-            case "milanesas":
-              setMilanesas(updatedItems)
-              break
-            case "hamburguesas":
-              setHamburguesas(updatedItems)
-              break
-            case "ensaladas":
-              setEnsaladas(updatedItems)
-              break
-            case "otros":
-              setOtros(updatedItems)
-              break
-            case "postres":
-              setPostres(updatedItems)
-              break
-            case "sandwicheria":
-              setSandwicheria(updatedItems)
-              break
-            case "cafeteria":
-              setCafeteria(updatedItems)
-              break
-            case "pasteleria":
-              setPasteleria(updatedItems)
-              break
-            case "bebidasSinAlcohol":
-              setBebidasSinAlcohol(updatedItems)
-              break
-            case "cervezas":
-              setCervezas(updatedItems)
-              break
-            case "tragosClasicos":
-              setTragosClasicos(updatedItems)
-              break
-            case "tragosEspeciales":
-              setTragosEspeciales(updatedItems)
-              break
-            case "tragosRedBull":
-              setTragosRedBull(updatedItems)
-              break
-            case "botellas":
-              setBotellas(updatedItems)
-              break
-            case "vinos":
-              // Los vinos tienen subcategorías, actualizar cada una
-              if (categoryId.startsWith("vinos-")) {
-                const subCategory = categoryId.split("-")[1]
-                setVinos((prev: any) => ({
-                  ...prev,
-                  [subCategory]: updatedItems
-                }))
-              }
-              break
-            default:
-              // Para categorías personalizadas
-              setMenuSections(prev => ({
-                ...prev,
-                [categoryId]: updatedItems
-              }))
-          }
-
-          setNotificationStatus(`✅ Precios aumentados en ${percentage}%`)
-          setTimeout(() => setNotificationStatus(""), 3000)
-
-        } catch (error) {
-          console.error("Error updating prices:", error)
-          alert("Error al actualizar los precios")
-        } finally {
-          setSaving(false)
-        }
       }
 
-      // Función para aumentar precios porcentualmente en toda la carta
-      const handleIncreaseAllPrices = async () => {
-        if (!priceIncreasePercentage || isNaN(parseFloat(priceIncreasePercentage)) || parseFloat(priceIncreasePercentage) <= 0) {
-          alert("Por favor ingresa un porcentaje válido mayor a 0")
-          return
-        }
+      setNotificationStatus(`✅ Precios aumentados en ${percentage}%`)
+      setTimeout(() => setNotificationStatus(""), 3000)
 
-        const percentage = parseFloat(priceIncreasePercentage)
-        const confirmMessage = `¿Estás seguro de que quieres aumentar TODOS los precios de la carta en un ${percentage}%?\n\nEsta acción afectará TODOS los productos y NO se puede deshacer.`
+    } catch (error) {
+      console.error("Error updating prices:", error)
+      alert("Error al actualizar los precios")
+    } finally {
+      setSaving(false)
+    }
+  }
 
-        if (!confirm(confirmMessage)) {
-          return
-        }
+  // Función para aumentar precios porcentualmente en toda la carta
+  const handleIncreaseAllPrices = async () => {
+    if (!priceIncreasePercentage || isNaN(parseFloat(priceIncreasePercentage)) || parseFloat(priceIncreasePercentage) <= 0) {
+      alert("Por favor ingresa un porcentaje válido mayor a 0")
+      return
+    }
 
-        try {
-          setIsIncreasingPrices(true)
-          setNotificationStatus(`Aumentando todos los precios en ${percentage}%...`)
+    const percentage = parseFloat(priceIncreasePercentage)
+    const confirmMessage = `¿Estás seguro de que quieres aumentar TODOS los precios de la carta en un ${percentage}%?\n\nEsta acción afectará TODOS los productos y NO se puede deshacer.`
 
-          const response = await fetch("/api/admin/increase-prices", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ percentage }),
-          })
+    if (!confirm(confirmMessage)) {
+      return
+    }
 
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || "Error al aumentar precios")
-          }
+    try {
+      setIsIncreasingPrices(true)
+      setNotificationStatus(`Aumentando todos los precios en ${percentage}%...`)
 
-          const result = await response.json()
+      const response = await fetch("/api/admin/increase-prices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ percentage }),
+      })
 
-          // Recargar todos los datos del menú
-          await refetchAdminMenu()
-
-          setNotificationStatus(`✅ ${result.message}`)
-          setShowPriceIncreaseModal(false)
-          setPriceIncreasePercentage("")
-
-          setTimeout(() => setNotificationStatus(""), 5000)
-
-        } catch (error) {
-          console.error("Error increasing prices:", error)
-          alert(`Error al aumentar precios: ${error instanceof Error ? error.message : "Error desconocido"}`)
-        } finally {
-          setIsIncreasingPrices(false)
-        }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al aumentar precios")
       }
 
-      // Función para confirmar y sincronizar todos los cambios
-      const handleConfirmAndSync = async () => {
-        // NOTA: Los cambios se guardan automáticamente cuando se hacen.
-        // Este botón solo muestra un mensaje de confirmación sin recargar nada,
-        // para evitar que los productos desaparezcan temporalmente.
+      const result = await response.json()
 
-        try {
-          setSaving(true)
-          setNotificationStatus("✅ Todos los cambios están guardados correctamente")
+      // Recargar todos los datos del menú
+      await refetchAdminMenu()
 
-          // Pequeña pausa para que el usuario vea el mensaje
-          await new Promise(resolve => setTimeout(resolve, 1500))
+      setNotificationStatus(`✅ ${result.message}`)
+      setShowPriceIncreaseModal(false)
+      setPriceIncreasePercentage("")
 
-          setNotificationStatus("")
-        } catch (error) {
-          console.error("Error:", error)
-          setNotificationStatus("❌ Error")
-          setTimeout(() => setNotificationStatus(""), 3000)
-        } finally {
-          setSaving(false)
-        }
-      }
+      setTimeout(() => setNotificationStatus(""), 5000)
 
-      // Función helper para extraer el nombre de la subcategoría del ID
-      // Si el ID incluye el padre (ej: "bebidas-promociones"), extrae solo "bebidas"
-      const getSubcategoryDisplayName = (subcatId: string, parentId?: string): string => {
-        // Si se proporciona el parentId y el subcatId termina con él, remover esa parte
-        if (parentId) {
-          const parentSuffix = `-${parentId}`
-          if (subcatId.endsWith(parentSuffix)) {
-            const baseName = subcatId.slice(0, -parentSuffix.length)
-            return baseName.split('-').map(word =>
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ')
-          }
-        }
-        // Si no, usar el ID completo pero remover números al final
-        const parts = subcatId.split('-')
-        const filteredParts = parts.filter(part => !/^\d+$/.test(part))
-        if (filteredParts.length > 0) {
-          return filteredParts.map(word =>
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' ')
-        }
-        // Fallback: usar todo el ID
-        return subcatId.split('-').map(word =>
+    } catch (error) {
+      console.error("Error increasing prices:", error)
+      alert(`Error al aumentar precios: ${error instanceof Error ? error.message : "Error desconocido"}`)
+    } finally {
+      setIsIncreasingPrices(false)
+    }
+  }
+
+  // Función para confirmar y sincronizar todos los cambios
+  const handleConfirmAndSync = async () => {
+    // NOTA: Los cambios se guardan automáticamente cuando se hacen.
+    // Este botón solo muestra un mensaje de confirmación sin recargar nada,
+    // para evitar que los productos desaparezcan temporalmente.
+
+    try {
+      setSaving(true)
+      setNotificationStatus("✅ Todos los cambios están guardados correctamente")
+
+      // Pequeña pausa para que el usuario vea el mensaje
+      await new Promise(resolve => setTimeout(resolve, 1500))
+
+      setNotificationStatus("")
+    } catch (error) {
+      console.error("Error:", error)
+      setNotificationStatus("❌ Error")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Función helper para extraer el nombre de la subcategoría del ID
+  // Si el ID incluye el padre (ej: "bebidas-promociones"), extrae solo "bebidas"
+  const getSubcategoryDisplayName = (subcatId: string, parentId?: string): string => {
+    // Si se proporciona el parentId y el subcatId termina con él, remover esa parte
+    if (parentId) {
+      const parentSuffix = `-${parentId}`
+      if (subcatId.endsWith(parentSuffix)) {
+        const baseName = subcatId.slice(0, -parentSuffix.length)
+        return baseName.split('-').map(word =>
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ')
       }
+    }
+    // Si no, usar el ID completo pero remover números al final
+    const parts = subcatId.split('-')
+    const filteredParts = parts.filter(part => !/^\d+$/.test(part))
+    if (filteredParts.length > 0) {
+      return filteredParts.map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ')
+    }
+    // Fallback: usar todo el ID
+    return subcatId.split('-').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ')
+  }
 
-      // Función para renderizar subcategorías dentro de una categoría
-      const renderSubcategories = (categoryId: string) => {
-        // Todas las categorías se comportan igual
-        const subcategories = Object.entries(subcategoryMapping)
-          .filter(([subcatId, parentId]) => parentId === categoryId)
-          .map(([subcatId]) => subcatId)
+  // Función para renderizar subcategorías dentro de una categoría
+  const renderSubcategories = (categoryId: string) => {
+    // Todas las categorías se comportan igual
+    const subcategories = Object.entries(subcategoryMapping)
+      .filter(([subcatId, parentId]) => parentId === categoryId)
+      .map(([subcatId]) => subcatId)
 
-        // Debug: mostrar información de subcategorías (solo en desarrollo)
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`Renderizando subcategorías para ${categoryId}:`, subcategories)
-        }
+    // Debug: mostrar información de subcategorías (solo en desarrollo)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Renderizando subcategorías para ${categoryId}:`, subcategories)
+    }
 
-        if (subcategories.length === 0) {
-          // Debug: mostrar cuando no hay subcategorías
+    if (subcategories.length === 0) {
+      // Debug: mostrar cuando no hay subcategorías
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`No hay subcategorías para ${categoryId}`)
+      }
+      return null
+    }
+
+    return (
+      <div className="space-y-6 mt-8">
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <span className="text-[#f4b942]">📁</span>
+            Subcategorías Dinámicas
+          </h3>
+        </div>
+
+        {subcategories.map(subcatId => {
+          // Asegurar que subcatData siempre sea un array válido
+          const subcatData = Array.isArray(menuSections[subcatId]) ? menuSections[subcatId] : []
+          // Generar nombre desde el ID usando la función helper
+          const subcatName = getSubcategoryDisplayName(subcatId, categoryId)
+
+          // Debug: mostrar información de cada subcategoría
           if (process.env.NODE_ENV === 'development') {
-            console.log(`No hay subcategorías para ${categoryId}`)
-          }
-          return null
-        }
-
-        return (
-          <div className="space-y-6 mt-8">
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <span className="text-[#f4b942]">📁</span>
-                Subcategorías Dinámicas
-              </h3>
-            </div>
-
-            {subcategories.map(subcatId => {
-              // Asegurar que subcatData siempre sea un array válido
-              const subcatData = Array.isArray(menuSections[subcatId]) ? menuSections[subcatId] : []
-              // Generar nombre desde el ID usando la función helper
-              const subcatName = getSubcategoryDisplayName(subcatId, categoryId)
-
-              // Debug: mostrar información de cada subcategoría
-              if (process.env.NODE_ENV === 'development') {
-                console.log(`Subcategoría ${subcatId}:`, { subcatName, productCount: subcatData.length })
-              }
-
-              // Contar subsub-categorías (nivel 2) para esta subcategoría (nivel 1)
-              const subSubcategoryCount = Object.entries(subcategoryMapping)
-                .filter(([subSubId, parentId]) => parentId === subcatId)
-                .length
-
-              return (
-                <div key={subcatId} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <span className="text-[#8bc34a]">🔹</span>
-                      {subcatName}
-                      <span className="text-sm text-gray-500 font-normal">
-                        ({subcatData.length} producto{subcatData.length !== 1 ? 's' : ''})
-                      </span>
-                      {subSubcategoryCount > 0 && (
-                        <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full ml-2">
-                          {subSubcategoryCount} subsub
-                        </span>
-                      )}
-                    </h4>
-                    <div className="flex gap-2 items-center">
-                      <select
-                        className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
-                        defaultValue="none"
-                        onChange={(e) => applySortToSection(subcatId, e.target.value as any)}
-                        aria-label="Ordenar subcategoría"
-                      >
-                        <option value="none">Orden original</option>
-                        <option value="priceDesc">Precio ↓</option>
-                        <option value="priceAsc">Precio ↑</option>
-                        <option value="nameAsc">A-Z</option>
-                        <option value="nameDesc">Z-A</option>
-                      </select>
-                      <Button
-                        size="sm"
-                        disabled={saving}
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => {
-                          setSelectedSectionForProduct(subcatId)
-                          setIsAddingProduct(true)
-                        }}
-                      >
-                        <Plus className="w-4 h-4 text-white" />
-                        <span className="text-white">Agregar Producto</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        disabled={saving}
-                        className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ color: "#fff", letterSpacing: "0.04em" }}
-                        onClick={() => handleDeleteSubcategory(subcatId)}
-                      >
-                        <Trash2 className="w-4 h-4 text-white" />
-                        <span style={{ color: "#fff", letterSpacing: "0.04em" }}>Eliminar</span>
-                      </Button>
-                    </div>
-                  </div>
-
-                  {Array.isArray(subcatData) && subcatData.length > 0 ? (
-                    <div className="space-y-3">
-                      {subcatData.map((item) => renderMenuItem(item, subcatId))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-gray-500 bg-white rounded border-2 border-dashed border-gray-300">
-                      <p className="text-sm">No hay productos en esta subcategoría aún.</p>
-                      <p className="text-xs mt-1">Haz clic en "Agregar Producto" para comenzar.</p>
-                    </div>
-                  )}
-
-                  {/* Renderizar sub-subcategorías (nivel 2) */}
-                  {(() => {
-                    const subSubcategories = Object.entries(subcategoryMapping)
-                      .filter(([subsubId, parentId]) => parentId === subcatId)
-                      .map(([subsubId]) => subsubId)
-
-                    if (subSubcategories.length === 0) return null
-
-                    return (
-                      <div className="mt-4 ml-4 space-y-4 border-l-2 border-blue-300 pl-4">
-                        {subSubcategories.map(subsubId => {
-                          const subsubData = Array.isArray(menuSections[subsubId]) ? menuSections[subsubId] : []
-                          let subsubName = subsubId.split('-').map(word => {
-                            if (/^\d+$/.test(word)) return null
-                            return word.charAt(0).toUpperCase() + word.slice(1)
-                          }).filter(Boolean).join(' ')
-
-                          if (!subsubName) {
-                            subsubName = subsubId.split('-').map(word =>
-                              word.charAt(0).toUpperCase() + word.slice(1)
-                            ).join(' ')
-                          }
-
-                          return (
-                            <div key={subsubId} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                              <div className="flex justify-between items-center mb-3">
-                                <h5 className="text-md font-semibold text-gray-800 flex items-center gap-2">
-                                  <span className="text-blue-500">↳</span>
-                                  {subsubName}
-                                  <span className="text-sm text-gray-500 font-normal">
-                                    ({subsubData.length} producto{subsubData.length !== 1 ? 's' : ''})
-                                  </span>
-                                </h5>
-                                <div className="flex gap-2 items-center">
-                                  <Button
-                                    size="sm"
-                                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold text-xs h-8"
-                                    onClick={() => {
-                                      setSelectedSectionForProduct(subsubId)
-                                      setIsAddingProduct(true)
-                                    }}
-                                  >
-                                    <Plus className="w-3 h-3 text-white" />
-                                    <span className="text-white">Agregar</span>
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white border-0 font-semibold text-xs h-8"
-                                    onClick={() => handleDeleteSubcategory(subsubId)}
-                                  >
-                                    <Trash2 className="w-3 h-3 text-white" />
-                                    <span>Eliminar</span>
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {Array.isArray(subsubData) && subsubData.length > 0 ? (
-                                <div className="space-y-2">
-                                  {subsubData.map((item) => renderMenuItem(item, subsubId))}
-                                </div>
-                              ) : (
-                                <div className="text-center py-4 text-gray-500 bg-white rounded border-2 border-dashed border-blue-200">
-                                  <p className="text-xs">No hay productos en esta sub-subcategoría aún.</p>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )
-                  })()}
-                </div>
-              )
-            })}
-          </div>
-        )
-      }
-
-      // Helpers para edición de subcategorías en el panel "Editar Categorías"
-      const slugifyId = (name: string) =>
-        name
-          .toLowerCase()
-          .trim()
-          .replace(/[^a-z0-9\s-]/g, "")
-          .replace(/\s+/g, "-")
-          .replace(/-+/g, "-")
-
-      const startEditSubcategory = (subcatId: string) => {
-        setInlineEditingSubcatId(subcatId)
-        // Generar nombre desde el ID usando la función helper
-        // Obtener el parentId del mapeo para extraer correctamente el nombre
-        const parentId = subcategoryMapping[subcatId] || ""
-        const subcatName = getSubcategoryDisplayName(subcatId, parentId)
-
-        setInlineEditingSubcatName(subcatName)
-        setInlineEditingSubcatParent(subcategoryMapping[subcatId] || "")
-      }
-
-      const cancelEditSubcategory = () => {
-        setInlineEditingSubcatId(null)
-        setInlineEditingSubcatName("")
-        setInlineEditingSubcatParent("")
-      }
-
-      const saveEditSubcategory = async () => {
-        if (!inlineEditingSubcatId || !inlineEditingSubcatName.trim()) return
-        const oldId = inlineEditingSubcatId
-        const subcategoryBaseId = slugifyId(inlineEditingSubcatName)
-        const newParent = inlineEditingSubcatParent || subcategoryMapping[oldId]
-
-        // SIEMPRE crear un ID único que combine subcategoría y categoría padre
-        // Formato: "subcategoria-categoria-padre" (ej: "bebidas-promociones")
-        const newId = `${subcategoryBaseId}-${newParent}`
-
-        setSaving(true)
-        try {
-          // Intentar renombrar la sección en menu.json si existe
-          try {
-            const getResp = await fetch(`/api/menu/${oldId}`)
-            if (getResp.ok) {
-              const items = await getResp.json()
-              if (newId !== oldId) {
-                await fetch(`/api/menu/${newId}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(items),
-                })
-                await fetch(`/api/menu/${oldId}`, { method: "DELETE" })
-              }
-            } else if (newId !== oldId) {
-              // Si no existía sección, no hay nada que copiar; solo asegurar eliminación por si acaso
-              await fetch(`/api/menu/${oldId}`, { method: "DELETE" }).catch(() => { })
-            }
-          } catch (e) {
-            console.warn("No se pudo renombrar sección en menú:", e)
+            console.log(`Subcategoría ${subcatId}:`, { subcatName, productCount: subcatData.length })
           }
 
-          // Actualizar mapeo
-          const updatedMapping: any = { ...subcategoryMapping }
-          delete updatedMapping[oldId]
-          updatedMapping[newId] = newParent
-          const mappingResp = await fetch("/api/admin/subcategory-mapping", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedMapping),
-          })
-          if (!mappingResp.ok) throw new Error("Error guardando mapeo")
-          setSubcategoryMapping(updatedMapping)
+          // Contar subsub-categorías (nivel 2) para esta subcategoría (nivel 1)
+          const subSubcategoryCount = Object.entries(subcategoryMapping)
+            .filter(([subSubId, parentId]) => parentId === subcatId)
+            .length
 
-          // Actualizar estados locales de secciones
-          setMenuSections((prev) => {
-            const next = { ...prev }
-            if (newId !== oldId) {
-              next[newId] = next[oldId] || []
-              delete next[oldId]
-            }
-            return next
-          })
-
-          setNotificationStatus("✅ Subcategoría actualizada")
-          setTimeout(() => setNotificationStatus(""), 2500)
-          cancelEditSubcategory()
-        } catch (error) {
-          console.error("Error editando subcategoría:", error)
-          setNotificationStatus("❌ Error al actualizar la subcategoría")
-          setTimeout(() => setNotificationStatus(""), 3000)
-        } finally {
-          setSaving(false)
-        }
-      }
-
-      // Utilidades de ordenamiento para categorías/subcategorías en admin
-      type SortCriterion = 'none' | 'priceDesc' | 'priceAsc' | 'nameAsc' | 'nameDesc'
-
-      const parsePriceToNumber = (price: any): number => {
-        if (price == null) return 0
-        const str = String(price)
-        const cleaned = str.replace(/[^0-9.,-]/g, '').replace(/,(?=\d{3}\b)/g, '').replace(',', '.')
-        const num = parseFloat(cleaned)
-        return isNaN(num) ? 0 : num
-      }
-
-      const sortItemsBy = (items: any[], criterion: SortCriterion): any[] => {
-        const arr = [...items]
-        switch (criterion) {
-          case 'priceDesc':
-            return arr.sort((a, b) => parsePriceToNumber(b.price) - parsePriceToNumber(a.price))
-          case 'priceAsc':
-            return arr.sort((a, b) => parsePriceToNumber(a.price) - parsePriceToNumber(b.price))
-          case 'nameAsc':
-            return arr.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }))
-          case 'nameDesc':
-            return arr.sort((a, b) => String(b.name || '').localeCompare(String(a.name || ''), 'es', { sensitivity: 'base' }))
-          default:
-            return items
-        }
-      }
-
-      const applySortToSection = async (sectionKey: string, criterion: SortCriterion) => {
-        try {
-          // Tomar datos actuales de la sección desde menuSections
-          const currentItems = Array.isArray(menuSections[sectionKey]) ? menuSections[sectionKey] : []
-          const sorted = sortItemsBy(currentItems, criterion)
-
-          // Actualizar estado local inmediatamente
-          setMenuSections(prev => ({ ...prev, [sectionKey]: sorted }))
-
-          // Persistir en el servidor
-          const response = await fetch(`/api/menu/${sectionKey}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(sorted),
-          })
-
-          if (!response.ok) throw new Error('Error al guardar el orden')
-          setNotificationStatus('✅ Orden actualizado')
-          setTimeout(() => setNotificationStatus(''), 2000)
-        } catch (error) {
-          console.error('Error aplicando orden:', error)
-          setNotificationStatus('❌ Error al actualizar el orden')
-          setTimeout(() => setNotificationStatus(''), 2500)
-        }
-      }
-
-      const renderMenuItem = (item: MenuItem, section: string) => (
-        <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className={`font-semibold text-lg ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
-                  <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
-                  {item.hidden && (
-                    <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
-                      <EyeOff className="w-3 h-3 mr-1" />
-                      OCULTO
-                    </Badge>
+          return (
+            <div key={subcatId} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <span className="text-[#8bc34a]">🔹</span>
+                  {subcatName}
+                  <span className="text-sm text-gray-500 font-normal">
+                    ({subcatData.length} producto{subcatData.length !== 1 ? 's' : ''})
+                  </span>
+                  {subSubcategoryCount > 0 && (
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full ml-2">
+                      {subSubcategoryCount} subsub
+                    </span>
                   )}
-                </div>
-                <p className={`text-sm mb-2 ${item.hidden ? 'item-description text-gray-500' : 'item-description'}`}>
-                  {formatDescription(item.description)}
-                </p>
-              </div>
-              <div className="flex flex-col items-end gap-2 ml-4">
-                <div className="flex gap-2">
+                </h4>
+                <div className="flex gap-2 items-center">
+                  <select
+                    className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                    defaultValue="none"
+                    onChange={(e) => applySortToSection(subcatId, e.target.value as any)}
+                    aria-label="Ordenar subcategoría"
+                  >
+                    <option value="none">Orden original</option>
+                    <option value="priceDesc">Precio ↓</option>
+                    <option value="priceAsc">Precio ↑</option>
+                    <option value="nameAsc">A-Z</option>
+                    <option value="nameDesc">Z-A</option>
+                  </select>
                   <Button
                     size="sm"
-                    onClick={() => handleEdit(item, section)}
-                    className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                    disabled={saving}
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => {
+                      setSelectedSectionForProduct(subcatId)
+                      setIsAddingProduct(true)
+                    }}
                   >
-                    <Edit className="w-4 h-4 text-white" />
+                    <Plus className="w-4 h-4 text-white" />
+                    <span className="text-white">Agregar Producto</span>
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => handleToggleVisibility(item, section)}
-                    className={`group relative ${item.hidden
-                      ? "bg-orange-600 hover:bg-green-600 text-white"
-                      : "bg-green-600 hover:bg-orange-600 text-white"
-                      } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
-                  >
-                    {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
-                    {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
-                    <span className="group-hover:hidden">
-                      {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
-                    </span>
-                    <span className="hidden group-hover:block">
-                      {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
-                    </span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleDelete(item.id, section)}
-                    className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
+                    variant="destructive"
+                    disabled={saving}
+                    className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ color: "#fff", letterSpacing: "0.04em" }}
+                    onClick={() => handleDeleteSubcategory(subcatId)}
                   >
                     <Trash2 className="w-4 h-4 text-white" />
+                    <span style={{ color: "#fff", letterSpacing: "0.04em" }}>Eliminar</span>
                   </Button>
                 </div>
-                {item.tags && (
-                  <div className="flex gap-1 mt-2">
-                    {item.tags.map((tag) => {
-                      const badgeClasses = tag === "vegan"
-                        ? "bg-green-100 text-green-800 border-green-300"
-                        : tag === "sin-tacc"
-                          ? "bg-purple-100 text-purple-800 border-purple-300"
-                          : "bg-red-100 text-red-800 border-red-300"
+              </div>
+
+              {Array.isArray(subcatData) && subcatData.length > 0 ? (
+                <div className="space-y-3">
+                  {subcatData.map((item) => renderMenuItem(item, subcatId))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500 bg-white rounded border-2 border-dashed border-gray-300">
+                  <p className="text-sm">No hay productos en esta subcategoría aún.</p>
+                  <p className="text-xs mt-1">Haz clic en "Agregar Producto" para comenzar.</p>
+                </div>
+              )}
+
+              {/* Renderizar sub-subcategorías (nivel 2) */}
+              {(() => {
+                const subSubcategories = Object.entries(subcategoryMapping)
+                  .filter(([subsubId, parentId]) => parentId === subcatId)
+                  .map(([subsubId]) => subsubId)
+
+                if (subSubcategories.length === 0) return null
+
+                return (
+                  <div className="mt-4 ml-4 space-y-4 border-l-2 border-blue-300 pl-4">
+                    {subSubcategories.map(subsubId => {
+                      const subsubData = Array.isArray(menuSections[subsubId]) ? menuSections[subsubId] : []
+                      let subsubName = subsubId.split('-').map(word => {
+                        if (/^\d+$/.test(word)) return null
+                        return word.charAt(0).toUpperCase() + word.slice(1)
+                      }).filter(Boolean).join(' ')
+
+                      if (!subsubName) {
+                        subsubName = subsubId.split('-').map(word =>
+                          word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join(' ')
+                      }
+
                       return (
-                        <Badge key={tag} variant="secondary" className={`text-xs border ${badgeClasses}`}>
-                          <span className="mr-1">{tag === "vegan" ? "🌱" : tag === "sin-tacc" ? "🌾" : "🔥"}</span>
-                          {tag}
-                        </Badge>
+                        <div key={subsubId} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                          <div className="flex justify-between items-center mb-3">
+                            <h5 className="text-md font-semibold text-gray-800 flex items-center gap-2">
+                              <span className="text-blue-500">↳</span>
+                              {subsubName}
+                              <span className="text-sm text-gray-500 font-normal">
+                                ({subsubData.length} producto{subsubData.length !== 1 ? 's' : ''})
+                              </span>
+                            </h5>
+                            <div className="flex gap-2 items-center">
+                              <Button
+                                size="sm"
+                                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold text-xs h-8"
+                                onClick={() => {
+                                  setSelectedSectionForProduct(subsubId)
+                                  setIsAddingProduct(true)
+                                }}
+                              >
+                                <Plus className="w-3 h-3 text-white" />
+                                <span className="text-white">Agregar</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white border-0 font-semibold text-xs h-8"
+                                onClick={() => handleDeleteSubcategory(subsubId)}
+                              >
+                                <Trash2 className="w-3 h-3 text-white" />
+                                <span>Eliminar</span>
+                              </Button>
+                            </div>
+                          </div>
+
+                          {Array.isArray(subsubData) && subsubData.length > 0 ? (
+                            <div className="space-y-2">
+                              {subsubData.map((item) => renderMenuItem(item, subsubId))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 text-gray-500 bg-white rounded border-2 border-dashed border-blue-200">
+                              <p className="text-xs">No hay productos en esta sub-subcategoría aún.</p>
+                            </div>
+                          )}
+                        </div>
                       )
                     })}
                   </div>
-                )}
-              </div>
+                )
+              })()}
             </div>
-          </CardContent>
-        </Card>
-      )
+          )
+        })}
+      </div>
+    )
+  }
 
-      const renderDrinkItem = (item: DrinkItem, section: string) => (
-        <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className={`font-semibold text-lg ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
-                  <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
-                  {item.hidden && (
-                    <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
-                      <EyeOff className="w-3 h-3 mr-1" />
-                      OCULTO
+  // Helpers para edición de subcategorías en el panel "Editar Categorías"
+  const slugifyId = (name: string) =>
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+
+  const startEditSubcategory = (subcatId: string) => {
+    setInlineEditingSubcatId(subcatId)
+    // Generar nombre desde el ID usando la función helper
+    // Obtener el parentId del mapeo para extraer correctamente el nombre
+    const parentId = subcategoryMapping[subcatId] || ""
+    const subcatName = getSubcategoryDisplayName(subcatId, parentId)
+
+    setInlineEditingSubcatName(subcatName)
+    setInlineEditingSubcatParent(subcategoryMapping[subcatId] || "")
+  }
+
+  const cancelEditSubcategory = () => {
+    setInlineEditingSubcatId(null)
+    setInlineEditingSubcatName("")
+    setInlineEditingSubcatParent("")
+  }
+
+  const saveEditSubcategory = async () => {
+    if (!inlineEditingSubcatId || !inlineEditingSubcatName.trim()) return
+    const oldId = inlineEditingSubcatId
+    const subcategoryBaseId = slugifyId(inlineEditingSubcatName)
+    const newParent = inlineEditingSubcatParent || subcategoryMapping[oldId]
+
+    // SIEMPRE crear un ID único que combine subcategoría y categoría padre
+    // Formato: "subcategoria-categoria-padre" (ej: "bebidas-promociones")
+    const newId = `${subcategoryBaseId}-${newParent}`
+
+    setSaving(true)
+    try {
+      // Intentar renombrar la sección en menu.json si existe
+      try {
+        const getResp = await fetch(`/api/menu/${oldId}`)
+        if (getResp.ok) {
+          const items = await getResp.json()
+          if (newId !== oldId) {
+            await fetch(`/api/menu/${newId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(items),
+            })
+            await fetch(`/api/menu/${oldId}`, { method: "DELETE" })
+          }
+        } else if (newId !== oldId) {
+          // Si no existía sección, no hay nada que copiar; solo asegurar eliminación por si acaso
+          await fetch(`/api/menu/${oldId}`, { method: "DELETE" }).catch(() => { })
+        }
+      } catch (e) {
+        console.warn("No se pudo renombrar sección en menú:", e)
+      }
+
+      // Actualizar mapeo
+      const updatedMapping: any = { ...subcategoryMapping }
+      delete updatedMapping[oldId]
+      updatedMapping[newId] = newParent
+      const mappingResp = await fetch("/api/admin/subcategory-mapping", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMapping),
+      })
+      if (!mappingResp.ok) throw new Error("Error guardando mapeo")
+      setSubcategoryMapping(updatedMapping)
+
+      // Actualizar estados locales de secciones
+      setMenuSections((prev) => {
+        const next = { ...prev }
+        if (newId !== oldId) {
+          next[newId] = next[oldId] || []
+          delete next[oldId]
+        }
+        return next
+      })
+
+      setNotificationStatus("✅ Subcategoría actualizada")
+      setTimeout(() => setNotificationStatus(""), 2500)
+      cancelEditSubcategory()
+    } catch (error) {
+      console.error("Error editando subcategoría:", error)
+      setNotificationStatus("❌ Error al actualizar la subcategoría")
+      setTimeout(() => setNotificationStatus(""), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Utilidades de ordenamiento para categorías/subcategorías en admin
+  type SortCriterion = 'none' | 'priceDesc' | 'priceAsc' | 'nameAsc' | 'nameDesc'
+
+  const parsePriceToNumber = (price: any): number => {
+    if (price == null) return 0
+    const str = String(price)
+    const cleaned = str.replace(/[^0-9.,-]/g, '').replace(/,(?=\d{3}\b)/g, '').replace(',', '.')
+    const num = parseFloat(cleaned)
+    return isNaN(num) ? 0 : num
+  }
+
+  const sortItemsBy = (items: any[], criterion: SortCriterion): any[] => {
+    const arr = [...items]
+    switch (criterion) {
+      case 'priceDesc':
+        return arr.sort((a, b) => parsePriceToNumber(b.price) - parsePriceToNumber(a.price))
+      case 'priceAsc':
+        return arr.sort((a, b) => parsePriceToNumber(a.price) - parsePriceToNumber(b.price))
+      case 'nameAsc':
+        return arr.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }))
+      case 'nameDesc':
+        return arr.sort((a, b) => String(b.name || '').localeCompare(String(a.name || ''), 'es', { sensitivity: 'base' }))
+      default:
+        return items
+    }
+  }
+
+  const applySortToSection = async (sectionKey: string, criterion: SortCriterion) => {
+    try {
+      // Tomar datos actuales de la sección desde menuSections
+      const currentItems = Array.isArray(menuSections[sectionKey]) ? menuSections[sectionKey] : []
+      const sorted = sortItemsBy(currentItems, criterion)
+
+      // Actualizar estado local inmediatamente
+      setMenuSections(prev => ({ ...prev, [sectionKey]: sorted }))
+
+      // Persistir en el servidor
+      const response = await fetch(`/api/menu/${sectionKey}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sorted),
+      })
+
+      if (!response.ok) throw new Error('Error al guardar el orden')
+      setNotificationStatus('✅ Orden actualizado')
+      setTimeout(() => setNotificationStatus(''), 2000)
+    } catch (error) {
+      console.error('Error aplicando orden:', error)
+      setNotificationStatus('❌ Error al actualizar el orden')
+      setTimeout(() => setNotificationStatus(''), 2500)
+    }
+  }
+
+  const renderMenuItem = (item: MenuItem, section: string) => (
+    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className={`font-semibold text-lg ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
+              <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
+              {item.hidden && (
+                <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
+                  <EyeOff className="w-3 h-3 mr-1" />
+                  OCULTO
+                </Badge>
+              )}
+            </div>
+            <p className={`text-sm mb-2 ${item.hidden ? 'item-description text-gray-500' : 'item-description'}`}>
+              {formatDescription(item.description)}
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2 ml-4">
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => handleEdit(item, section)}
+                className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+              >
+                <Edit className="w-4 h-4 text-white" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleToggleVisibility(item, section)}
+                className={`group relative ${item.hidden
+                  ? "bg-orange-600 hover:bg-green-600 text-white"
+                  : "bg-green-600 hover:bg-orange-600 text-white"
+                  } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
+              >
+                {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
+                {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
+                <span className="group-hover:hidden">
+                  {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
+                </span>
+                <span className="hidden group-hover:block">
+                  {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
+                </span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleDelete(item.id, section)}
+                className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
+              >
+                <Trash2 className="w-4 h-4 text-white" />
+              </Button>
+            </div>
+            {item.tags && (
+              <div className="flex gap-1 mt-2">
+                {item.tags.map((tag) => {
+                  const badgeClasses = tag === "vegan"
+                    ? "bg-green-100 text-green-800 border-green-300"
+                    : tag === "sin-tacc"
+                      ? "bg-purple-100 text-purple-800 border-purple-300"
+                      : "bg-red-100 text-red-800 border-red-300"
+                  return (
+                    <Badge key={tag} variant="secondary" className={`text-xs border ${badgeClasses}`}>
+                      <span className="mr-1">{tag === "vegan" ? "🌱" : tag === "sin-tacc" ? "🌾" : "🔥"}</span>
+                      {tag}
                     </Badge>
-                  )}
-                </div>
-                {item.description && (
-                  <p className={`text-sm mb-2 italic ${item.hidden ? 'item-description text-gray-500' : 'item-description'}`}>
-                    {formatDescription(item.description)}
-                  </p>
-                )}
-                <div className={`grid grid-cols-2 gap-2 text-xs ${item.hidden ? 'item-details text-gray-500' : 'item-details'}`}>
-                  {item.ingredients && (
-                    <div><strong>Ingredientes:</strong> {item.ingredients}</div>
-                  )}
-                  {item.glass && (
-                    <div><strong>Vaso:</strong> {item.glass}</div>
-                  )}
-                  {item.technique && (
-                    <div><strong>Técnica:</strong> {item.technique}</div>
-                  )}
-                  {item.garnish && (
-                    <div><strong>Garnish:</strong> {item.garnish}</div>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-2 ml-4">
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleEdit(item, section)}
-                    className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-                  >
-                    <Edit className="w-4 h-4 text-white" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleToggleVisibility(item, section)}
-                    className={`group relative ${item.hidden
-                      ? "bg-orange-600 hover:bg-green-600 text-white"
-                      : "bg-green-600 hover:bg-orange-600 text-white"
-                      } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
-                  >
-                    {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
-                    {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
-                    <span className="group-hover:hidden">
-                      {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
-                    </span>
-                    <span className="hidden group-hover:block">
-                      {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
-                    </span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleDelete(item.id, section)}
-                    className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
-                  >
-                    <Trash2 className="w-4 h-4 text-white" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )
-
-      const renderWineItem = (item: WineItem, section: string) => (
-        <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <h3 className={`font-semibold ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
-                {item.hidden && (
-                  <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
-                    <EyeOff className="w-3 h-3 mr-1" />
-                    OCULTO
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
-                <Button
-                  size="sm"
-                  onClick={() => handleEdit(item, section)}
-                  className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-                >
-                  <Edit className="w-4 h-4 text-white" />
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleToggleVisibility(item, section)}
-                  className={`group relative ${item.hidden
-                    ? "bg-orange-600 hover:bg-green-600 text-white"
-                    : "bg-green-600 hover:bg-orange-600 text-white"
-                    } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
-                >
-                  {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
-                  {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
-                  <span className="group-hover:hidden">
-                    {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
-                  </span>
-                  <span className="hidden group-hover:block">
-                    {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
-                  </span>
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleDelete(item.id, section)}
-                  className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
-                >
-                  <Trash2 className="w-4 h-4 text-white" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )
-
-      // Mostrar pantalla de carga
-      if (loading) {
-        return (
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 text-lg">Cargando panel de administración...</p>
-            </div>
-          </div>
-        )
-      }
-
-      // Mostrar pantalla de login si no está autenticado
-      if (!isAuthenticated) {
-        return (
-          <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-            {/* Degradado de fondo igual al de la carátula del menú */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black"></div>
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-transparent to-black/50"></div>
-
-            {/* Contenido centrado */}
-            <div className="relative z-10">
-              <Card className="w-full max-w-md bg-black/80 backdrop-blur-sm border-gray-700">
-                <CardHeader className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="p-3 bg-amber-900/20 rounded-full border border-amber-600/30">
-                      <Lock className="w-8 h-8 text-amber-400" />
-                    </div>
-                  </div>
-                  <CardTitle className="text-2xl font-bold text-white">
-                    Panel de Administración
-                  </CardTitle>
-                  <p className="text-gray-300">COBRA - Acceso Restringido</p>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-white">Contraseña</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Ingresa la contraseña"
-                        className="w-full bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500"
-                        required
-                      />
-                    </div>
-                    {loginError && (
-                      <div className="text-red-400 text-sm text-center">
-                        {loginError}
-                      </div>
-                    )}
-                    <Button type="submit" className="w-full bg-black hover:bg-gray-800 text-white border-0">
-                      Acceder
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )
-      }
-
-      // Si estamos editando o agregando, mostrar el formulario correspondiente
-      if (isEditing && editingItem) {
-        return (
-          <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-4xl mx-auto">
-              <Button
-                variant="ghost"
-                onClick={handleCancel}
-                className="mb-6 flex items-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Volver al panel
-              </Button>
-              <EditForm
-                item={editingItem}
-                section={isEditing}
-                onSave={(item) => handleSave(isEditing, item)}
-                onCancel={handleCancel}
-              />
-            </div>
-          </div>
-        )
-      }
-
-      if (isAdding) {
-        return (
-          <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-4xl mx-auto">
-              <Button
-                variant="ghost"
-                onClick={handleCancel}
-                className="mb-6 flex items-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Volver al panel
-              </Button>
-              <AddForm
-                section={isAdding}
-                onAdd={(item) => handleAdd(isAdding, item)}
-                onCancel={handleCancel}
-              />
-            </div>
-          </div>
-        )
-      }
-
-      return (
-        <div className="min-h-screen bg-gray-50 admin-panel">
-          <div className="max-w-7xl mx-auto px-4 py-8">
-            <header className="mb-8 flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Panel de Administración - COBRA
-                </h1>
-                <p className="text-gray-600">
-                  Gestiona el contenido del menú de tu restaurante
-                </p>
-              </div>
-              <div className="flex gap-4">
-                <Button
-                  onClick={handleConfirmAndSync}
-                  disabled={saving}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Sincronizando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      Confirmar Cambios
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={() => setShowPriceIncreaseModal(true)}
-                  disabled={saving}
-                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className="text-lg">📈</span>
-                  Aumentar Precios
-                </Button>
-                <Button
-                  onClick={() => setIsReorderingCategories(true)}
-                  disabled={saving}
-                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <GripVertical className="w-4 h-4" />
-                  <span style={{ color: "white" }}>Reordenar Categorías</span>
-                </Button>
-                <Button
-                  onClick={() => setIsEditingCategories(true)}
-                  disabled={saving}
-                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Edit className="w-4 h-4" />
-                  <span style={{ color: "white" }}>Editar Categorías</span>
-                </Button>
-                <Button
-                  onClick={handleLogout}
-                  disabled={saving}
-                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Lock className="w-4 h-4" />
-                  Cerrar Sesión
-                </Button>
-              </div>
-            </header>
-
-            {/* Indicador de estado de notificaciones */}
-            {notificationStatus && (
-              <div className={`mb-6 p-4 rounded-lg border-2 ${saving
-                ? 'bg-yellow-50 border-yellow-400 animate-pulse'
-                : notificationStatus.includes('✅')
-                  ? 'bg-green-50 border-green-400'
-                  : notificationStatus.includes('❌')
-                    ? 'bg-red-50 border-red-400'
-                    : 'bg-blue-50 border-blue-400'
-                }`}>
-                <div className="flex items-center gap-3">
-                  {saving && (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-600"></div>
-                  )}
-                  <p className={`text-sm font-bold ${saving
-                    ? 'text-yellow-900'
-                    : notificationStatus.includes('✅')
-                      ? 'text-green-900'
-                      : notificationStatus.includes('❌')
-                        ? 'text-red-900'
-                        : 'text-blue-900'
-                    }`}>
-                    {notificationStatus}
-                  </p>
-                </div>
-                {saving && (
-                  <p className="text-xs text-yellow-700 mt-2 font-semibold">
-                    ⚠️ Por favor espera... No realices otros cambios hasta que termine el guardado.
-                  </p>
-                )}
+                  )
+                })}
               </div>
             )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              {/* Todas las categorías en una sola lista */}
-              <div className="relative">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">
-                      {allCategories.length} categoría{allCategories.length !== 1 ? 's' : ''}
-                    </span>
-                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                      {allCategories.filter(cat => !cat.isStandard).length} personalizada{allCategories.filter(cat => !cat.isStandard).length !== 1 ? 's' : ''}
-                    </span>
-                    {(() => {
-                      const outOfTimeCount = allCategories.filter(cat =>
-                        categories[cat.id]?.timeRestricted && !isCategoryVisible(cat.id, categories)
-                      ).length
+  const renderDrinkItem = (item: DrinkItem, section: string) => (
+    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className={`font-semibold text-lg ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
+              <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
+              {item.hidden && (
+                <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
+                  <EyeOff className="w-3 h-3 mr-1" />
+                  OCULTO
+                </Badge>
+              )}
+            </div>
+            {item.description && (
+              <p className={`text-sm mb-2 italic ${item.hidden ? 'item-description text-gray-500' : 'item-description'}`}>
+                {formatDescription(item.description)}
+              </p>
+            )}
+            <div className={`grid grid-cols-2 gap-2 text-xs ${item.hidden ? 'item-details text-gray-500' : 'item-details'}`}>
+              {item.ingredients && (
+                <div><strong>Ingredientes:</strong> {item.ingredients}</div>
+              )}
+              {item.glass && (
+                <div><strong>Vaso:</strong> {item.glass}</div>
+              )}
+              {item.technique && (
+                <div><strong>Técnica:</strong> {item.technique}</div>
+              )}
+              {item.garnish && (
+                <div><strong>Garnish:</strong> {item.garnish}</div>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-2 ml-4">
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => handleEdit(item, section)}
+                className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+              >
+                <Edit className="w-4 h-4 text-white" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleToggleVisibility(item, section)}
+                className={`group relative ${item.hidden
+                  ? "bg-orange-600 hover:bg-green-600 text-white"
+                  : "bg-green-600 hover:bg-orange-600 text-white"
+                  } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
+              >
+                {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
+                {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
+                <span className="group-hover:hidden">
+                  {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
+                </span>
+                <span className="hidden group-hover:block">
+                  {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
+                </span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleDelete(item.id, section)}
+                className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
+              >
+                <Trash2 className="w-4 h-4 text-white" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 
-                      return outOfTimeCount > 0 ? (
-                        <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {outOfTimeCount} fuera de horario
-                        </span>
-                      ) : null
-                    })()}
-                  </div>
+  const renderWineItem = (item: WineItem, section: string) => (
+    <Card key={item.id} className={`mb-4 ${item.hidden ? 'admin-hidden-item bg-gray-100' : 'admin-visible-item'}`}>
+      <CardContent className="p-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <h3 className={`font-semibold ${item.hidden ? 'item-name text-gray-600' : 'item-name'}`}>{item.name}</h3>
+            {item.hidden && (
+              <Badge variant="secondary" className="admin-hidden-badge text-xs bg-gray-300">
+                <EyeOff className="w-3 h-3 mr-1" />
+                OCULTO
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`font-bold ${item.hidden ? 'text-gray-500' : 'text-gold'}`}>${item.price}</span>
+            <Button
+              size="sm"
+              onClick={() => handleEdit(item, section)}
+              className="bg-black hover:bg-gray-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+            >
+              <Edit className="w-4 h-4 text-white" />
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleToggleVisibility(item, section)}
+              className={`group relative ${item.hidden
+                ? "bg-orange-600 hover:bg-green-600 text-white"
+                : "bg-green-600 hover:bg-orange-600 text-white"
+                } border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold`}
+            >
+              {/* Visible: muestra Eye verde, hover muestra EyeOff naranja */}
+              {/* Oculto: muestra EyeOff naranja, hover muestra Eye verde */}
+              <span className="group-hover:hidden">
+                {item.hidden ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
+              </span>
+              <span className="hidden group-hover:block">
+                {item.hidden ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
+              </span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleDelete(item.id, section)}
+              className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 font-semibold admin-delete-button"
+            >
+              <Trash2 className="w-4 h-4 text-white" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  // Mostrar pantalla de carga
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Cargando panel de administración...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Mostrar pantalla de login si no está autenticado
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+        {/* Degradado de fondo igual al de la carátula del menú */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-transparent to-black/50"></div>
+
+        {/* Contenido centrado */}
+        <div className="relative z-10">
+          <Card className="w-full max-w-md bg-black/80 backdrop-blur-sm border-gray-700">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-amber-900/20 rounded-full border border-amber-600/30">
+                  <Lock className="w-8 h-8 text-amber-400" />
                 </div>
-                <TabsList className="flex flex-wrap w-full gap-2">
-                  {(allCategories || []).map((category) => {
-                    // Contar subcategorías para esta categoría
-                    const subcategoryCount = Object.entries(subcategoryMapping)
-                      .filter(([subcatId, parentId]) => parentId === category.id)
-                      .length
-
-                    // Verificar si la categoría está visible según su horario
-                    const isVisible = isCategoryVisible(category.id, categories)
-
-                    return (
-                      <TabsTrigger
-                        key={category.id}
-                        value={category.id}
-                        className={`relative transition-all duration-300 text-xs sm:text-sm !whitespace-normal break-words min-w-fit max-w-full px-3 py-2 ${category.id === activeTab ? 'scale-105' : ''
-                          } ${!isVisible ? 'opacity-50 text-gray-400' : ''
-                          }`}
-                        style={{ whiteSpace: 'normal', flex: '0 1 auto' }}
-                        title={!isVisible ? 'Categoría fuera de horario' : category.name}
-                      >
-                        <span className="block text-center">{category.name}</span>
-                        {!isVisible && (
-                          <span className="ml-1 text-[10px]">🕐</span>
-                        )}
-                        {subcategoryCount > 0 && (
-                          <span className={`absolute -top-1 -right-1 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold ${!isVisible ? 'bg-gray-400' : 'bg-black'
-                            }`}>
-                            {subcategoryCount}
-                          </span>
-                        )}
-                      </TabsTrigger>
-                    )
-                  })}
-                </TabsList>
               </div>
+              <CardTitle className="text-2xl font-bold text-white">
+                Panel de Administración
+              </CardTitle>
+              <p className="text-gray-300">COBRA - Acceso Restringido</p>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-white">Contraseña</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Ingresa la contraseña"
+                    className="w-full bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-amber-500"
+                    required
+                  />
+                </div>
+                {loginError && (
+                  <div className="text-red-400 text-sm text-center">
+                    {loginError}
+                  </div>
+                )}
+                <Button type="submit" className="w-full bg-black hover:bg-gray-800 text-white border-0">
+                  Acceder
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
+  // Si estamos editando o agregando, mostrar el formulario correspondiente
+  if (isEditing && editingItem) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={handleCancel}
+            className="mb-6 flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver al panel
+          </Button>
+          <EditForm
+            item={editingItem}
+            section={isEditing}
+            onSave={(item) => handleSave(isEditing, item)}
+            onCancel={handleCancel}
+          />
+        </div>
+      </div>
+    )
+  }
 
+  if (isAdding) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={handleCancel}
+            className="mb-6 flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver al panel
+          </Button>
+          <AddForm
+            section={isAdding}
+            onAdd={(item) => handleAdd(isAdding, item)}
+            onCancel={handleCancel}
+          />
+        </div>
+      </div>
+    )
+  }
 
-              {/* Tabs dinámicos generados desde allCategories */}
+  return (
+    <div className="min-h-screen bg-gray-50 admin-panel">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <header className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Panel de Administración - COBRA
+            </h1>
+            <p className="text-gray-600">
+              Gestiona el contenido del menú de tu restaurante
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <Button
+              onClick={handleConfirmAndSync}
+              disabled={saving}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Sincronizando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Confirmar Cambios
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={() => setShowPriceIncreaseModal(true)}
+              disabled={saving}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="text-lg">📈</span>
+              Aumentar Precios
+            </Button>
+            <Button
+              onClick={() => setIsReorderingCategories(true)}
+              disabled={saving}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <GripVertical className="w-4 h-4" />
+              <span style={{ color: "white" }}>Reordenar Categorías</span>
+            </Button>
+            <Button
+              onClick={() => setIsEditingCategories(true)}
+              disabled={saving}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Edit className="w-4 h-4" />
+              <span style={{ color: "white" }}>Editar Categorías</span>
+            </Button>
+            <Button
+              onClick={handleLogout}
+              disabled={saving}
+              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Lock className="w-4 h-4" />
+              Cerrar Sesión
+            </Button>
+          </div>
+        </header>
+
+        {/* Indicador de estado de notificaciones */}
+        {notificationStatus && (
+          <div className={`mb-6 p-4 rounded-lg border-2 ${saving
+            ? 'bg-yellow-50 border-yellow-400 animate-pulse'
+            : notificationStatus.includes('✅')
+              ? 'bg-green-50 border-green-400'
+              : notificationStatus.includes('❌')
+                ? 'bg-red-50 border-red-400'
+                : 'bg-blue-50 border-blue-400'
+            }`}>
+            <div className="flex items-center gap-3">
+              {saving && (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-600"></div>
+              )}
+              <p className={`text-sm font-bold ${saving
+                ? 'text-yellow-900'
+                : notificationStatus.includes('✅')
+                  ? 'text-green-900'
+                  : notificationStatus.includes('❌')
+                    ? 'text-red-900'
+                    : 'text-blue-900'
+                }`}>
+                {notificationStatus}
+              </p>
+            </div>
+            {saving && (
+              <p className="text-xs text-yellow-700 mt-2 font-semibold">
+                ⚠️ Por favor espera... No realices otros cambios hasta que termine el guardado.
+              </p>
+            )}
+          </div>
+        )}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          {/* Todas las categorías en una sola lista */}
+          <div className="relative">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  {allCategories.length} categoría{allCategories.length !== 1 ? 's' : ''}
+                </span>
+                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  {allCategories.filter(cat => !cat.isStandard).length} personalizada{allCategories.filter(cat => !cat.isStandard).length !== 1 ? 's' : ''}
+                </span>
+                {(() => {
+                  const outOfTimeCount = allCategories.filter(cat =>
+                    categories[cat.id]?.timeRestricted && !isCategoryVisible(cat.id, categories)
+                  ).length
+
+                  return outOfTimeCount > 0 ? (
+                    <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {outOfTimeCount} fuera de horario
+                    </span>
+                  ) : null
+                })()}
+              </div>
+            </div>
+            <TabsList className="flex flex-wrap w-full gap-2">
               {(allCategories || []).map((category) => {
+                // Contar subcategorías para esta categoría
+                const subcategoryCount = Object.entries(subcategoryMapping)
+                  .filter(([subcatId, parentId]) => parentId === category.id)
+                  .length
+
                 // Verificar si la categoría está visible según su horario
-                const isCategoryVisibleNow = isCategoryVisible(category.id, categories)
+                const isVisible = isCategoryVisible(category.id, categories)
 
                 return (
-                  <TabsContent key={category.id} value={category.id} className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <h2 className={`text-2xl font-semibold ${isCategoryVisibleNow ? 'text-gray-900' : 'text-gray-400'}`}>
-                          {category.name}
-                        </h2>
-                        {categories[category.id]?.timeRestricted && (
-                          <Badge variant="outline" className={`flex items-center gap-1 ${isCategoryVisibleNow
-                            ? 'bg-blue-50 text-blue-700 border-blue-300'
-                            : 'bg-gray-50 text-gray-500 border-gray-300'
-                            }`}>
-                            <Clock className="w-3 h-3" />
-                            {categories[category.id]?.startTime} - {categories[category.id]?.endTime}
-                          </Badge>
-                        )}
-                        {!isCategoryVisibleNow && categories[category.id]?.timeRestricted && (
-                          <Badge variant="outline" className="flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-300">
-                            Fuera de horario
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex gap-2 items-center">
-                        <select
-                          className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
-                          defaultValue="none"
-                          onChange={(e) => applySortToSection(category.id, e.target.value as any)}
-                          aria-label="Ordenar categoría"
-                        >
-                          <option value="none">Orden original</option>
-                          <option value="priceDesc">Precio ↓</option>
-                          <option value="priceAsc">Precio ↑</option>
-                          <option value="nameAsc">A-Z</option>
-                          <option value="nameDesc">Z-A</option>
-                        </select>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center gap-2"
-                          onClick={() => handleOpenTimeRangeModal(category.id)}
-                        >
-                          <Clock className="w-4 h-4" />
-                          <span>Horario</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                          onClick={() => {
-                            setSelectedCategoryForSubcategory(category.id)
-                            setIsAddingSubcategory(true)
-                          }}
-                        >
-                          <Plus className="w-4 h-4 text-white" />
-                          <span className="text-white">Agregar Subcategoría</span>
-                        </Button>
-                        {(!Object.values(subcategoryMapping).includes(category.id)) && (
-                          <Button
-                            size="sm"
-                            disabled={saving}
-                            className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
-                            onClick={() => setIsAdding(category.id)}
-                          >
-                            <Plus className="w-4 h-4 text-white" />
-                            <span className="text-white">Agregar Producto</span>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Mostrar productos de esta categoría si existen (solo si no tiene subcategorías) */}
-                    {Array.isArray(menuSections[category.id]) && menuSections[category.id].length > 0 ? (
-                      menuSections[category.id].map((item) => renderMenuItem(item, category.id))
-                    ) : (
-                      !Object.values(subcategoryMapping).includes(category.id) ? (
-                        <div className="text-center py-8 text-gray-500">
-                          <p>No hay productos en esta categoría aún.</p>
-                          <p className="text-sm">Haz clic en "Agregar Producto" para comenzar.</p>
-                        </div>
-                      ) : null
+                  <TabsTrigger
+                    key={category.id}
+                    value={category.id}
+                    className={`relative transition-all duration-300 text-xs sm:text-sm !whitespace-normal break-words min-w-fit max-w-full px-3 py-2 ${category.id === activeTab ? 'scale-105' : ''
+                      } ${!isVisible ? 'opacity-50 text-gray-400' : ''
+                      }`}
+                    style={{ whiteSpace: 'normal', flex: '0 1 auto' }}
+                    title={!isVisible ? 'Categoría fuera de horario' : category.name}
+                  >
+                    <span className="block text-center">{category.name}</span>
+                    {!isVisible && (
+                      <span className="ml-1 text-[10px]">🕐</span>
                     )}
-
-                    {/* Renderizar subcategorías dinámicas */}
-                    {renderSubcategories(category.id)}
-                  </TabsContent>
+                    {subcategoryCount > 0 && (
+                      <span className={`absolute -top-1 -right-1 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold ${!isVisible ? 'bg-gray-400' : 'bg-black'
+                        }`}>
+                        {subcategoryCount}
+                      </span>
+                    )}
+                  </TabsTrigger>
                 )
               })}
+            </TabsList>
+          </div>
 
-              {/* Tapeo */}
-              <TabsContent value="tapeo" className="space-y-4">
+
+
+          {/* Tabs dinámicos generados desde allCategories */}
+          {(allCategories || []).map((category) => {
+            // Verificar si la categoría está visible según su horario
+            const isCategoryVisibleNow = isCategoryVisible(category.id, categories)
+
+            return (
+              <TabsContent key={category.id} value={category.id} className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-semibold text-gray-900">Tapeo</h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className={`text-2xl font-semibold ${isCategoryVisibleNow ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {category.name}
+                    </h2>
+                    {categories[category.id]?.timeRestricted && (
+                      <Badge variant="outline" className={`flex items-center gap-1 ${isCategoryVisibleNow
+                        ? 'bg-blue-50 text-blue-700 border-blue-300'
+                        : 'bg-gray-50 text-gray-500 border-gray-300'
+                        }`}>
+                        <Clock className="w-3 h-3" />
+                        {categories[category.id]?.startTime} - {categories[category.id]?.endTime}
+                      </Badge>
+                    )}
+                    {!isCategoryVisibleNow && categories[category.id]?.timeRestricted && (
+                      <Badge variant="outline" className="flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-300">
+                        Fuera de horario
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex gap-2 items-center">
                     <select
                       className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
                       defaultValue="none"
-                      onChange={(e) => applySortToSection('tapeo', e.target.value as any)}
-                      aria-label="Ordenar Tapeo"
+                      onChange={(e) => applySortToSection(category.id, e.target.value as any)}
+                      aria-label="Ordenar categoría"
+                    >
+                      <option value="none">Orden original</option>
+                      <option value="priceDesc">Precio ↓</option>
+                      <option value="priceAsc">Precio ↑</option>
+                      <option value="nameAsc">A-Z</option>
+                      <option value="nameDesc">Z-A</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      onClick={() => handleOpenTimeRangeModal(category.id)}
+                    >
+                      <Clock className="w-4 h-4" />
+                      <span>Horario</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                      onClick={() => {
+                        setSelectedCategoryForSubcategory(category.id)
+                        setIsAddingSubcategory(true)
+                      }}
+                    >
+                      <Plus className="w-4 h-4 text-white" />
+                      <span className="text-white">Agregar Subcategoría</span>
+                    </Button>
+                    {(!Object.values(subcategoryMapping).includes(category.id)) && (
+                      <Button
+                        size="sm"
+                        disabled={saving}
+                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setIsAdding(category.id)}
+                      >
+                        <Plus className="w-4 h-4 text-white" />
+                        <span className="text-white">Agregar Producto</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mostrar productos de esta categoría si existen (solo si no tiene subcategorías) */}
+                {Array.isArray(menuSections[category.id]) && menuSections[category.id].length > 0 ? (
+                  menuSections[category.id].map((item) => renderMenuItem(item, category.id))
+                ) : (
+                  !Object.values(subcategoryMapping).includes(category.id) ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No hay productos en esta categoría aún.</p>
+                      <p className="text-sm">Haz clic en "Agregar Producto" para comenzar.</p>
+                    </div>
+                  ) : null
+                )}
+
+                {/* Renderizar subcategorías dinámicas */}
+                {renderSubcategories(category.id)}
+              </TabsContent>
+            )
+          })}
+
+          {/* Tapeo */}
+          <TabsContent value="tapeo" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold text-gray-900">Tapeo</h2>
+              <div className="flex gap-2 items-center">
+                <select
+                  className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                  defaultValue="none"
+                  onChange={(e) => applySortToSection('tapeo', e.target.value as any)}
+                  aria-label="Ordenar Tapeo"
+                >
+                  <option value="none">Orden original</option>
+                  <option value="priceDesc">Precio ↓</option>
+                  <option value="priceAsc">Precio ↑</option>
+                  <option value="nameAsc">A-Z</option>
+                  <option value="nameDesc">Z-A</option>
+                </select>
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                  onClick={() => {
+                    setSelectedCategoryForSubcategory("tapeo")
+                    setIsAddingSubcategory(true)
+                  }}
+                >
+                  <Plus className="w-4 h-4 text-white" />
+                  <span className="text-white">Agregar Subcategoría</span>
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                  onClick={() => setIsAdding("tapeo")}
+                >
+                  <Plus className="w-4 h-4 text-white" />
+                  <span className="text-white">Agregar Tapeo</span>
+                </Button>
+              </div>
+            </div>
+            {Array.isArray(tapeo) && tapeo.map((item) => renderMenuItem(item, "tapeo"))}
+
+            {/* Renderizar subcategorías dinámicamente */}
+            {renderSubcategories("tapeo")}
+          </TabsContent>
+
+          {/* Principales */}
+          <TabsContent value="principales" className="space-y-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">Platos Principales</h2>
+              <Button
+                size="sm"
+                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                onClick={() => {
+                  setSelectedCategoryForSubcategory("principales")
+                  setIsAddingSubcategory(true)
+                }}
+              >
+                <Plus className="w-4 h-4 text-white" />
+                <span className="text-white">Agregar Subcategoría</span>
+              </Button>
+            </div>
+
+            {/* Renderizar subcategorías dinámicamente */}
+            {renderSubcategories("principales")}
+          </TabsContent>
+
+          {/* Cafetería */}
+          <TabsContent value="cafeteria" className="space-y-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">Cafetería y Pastelería</h2>
+              <Button
+                size="sm"
+                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                onClick={() => {
+                  setSelectedCategoryForSubcategory("cafeteria")
+                  setIsAddingSubcategory(true)
+                }}
+              >
+                <Plus className="w-4 h-4 text-white" />
+                <span className="text-white">Agregar Subcategoría</span>
+              </Button>
+            </div>
+
+            <div className="space-y-8">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Cafetería</h3>
+                  <div className="flex gap-2 items-center">
+                    <select
+                      className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                      defaultValue="none"
+                      onChange={(e) => applySortToSection('cafeteria', e.target.value as any)}
+                      aria-label="Ordenar Cafetería"
                     >
                       <option value="none">Orden original</option>
                       <option value="priceDesc">Precio ↓</option>
@@ -3451,1170 +3541,1088 @@ export default function AdminPanel() {
                     <Button
                       size="sm"
                       className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => {
-                        setSelectedCategoryForSubcategory("tapeo")
-                        setIsAddingSubcategory(true)
-                      }}
+                      onClick={() => setIsAdding("cafeteria")}
                     >
-                      <Plus className="w-4 h-4 text-white" />
-                      <span className="text-white">Agregar Subcategoría</span>
+                      <Plus className="w-4 h-4" />
+                      Agregar
                     </Button>
+                  </div>
+                </div>
+                {Array.isArray(cafeteria) && cafeteria.map((item) => renderWineItem(item, "cafeteria"))}
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Pastelería</h3>
+                  <div className="flex gap-2 items-center">
+                    <select
+                      className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
+                      defaultValue="none"
+                      onChange={(e) => applySortToSection('pasteleria', e.target.value as any)}
+                      aria-label="Ordenar Pastelería"
+                    >
+                      <option value="none">Orden original</option>
+                      <option value="priceDesc">Precio ↓</option>
+                      <option value="priceAsc">Precio ↑</option>
+                      <option value="nameAsc">A-Z</option>
+                      <option value="nameDesc">Z-A</option>
+                    </select>
                     <Button
                       size="sm"
                       className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => setIsAdding("tapeo")}
-                    >
-                      <Plus className="w-4 h-4 text-white" />
-                      <span className="text-white">Agregar Tapeo</span>
-                    </Button>
-                  </div>
-                </div>
-                {Array.isArray(tapeo) && tapeo.map((item) => renderMenuItem(item, "tapeo"))}
-
-                {/* Renderizar subcategorías dinámicamente */}
-                {renderSubcategories("tapeo")}
-              </TabsContent>
-
-              {/* Principales */}
-              <TabsContent value="principales" className="space-y-4">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900">Platos Principales</h2>
-                  <Button
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => {
-                      setSelectedCategoryForSubcategory("principales")
-                      setIsAddingSubcategory(true)
-                    }}
-                  >
-                    <Plus className="w-4 h-4 text-white" />
-                    <span className="text-white">Agregar Subcategoría</span>
-                  </Button>
-                </div>
-
-                {/* Renderizar subcategorías dinámicamente */}
-                {renderSubcategories("principales")}
-              </TabsContent>
-
-              {/* Cafetería */}
-              <TabsContent value="cafeteria" className="space-y-4">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900">Cafetería y Pastelería</h2>
-                  <Button
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => {
-                      setSelectedCategoryForSubcategory("cafeteria")
-                      setIsAddingSubcategory(true)
-                    }}
-                  >
-                    <Plus className="w-4 h-4 text-white" />
-                    <span className="text-white">Agregar Subcategoría</span>
-                  </Button>
-                </div>
-
-                <div className="space-y-8">
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Cafetería</h3>
-                      <div className="flex gap-2 items-center">
-                        <select
-                          className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
-                          defaultValue="none"
-                          onChange={(e) => applySortToSection('cafeteria', e.target.value as any)}
-                          aria-label="Ordenar Cafetería"
-                        >
-                          <option value="none">Orden original</option>
-                          <option value="priceDesc">Precio ↓</option>
-                          <option value="priceAsc">Precio ↑</option>
-                          <option value="nameAsc">A-Z</option>
-                          <option value="nameDesc">Z-A</option>
-                        </select>
-                        <Button
-                          size="sm"
-                          className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                          onClick={() => setIsAdding("cafeteria")}
-                        >
-                          <Plus className="w-4 h-4" />
-                          Agregar
-                        </Button>
-                      </div>
-                    </div>
-                    {Array.isArray(cafeteria) && cafeteria.map((item) => renderWineItem(item, "cafeteria"))}
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Pastelería</h3>
-                      <div className="flex gap-2 items-center">
-                        <select
-                          className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
-                          defaultValue="none"
-                          onChange={(e) => applySortToSection('pasteleria', e.target.value as any)}
-                          aria-label="Ordenar Pastelería"
-                        >
-                          <option value="none">Orden original</option>
-                          <option value="priceDesc">Precio ↓</option>
-                          <option value="priceAsc">Precio ↑</option>
-                          <option value="nameAsc">A-Z</option>
-                          <option value="nameDesc">Z-A</option>
-                        </select>
-                        <Button
-                          size="sm"
-                          className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                          onClick={() => setIsAdding("pasteleria")}
-                        >
-                          <Plus className="w-4 h-4" />
-                          Agregar
-                        </Button>
-                      </div>
-                    </div>
-                    {Array.isArray(pasteleria) && pasteleria.map((item) => renderWineItem(item, "pasteleria"))}
-                  </div>
-                </div>
-
-                {/* Renderizar subcategorías dinámicamente */}
-                {renderSubcategories("cafeteria")}
-              </TabsContent>
-
-              {/* Bebidas */}
-              <TabsContent value="bebidas" className="space-y-4">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900">Bebidas</h2>
-                  <Button
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => {
-                      setSelectedCategoryForSubcategory("bebidas")
-                      setIsAddingSubcategory(true)
-                    }}
-                  >
-                    <Plus className="w-4 h-4 text-white" />
-                    <span className="text-white">Agregar Subcategoría</span>
-                  </Button>
-                </div>
-
-                <div className="space-y-8">
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Bebidas Sin Alcohol</h3>
-                      <Button
-                        size="sm"
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                        onClick={() => setIsAdding("bebidasSinAlcohol")}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Agregar
-                      </Button>
-                    </div>
-                    {Array.isArray(bebidasSinAlcohol) && bebidasSinAlcohol.map((item) => renderWineItem(item, "bebidasSinAlcohol"))}
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Cervezas</h3>
-                      <Button
-                        size="sm"
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                        onClick={() => setIsAdding("cervezas")}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Agregar
-                      </Button>
-                    </div>
-                    {Array.isArray(cervezas) && cervezas.map((item) => renderWineItem(item, "cervezas"))}
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Vinos</h3>
-                    </div>
-
-                    <div className="space-y-4 ml-4">
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-lg font-medium text-gray-900">Tintos</h4>
-                          <Button
-                            size="sm"
-                            className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                            onClick={() => setIsAdding("vinos-tintos")}
-                          >
-                            <Plus className="w-3 h-3" />
-                            Agregar
-                          </Button>
-                        </div>
-                        {Array.isArray(vinos?.tintos) && vinos.tintos.map((item: any) => renderWineItem(item, "vinos-tintos"))}
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-lg font-medium text-gray-900">Blancos</h4>
-                          <Button
-                            size="sm"
-                            className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                            onClick={() => setIsAdding("vinos-blancos")}
-                          >
-                            <Plus className="w-3 h-3" />
-                            Agregar
-                          </Button>
-                        </div>
-                        {Array.isArray(vinos?.blancos) && vinos.blancos.map((item: any) => renderWineItem(item, "vinos-blancos"))}
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-lg font-medium text-gray-900">Rosados</h4>
-                          <Button
-                            size="sm"
-                            className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                            onClick={() => setIsAdding("vinos-rosados")}
-                          >
-                            <Plus className="w-3 h-3" />
-                            Agregar
-                          </Button>
-                        </div>
-                        {Array.isArray(vinos?.rosados) && vinos.rosados.map((item: any) => renderWineItem(item, "vinos-rosados"))}
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-lg font-medium text-gray-900">Copas</h4>
-                          <Button
-                            size="sm"
-                            className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                            onClick={() => setIsAdding("vinos-copas")}
-                          >
-                            <Plus className="w-3 h-3" />
-                            Agregar
-                          </Button>
-                        </div>
-                        {Array.isArray(vinos?.copas) && vinos.copas.map((item: any) => renderWineItem(item, "vinos-copas"))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Botellas</h3>
-                      <Button
-                        size="sm"
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                        onClick={() => setIsAdding("botellas")}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Agregar
-                      </Button>
-                    </div>
-                    {Array.isArray(botellas) && botellas.map((item) => renderWineItem(item, "botellas"))}
-                  </div>
-                </div>
-
-                {/* Renderizar subcategorías dinámicamente */}
-                {renderSubcategories("bebidas")}
-              </TabsContent>
-
-              {/* Tragos */}
-              <TabsContent value="tragos" className="space-y-4">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900">Tragos</h2>
-                  <Button
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => {
-                      setSelectedCategoryForSubcategory("tragos")
-                      setIsAddingSubcategory(true)
-                    }}
-                  >
-                    <Plus className="w-4 h-4 text-white" />
-                    <span className="text-white">Agregar Subcategoría</span>
-                  </Button>
-                </div>
-
-                <div className="space-y-8">
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Tragos Clásicos</h3>
-                      <Button
-                        size="sm"
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                        onClick={() => setIsAdding("tragosClasicos")}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Agregar
-                      </Button>
-                    </div>
-                    {Array.isArray(tragosClasicos) && tragosClasicos.map((item) => renderWineItem(item, "tragosClasicos"))}
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Tragos Especiales</h3>
-                      <Button
-                        size="sm"
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                        onClick={() => setIsAdding("tragosEspeciales")}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Agregar
-                      </Button>
-                    </div>
-                    {Array.isArray(tragosEspeciales) && tragosEspeciales.map((item) => renderWineItem(item, "tragosEspeciales"))}
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900">Tragos con Red Bull</h3>
-                      <Button
-                        size="sm"
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                        onClick={() => setIsAdding("tragosRedBull")}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Agregar
-                      </Button>
-                    </div>
-                    {Array.isArray(tragosRedBull) && tragosRedBull.map((item) => renderWineItem(item, "tragosRedBull"))}
-                  </div>
-                </div>
-
-                {/* Renderizar subcategorías dinámicamente */}
-                {renderSubcategories("tragos")}
-              </TabsContent>
-
-
-            </Tabs>
-          </div>
-
-          {/* Modal para editar categorías */}
-          {isEditingCategories && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-8 w-11/12 max-w-6xl max-h-[90vh] overflow-y-auto admin-edit-categories">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-semibold text-black">Editar Categorías</h3>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => setIsAddingCategory(true)}
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                      onClick={() => setIsAdding("pasteleria")}
                     >
                       <Plus className="w-4 h-4" />
-                      Agregar Categoría
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsEditingCategories(false)}
-                      className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-close-button"
-                    >
-                      <X className="w-4 h-4 text-white" />
-                      <span className="text-white">Cerrar</span>
+                      Agregar
                     </Button>
                   </div>
                 </div>
+                {Array.isArray(pasteleria) && pasteleria.map((item) => renderWineItem(item, "pasteleria"))}
+              </div>
+            </div>
 
-                <div className="space-y-6">
-                  {(allCategories || []).map((category) => (
-                    <div key={category.id} className="border-2 border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h4 className="text-xl font-bold text-black mb-2">
-                            {category.name}
-                          </h4>
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-700 font-medium">
-                              ID: {category.id} • Tipo: {category.isStandard ? 'Estándar' : 'Personalizada'}
-                            </p>
-                            {/* Descripción removida temporalmente */}
+            {/* Renderizar subcategorías dinámicamente */}
+            {renderSubcategories("cafeteria")}
+          </TabsContent>
 
-                            {/* Mostrar cantidad de productos */}
-                            <div className="mt-2">
-                              <span className="text-xs text-gray-700 bg-gray-200 px-3 py-1 rounded-full font-medium">
-                                📦 {(() => {
-                                  let items: any[] = []
-                                  switch (category.id) {
-                                    case "parrilla": items = parrilla; break
-                                    case "guarniciones": items = guarniciones; break
-                                    case "tapeo": items = tapeo; break
-                                    case "milanesas": items = milanesas; break
-                                    case "hamburguesas": items = hamburguesas; break
-                                    case "ensaladas": items = ensaladas; break
-                                    case "otros": items = otros; break
-                                    case "postres": items = postres; break
-                                    case "sandwicheria": items = sandwicheria; break
-                                    case "cafeteria": items = cafeteria; break
-                                    case "pasteleria": items = pasteleria; break
-                                    case "bebidasSinAlcohol": items = bebidasSinAlcohol; break
-                                    case "cervezas": items = cervezas; break
-                                    case "tragosClasicos": items = tragosClasicos; break
-                                    case "tragosEspeciales": items = tragosEspeciales; break
-                                    case "tragosRedBull": items = tragosRedBull; break
-                                    case "botellas": items = botellas; break
-                                    default: items = (menuSections[category.id] || [])
-                                  }
+          {/* Bebidas */}
+          <TabsContent value="bebidas" className="space-y-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">Bebidas</h2>
+              <Button
+                size="sm"
+                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                onClick={() => {
+                  setSelectedCategoryForSubcategory("bebidas")
+                  setIsAddingSubcategory(true)
+                }}
+              >
+                <Plus className="w-4 h-4 text-white" />
+                <span className="text-white">Agregar Subcategoría</span>
+              </Button>
+            </div>
 
-                                  const stats = getCategoryStats(items)
-                                  if (stats.total === 0) return 'Sin productos'
-                                  if (stats.hidden === 0) return `${stats.visible} visible${stats.visible !== 1 ? 's' : ''}`
-                                  return `${stats.visible} visible${stats.visible !== 1 ? 's' : ''} • ${stats.hidden} oculto${stats.hidden !== 1 ? 's' : ''}`
-                                })()}
-                              </span>
+            <div className="space-y-8">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Bebidas Sin Alcohol</h3>
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => setIsAdding("bebidasSinAlcohol")}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar
+                  </Button>
+                </div>
+                {Array.isArray(bebidasSinAlcohol) && bebidasSinAlcohol.map((item) => renderWineItem(item, "bebidasSinAlcohol"))}
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Cervezas</h3>
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => setIsAdding("cervezas")}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar
+                  </Button>
+                </div>
+                {Array.isArray(cervezas) && cervezas.map((item) => renderWineItem(item, "cervezas"))}
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Vinos</h3>
+                </div>
+
+                <div className="space-y-4 ml-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-lg font-medium text-gray-900">Tintos</h4>
+                      <Button
+                        size="sm"
+                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                        onClick={() => setIsAdding("vinos-tintos")}
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </Button>
+                    </div>
+                    {Array.isArray(vinos?.tintos) && vinos.tintos.map((item: any) => renderWineItem(item, "vinos-tintos"))}
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-lg font-medium text-gray-900">Blancos</h4>
+                      <Button
+                        size="sm"
+                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                        onClick={() => setIsAdding("vinos-blancos")}
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </Button>
+                    </div>
+                    {Array.isArray(vinos?.blancos) && vinos.blancos.map((item: any) => renderWineItem(item, "vinos-blancos"))}
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-lg font-medium text-gray-900">Rosados</h4>
+                      <Button
+                        size="sm"
+                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                        onClick={() => setIsAdding("vinos-rosados")}
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </Button>
+                    </div>
+                    {Array.isArray(vinos?.rosados) && vinos.rosados.map((item: any) => renderWineItem(item, "vinos-rosados"))}
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-lg font-medium text-gray-900">Copas</h4>
+                      <Button
+                        size="sm"
+                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                        onClick={() => setIsAdding("vinos-copas")}
+                      >
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </Button>
+                    </div>
+                    {Array.isArray(vinos?.copas) && vinos.copas.map((item: any) => renderWineItem(item, "vinos-copas"))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Botellas</h3>
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => setIsAdding("botellas")}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar
+                  </Button>
+                </div>
+                {Array.isArray(botellas) && botellas.map((item) => renderWineItem(item, "botellas"))}
+              </div>
+            </div>
+
+            {/* Renderizar subcategorías dinámicamente */}
+            {renderSubcategories("bebidas")}
+          </TabsContent>
+
+          {/* Tragos */}
+          <TabsContent value="tragos" className="space-y-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">Tragos</h2>
+              <Button
+                size="sm"
+                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                onClick={() => {
+                  setSelectedCategoryForSubcategory("tragos")
+                  setIsAddingSubcategory(true)
+                }}
+              >
+                <Plus className="w-4 h-4 text-white" />
+                <span className="text-white">Agregar Subcategoría</span>
+              </Button>
+            </div>
+
+            <div className="space-y-8">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Tragos Clásicos</h3>
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => setIsAdding("tragosClasicos")}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar
+                  </Button>
+                </div>
+                {Array.isArray(tragosClasicos) && tragosClasicos.map((item) => renderWineItem(item, "tragosClasicos"))}
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Tragos Especiales</h3>
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => setIsAdding("tragosEspeciales")}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar
+                  </Button>
+                </div>
+                {Array.isArray(tragosEspeciales) && tragosEspeciales.map((item) => renderWineItem(item, "tragosEspeciales"))}
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Tragos con Red Bull</h3>
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => setIsAdding("tragosRedBull")}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar
+                  </Button>
+                </div>
+                {Array.isArray(tragosRedBull) && tragosRedBull.map((item) => renderWineItem(item, "tragosRedBull"))}
+              </div>
+            </div>
+
+            {/* Renderizar subcategorías dinámicamente */}
+            {renderSubcategories("tragos")}
+          </TabsContent>
+
+
+        </Tabs>
+      </div>
+
+      {/* Modal para editar categorías */}
+      {isEditingCategories && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-11/12 max-w-6xl max-h-[90vh] overflow-y-auto admin-edit-categories">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-black">Editar Categorías</h3>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setIsAddingCategory(true)}
+                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                >
+                  <Plus className="w-4 h-4" />
+                  Agregar Categoría
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditingCategories(false)}
+                  className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-close-button"
+                >
+                  <X className="w-4 h-4 text-white" />
+                  <span className="text-white">Cerrar</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {(allCategories || []).map((category) => (
+                <div key={category.id} className="border-2 border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <h4 className="text-xl font-bold text-black mb-2">
+                        {category.name}
+                      </h4>
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-700 font-medium">
+                          ID: {category.id} • Tipo: {category.isStandard ? 'Estándar' : 'Personalizada'}
+                        </p>
+                        {/* Descripción removida temporalmente */}
+
+                        {/* Mostrar cantidad de productos */}
+                        <div className="mt-2">
+                          <span className="text-xs text-gray-700 bg-gray-200 px-3 py-1 rounded-full font-medium">
+                            📦 {(() => {
+                              let items: any[] = []
+                              switch (category.id) {
+                                case "parrilla": items = parrilla; break
+                                case "guarniciones": items = guarniciones; break
+                                case "tapeo": items = tapeo; break
+                                case "milanesas": items = milanesas; break
+                                case "hamburguesas": items = hamburguesas; break
+                                case "ensaladas": items = ensaladas; break
+                                case "otros": items = otros; break
+                                case "postres": items = postres; break
+                                case "sandwicheria": items = sandwicheria; break
+                                case "cafeteria": items = cafeteria; break
+                                case "pasteleria": items = pasteleria; break
+                                case "bebidasSinAlcohol": items = bebidasSinAlcohol; break
+                                case "cervezas": items = cervezas; break
+                                case "tragosClasicos": items = tragosClasicos; break
+                                case "tragosEspeciales": items = tragosEspeciales; break
+                                case "tragosRedBull": items = tragosRedBull; break
+                                case "botellas": items = botellas; break
+                                default: items = (menuSections[category.id] || [])
+                              }
+
+                              const stats = getCategoryStats(items)
+                              if (stats.total === 0) return 'Sin productos'
+                              if (stats.hidden === 0) return `${stats.visible} visible${stats.visible !== 1 ? 's' : ''}`
+                              return `${stats.visible} visible${stats.visible !== 1 ? 's' : ''} • ${stats.hidden} oculto${stats.hidden !== 1 ? 's' : ''}`
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditCategory(category)}
+                        className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-edit-button"
+                      >
+                        <Edit className="w-4 h-4 text-white" />
+                        <span className="text-white">Editar</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const percentage = prompt(`Ingresa el porcentaje de aumento para ${category.name} (ej: 15 para 15%):`)
+                          if (percentage && !isNaN(parseFloat(percentage))) {
+                            handleBulkPriceIncrease(category.id, parseFloat(percentage))
+                          }
+                        }}
+                        className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                      >
+                        <Plus className="w-4 h-4 text-white" />
+                        <span className="text-white">Aumentar Precios</span>
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteCategory(category.id)}
+                        className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                      >
+                        <Trash2 className="w-4 h-4 text-white" />
+                        <span className="text-white">Eliminar</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Mostrar subcategorías si existen */}
+                  {Object.entries(subcategoryMapping)
+                    .filter(([subcatId, parentId]) => parentId === category.id)
+                    .map(([subcatId]) => {
+                      const subcatName = getSubcategoryDisplayName(subcatId, category.id)
+
+                      return (
+                        <div key={subcatId} className="ml-6 mt-3 p-4 bg-gray-100 rounded-lg border-l-4 border-black shadow-sm">
+                          {inlineEditingSubcatId === subcatId ? (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-black">Nombre de Subcategoría</Label>
+                                  <Input
+                                    value={inlineEditingSubcatName}
+                                    onChange={(e) => setInlineEditingSubcatName(e.target.value)}
+                                    placeholder="Ej: Tinto"
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-black">Categoría Padre</Label>
+                                  <select
+                                    className="w-full border rounded-md px-2 py-2 text-gray-800 bg-white"
+                                    value={inlineEditingSubcatParent}
+                                    onChange={(e) => setInlineEditingSubcatParent(e.target.value)}
+                                  >
+                                    {(allCategories || [])
+                                      .filter((c) => !Object.keys(subcategoryMapping).includes(c.id))
+                                      .map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                      ))}
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 justify-end">
+                                <Button onClick={saveEditSubcategory} className="bg-black text-white border-0 hover:bg-gray-800">Guardar</Button>
+                                <Button variant="outline" onClick={cancelEditSubcategory} className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800">Cancelar</Button>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <div className="flex justify-between items-center">
+                              <span className="font-semibold text-black">{subcatName}</span>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => startEditSubcategory(subcatId)}
+                                  className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                                >
+                                  <Edit className="w-3 h-3 text-white" />
+                                  <span className="text-white">Editar</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
+                                    if (percentage && !isNaN(parseFloat(percentage))) {
+                                      handleBulkPriceIncrease(subcatId, parseFloat(percentage))
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-increase-prices-button"
+                                >
+                                  <Plus className="w-3 h-3 text-white" />
+                                  <span className="text-white">Aumentar Precios</span>
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDeleteSubcategory(subcatId)}
+                                  className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                                >
+                                  <Trash2 className="w-3 h-3 text-white" />
+                                  <span className="text-white">Eliminar</span>
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                </div>
+              ))}
+
+              {/* Sección de categorías eliminadas */}
+              {deletedCategories.length > 0 && (
+                <div className="mt-8 pt-6 border-t-2 border-gray-300">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-lg font-bold text-red-700">🗑️ Categorías Eliminadas</h4>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm("¿Estás seguro de que quieres eliminar permanentemente todas las categorías eliminadas? Esta acción no se puede deshacer.")) {
+                          setDeletedCategories([])
+                        }
+                      }}
+                      className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                    >
+                      <Trash2 className="w-4 h-4 text-white" />
+                      <span className="text-white">Limpiar Todo</span>
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {deletedCategories.map((deletedCategory) => (
+                      <div key={deletedCategory.id} className="flex justify-between items-center p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-sm">
+                        <div>
+                          <span className="font-semibold text-black">{deletedCategory.name}</span>
+                          <span className="text-sm text-red-700 ml-2 font-medium">
+                            (Eliminada el {new Date(deletedCategory.deletedAt).toLocaleDateString()})
+                          </span>
                         </div>
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEditCategory(category)}
-                            className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-edit-button"
+                            onClick={() => handleRestoreCategory(deletedCategory)}
+                            className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-restore-button"
                           >
-                            <Edit className="w-4 h-4 text-white" />
-                            <span className="text-white">Editar</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const percentage = prompt(`Ingresa el porcentaje de aumento para ${category.name} (ej: 15 para 15%):`)
-                              if (percentage && !isNaN(parseFloat(percentage))) {
-                                handleBulkPriceIncrease(category.id, parseFloat(percentage))
-                              }
-                            }}
-                            className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                          >
-                            <Plus className="w-4 h-4 text-white" />
-                            <span className="text-white">Aumentar Precios</span>
+                            <Plus className="w-4 h-4 text-black" />
+                            <span className="text-black">Restaurar</span>
                           </Button>
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleDeleteCategory(category.id)}
+                            onClick={() => {
+                              if (confirm(`¿Estás seguro de que quieres eliminar permanentemente la categoría "${deletedCategory.name}"? Esta acción no se puede deshacer.`)) {
+                                setDeletedCategories(prev => prev.filter(cat => cat.id !== deletedCategory.id))
+                              }
+                            }}
                             className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
                           >
                             <Trash2 className="w-4 h-4 text-white" />
-                            <span className="text-white">Eliminar</span>
+                            <span className="text-white">Eliminar Permanentemente</span>
                           </Button>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-                      {/* Mostrar subcategorías si existen */}
-                      {Object.entries(subcategoryMapping)
-                        .filter(([subcatId, parentId]) => parentId === category.id)
-                        .map(([subcatId]) => {
-                          const subcatName = getSubcategoryDisplayName(subcatId, category.id)
+      {/* Modal para agregar categoría */}
+      {isAddingCategory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">Agregar Nueva Categoría</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="categoryName">Nombre de la Categoría</Label>
+                <Input
+                  id="categoryName"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Ej: TORTAS"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAddingCategory(false)}
+                  className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleAddNewCategory}
+                  className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
+                >
+                  Agregar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-                          return (
-                            <div key={subcatId} className="ml-6 mt-3 p-4 bg-gray-100 rounded-lg border-l-4 border-black shadow-sm">
-                              {inlineEditingSubcatId === subcatId ? (
-                                <div className="space-y-3">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                      <Label className="text-black">Nombre de Subcategoría</Label>
-                                      <Input
-                                        value={inlineEditingSubcatName}
-                                        onChange={(e) => setInlineEditingSubcatName(e.target.value)}
-                                        placeholder="Ej: Tinto"
-                                      />
-                                    </div>
-                                    <div>
-                                      <Label className="text-black">Categoría Padre</Label>
-                                      <select
-                                        className="w-full border rounded-md px-2 py-2 text-gray-800 bg-white"
-                                        value={inlineEditingSubcatParent}
-                                        onChange={(e) => setInlineEditingSubcatParent(e.target.value)}
-                                      >
-                                        {(allCategories || [])
-                                          .filter((c) => !Object.keys(subcategoryMapping).includes(c.id))
-                                          .map((c) => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                          ))}
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-2 justify-end">
-                                    <Button onClick={saveEditSubcategory} className="bg-black text-white border-0 hover:bg-gray-800">Guardar</Button>
-                                    <Button variant="outline" onClick={cancelEditSubcategory} className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800">Cancelar</Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex justify-between items-center">
-                                  <span className="font-semibold text-black">{subcatName}</span>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => startEditSubcategory(subcatId)}
-                                      className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                                    >
-                                      <Edit className="w-3 h-3 text-white" />
-                                      <span className="text-white">Editar</span>
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
-                                        if (percentage && !isNaN(parseFloat(percentage))) {
-                                          handleBulkPriceIncrease(subcatId, parseFloat(percentage))
-                                        }
-                                      }}
-                                      className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-increase-prices-button"
-                                    >
-                                      <Plus className="w-3 h-3 text-white" />
-                                      <span className="text-white">Aumentar Precios</span>
-                                    </Button>
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() => handleDeleteSubcategory(subcatId)}
-                                      className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
-                                    >
-                                      <Trash2 className="w-3 h-3 text-white" />
-                                      <span className="text-white">Eliminar</span>
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                    </div>
-                  ))}
+      {/* Modal para editar categoría individual */}
+      {editingCategory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold">Editar Categoría: {editingCategory.name}</h3>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditingCategory(null)
+                  setEditingCategoryDescription("")
+                }}
+                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+              >
+                <X className="w-4 h-4" />
+                Cerrar
+              </Button>
+            </div>
 
-                  {/* Sección de categorías eliminadas */}
-                  {deletedCategories.length > 0 && (
-                    <div className="mt-8 pt-6 border-t-2 border-gray-300">
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-lg font-bold text-red-700">🗑️ Categorías Eliminadas</h4>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm("¿Estás seguro de que quieres eliminar permanentemente todas las categorías eliminadas? Esta acción no se puede deshacer.")) {
-                              setDeletedCategories([])
-                            }
-                          }}
-                          className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
-                        >
-                          <Trash2 className="w-4 h-4 text-white" />
-                          <span className="text-white">Limpiar Todo</span>
-                        </Button>
-                      </div>
-                      <div className="space-y-3">
-                        {deletedCategories.map((deletedCategory) => (
-                          <div key={deletedCategory.id} className="flex justify-between items-center p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-sm">
-                            <div>
-                              <span className="font-semibold text-black">{deletedCategory.name}</span>
-                              <span className="text-sm text-red-700 ml-2 font-medium">
-                                (Eliminada el {new Date(deletedCategory.deletedAt).toLocaleDateString()})
-                              </span>
-                            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Información básica de la categoría */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900">Información Básica</h4>
+                <div>
+                  <Label htmlFor="editCategoryName">Nombre de la Categoría</Label>
+                  <Input
+                    id="editCategoryName"
+                    defaultValue={editingCategory.name}
+                    placeholder="Nombre de la categoría"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editCategoryDescription">Descripción/Horario</Label>
+                  <Textarea
+                    id="editCategoryDescription"
+                    value={editingCategoryDescription}
+                    onChange={(e) => setEditingCategoryDescription(e.target.value)}
+                    placeholder="Ej: 12 a 16 hs, Horario de atención, etc."
+                    rows={3}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Esta descripción se mostrará debajo del título de la categoría en el menú público.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="editCategoryHidden"
+                    defaultChecked={editingCategory.hidden || false}
+                    className="rounded"
+                  />
+                  <Label htmlFor="editCategoryHidden">Ocultar categoría</Label>
+                </div>
+              </div>
+
+              {/* Gestión de subcategorías */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-lg font-semibold text-gray-900">Subcategorías</h4>
+                  <Button
+                    onClick={() => {
+                      setSelectedCategoryForReorder(editingCategory.id)
+                      setIsReorderingSubcategories(true)
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold text-sm"
+                    size="sm"
+                  >
+                    <GripVertical className="w-3 h-3" />
+                    Reordenar
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {Object.entries(subcategoryMapping)
+                    .filter(([subcatId, parentId]) => parentId === editingCategory.id)
+                    .map(([subcatId, parentId]) => {
+                      const subcatName = getSubcategoryDisplayName(subcatId, parentId)
+
+                      return (
+                        <div key={subcatId} className="border rounded-lg">
+                          <div className="flex justify-between items-center p-3 bg-gray-50">
+                            <span className="font-medium text-gray-700">{subcatName}</span>
                             <div className="flex gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleRestoreCategory(deletedCategory)}
-                                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold admin-restore-button"
+                                onClick={() => {
+                                  const newSubName = prompt(`Ingresa el nombre de la sub-subcategoría dentro de ${subcatName}:`)
+                                  if (newSubName) {
+                                    const newSubId = newSubName.toLowerCase().replace(/\s+/g, '-')
+                                    handleAddSubSubcategory(subcatId, newSubId, newSubName)
+                                  }
+                                }}
+                                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white border-0 font-semibold"
                               >
-                                <Plus className="w-4 h-4 text-black" />
-                                <span className="text-black">Restaurar</span>
+                                <Plus className="w-3 h-3" />
+                                Agregar Sub-Sub
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
+                                  if (percentage && !isNaN(parseFloat(percentage))) {
+                                    handleBulkPriceIncrease(subcatId, parseFloat(percentage))
+                                  }
+                                }}
+                                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                              >
+                                <Plus className="w-3 h-3" />
+                                Precios
                               </Button>
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => {
-                                  if (confirm(`¿Estás seguro de que quieres eliminar permanentemente la categoría "${deletedCategory.name}"? Esta acción no se puede deshacer.`)) {
-                                    setDeletedCategories(prev => prev.filter(cat => cat.id !== deletedCategory.id))
-                                  }
-                                }}
+                                onClick={() => handleDeleteSubcategory(subcatId)}
                                 className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
                               >
-                                <Trash2 className="w-4 h-4 text-white" />
-                                <span className="text-white">Eliminar Permanentemente</span>
+                                <Trash2 className="w-3 h-3 text-white" />
+                                Eliminar
                               </Button>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* Modal para agregar categoría */}
-          {isAddingCategory && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-96">
-                <h3 className="text-lg font-semibold mb-4">Agregar Nueva Categoría</h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="categoryName">Nombre de la Categoría</Label>
-                    <Input
-                      id="categoryName"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      placeholder="Ej: TORTAS"
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsAddingCategory(false)}
-                      className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={handleAddNewCategory}
-                      className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
-                    >
-                      Agregar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+                          {/* Sub-subcategorías */}
+                          {Object.entries(subcategoryMapping)
+                            .filter(([subsubId, parentId]) => parentId === subcatId)
+                            .map(([subsubId]) => {
+                              const subsubName = subsubId.split('-').map(word =>
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                              ).join(' ')
+                              const subsubData = menuSections[subsubId] || []
+                              const itemCount = Array.isArray(subsubData) ? subsubData.length : 0
 
-          {/* Modal para editar categoría individual */}
-          {editingCategory && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-semibold">Editar Categoría: {editingCategory.name}</h3>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditingCategory(null)
-                      setEditingCategoryDescription("")
-                    }}
-                    className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                  >
-                    <X className="w-4 h-4" />
-                    Cerrar
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Información básica de la categoría */}
-                  <div className="space-y-4">
-                    <h4 className="text-lg font-semibold text-gray-900">Información Básica</h4>
-                    <div>
-                      <Label htmlFor="editCategoryName">Nombre de la Categoría</Label>
-                      <Input
-                        id="editCategoryName"
-                        defaultValue={editingCategory.name}
-                        placeholder="Nombre de la categoría"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="editCategoryDescription">Descripción/Horario</Label>
-                      <Textarea
-                        id="editCategoryDescription"
-                        value={editingCategoryDescription}
-                        onChange={(e) => setEditingCategoryDescription(e.target.value)}
-                        placeholder="Ej: 12 a 16 hs, Horario de atención, etc."
-                        rows={3}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Esta descripción se mostrará debajo del título de la categoría en el menú público.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="editCategoryHidden"
-                        defaultChecked={editingCategory.hidden || false}
-                        className="rounded"
-                      />
-                      <Label htmlFor="editCategoryHidden">Ocultar categoría</Label>
-                    </div>
-                  </div>
-
-                  {/* Gestión de subcategorías */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-lg font-semibold text-gray-900">Subcategorías</h4>
-                      <Button
-                        onClick={() => {
-                          setSelectedCategoryForReorder(editingCategory.id)
-                          setIsReorderingSubcategories(true)
-                        }}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold text-sm"
-                        size="sm"
-                      >
-                        <GripVertical className="w-3 h-3" />
-                        Reordenar
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {Object.entries(subcategoryMapping)
-                        .filter(([subcatId, parentId]) => parentId === editingCategory.id)
-                        .map(([subcatId, parentId]) => {
-                          const subcatName = getSubcategoryDisplayName(subcatId, parentId)
-
-                          return (
-                            <div key={subcatId} className="border rounded-lg">
-                              <div className="flex justify-between items-center p-3 bg-gray-50">
-                                <span className="font-medium text-gray-700">{subcatName}</span>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const newSubName = prompt(`Ingresa el nombre de la sub-subcategoría dentro de ${subcatName}:`)
-                                      if (newSubName) {
-                                        const newSubId = newSubName.toLowerCase().replace(/\s+/g, '-')
-                                        handleAddSubSubcategory(subcatId, newSubId, newSubName)
-                                      }
-                                    }}
-                                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white border-0 font-semibold"
-                                  >
-                                    <Plus className="w-3 h-3" />
-                                    Agregar Sub-Sub
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const percentage = prompt(`Ingresa el porcentaje de aumento para ${subcatName} (ej: 15 para 15%):`)
-                                      if (percentage && !isNaN(parseFloat(percentage))) {
-                                        handleBulkPriceIncrease(subcatId, parseFloat(percentage))
-                                      }
-                                    }}
-                                    className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                                  >
-                                    <Plus className="w-3 h-3" />
-                                    Precios
-                                  </Button>
+                              return (
+                                <div key={subsubId} className="flex justify-between items-center p-2 ml-6 bg-blue-50 border-l-2 border-blue-400 m-2 rounded">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-blue-600">↳</span>
+                                    <span className="font-medium text-sm text-gray-700">{subsubName}</span>
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                      {itemCount} productos
+                                    </span>
+                                  </div>
                                   <Button
                                     variant="destructive"
                                     size="sm"
-                                    onClick={() => handleDeleteSubcategory(subcatId)}
-                                    className="flex items-center gap-2 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 font-semibold admin-delete-button"
+                                    onClick={() => handleDeleteSubcategory(subsubId)}
+                                    className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white border-0 font-semibold text-xs h-6"
                                   >
-                                    <Trash2 className="w-3 h-3 text-white" />
+                                    <Trash2 className="w-2.5 h-2.5 text-white" />
                                     Eliminar
                                   </Button>
                                 </div>
-                              </div>
+                              )
+                            })}
+                        </div>
+                      )
+                    })}
 
-                              {/* Sub-subcategorías */}
-                              {Object.entries(subcategoryMapping)
-                                .filter(([subsubId, parentId]) => parentId === subcatId)
-                                .map(([subsubId]) => {
-                                  const subsubName = subsubId.split('-').map(word =>
-                                    word.charAt(0).toUpperCase() + word.slice(1)
-                                  ).join(' ')
-                                  const subsubData = menuSections[subsubId] || []
-                                  const itemCount = Array.isArray(subsubData) ? subsubData.length : 0
-
-                                  return (
-                                    <div key={subsubId} className="flex justify-between items-center p-2 ml-6 bg-blue-50 border-l-2 border-blue-400 m-2 rounded">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs text-blue-600">↳</span>
-                                        <span className="font-medium text-sm text-gray-700">{subsubName}</span>
-                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                          {itemCount} productos
-                                        </span>
-                                      </div>
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDeleteSubcategory(subsubId)}
-                                        className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white border-0 font-semibold text-xs h-6"
-                                      >
-                                        <Trash2 className="w-2.5 h-2.5 text-white" />
-                                        Eliminar
-                                      </Button>
-                                    </div>
-                                  )
-                                })}
-                            </div>
-                          )
-                        })}
-
-                      {Object.entries(subcategoryMapping)
-                        .filter(([subcatId, parentId]) => parentId === editingCategory.id)
-                        .length === 0 && (
-                          <p className="text-gray-500 text-sm">No hay subcategorías en esta categoría</p>
-                        )}
-                    </div>
-
-                    {/* Agregar nueva subcategoría */}
-                    <div className="pt-4 border-t">
-                      <h5 className="text-md font-medium text-gray-900 mb-2">Agregar Nueva Subcategoría</h5>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Nombre de la subcategoría"
-                          value={newSubcategoryName}
-                          onChange={(e) => setNewSubcategoryName(e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (newSubcategoryName.trim()) {
-                              setSelectedCategoryForSubcategory(editingCategory.id)
-                              handleAddNewSubcategory()
-                            }
-                          }}
-                          className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                  {Object.entries(subcategoryMapping)
+                    .filter(([subcatId, parentId]) => parentId === editingCategory.id)
+                    .length === 0 && (
+                      <p className="text-gray-500 text-sm">No hay subcategorías en esta categoría</p>
+                    )}
                 </div>
 
-                {/* Botones de acción */}
-                <div className="flex gap-2 justify-end mt-8 pt-6 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditingCategory(null)
-                      setEditingCategoryDescription("")
-                    }}
-                    className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      const name = (document.getElementById('editCategoryName') as HTMLInputElement)?.value
-                      const hidden = (document.getElementById('editCategoryHidden') as HTMLInputElement)?.checked
-
-                      if (name) {
-                        handleSaveCategory({
-                          ...editingCategory,
-                          name,
-                          description: editingCategoryDescription,
-                          hidden
-                        })
-                      }
-                    }}
-                    className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
-                  >
-                    Guardar Cambios
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Modal para agregar subcategoría */}
-          {isAddingSubcategory && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-96">
-                <h3 className="text-lg font-semibold mb-4">Agregar Nueva Subcategoría</h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="subcategoryName">Nombre de la Subcategoría</Label>
+                {/* Agregar nueva subcategoría */}
+                <div className="pt-4 border-t">
+                  <h5 className="text-md font-medium text-gray-900 mb-2">Agregar Nueva Subcategoría</h5>
+                  <div className="flex gap-2">
                     <Input
-                      id="subcategoryName"
+                      placeholder="Nombre de la subcategoría"
                       value={newSubcategoryName}
                       onChange={(e) => setNewSubcategoryName(e.target.value)}
-                      placeholder="Ej: CAFÉ"
+                      className="flex-1"
                     />
-                  </div>
-                  <div className="flex gap-2 justify-end">
                     <Button
-                      variant="outline"
-                      onClick={() => setIsAddingSubcategory(false)}
-                      className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={handleAddNewSubcategory}
+                      size="sm"
+                      onClick={() => {
+                        if (newSubcategoryName.trim()) {
+                          setSelectedCategoryForSubcategory(editingCategory.id)
+                          handleAddNewSubcategory()
+                        }
+                      }}
                       className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
                     >
-                      Agregar
+                      <Plus className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Modal para ocultar/mostrar productos */}
-          <HideItemModal
-            isOpen={hideModalOpen}
-            onClose={() => setHideModalOpen(false)}
-            onConfirm={handleConfirmVisibilityToggle}
-            itemName={selectedItem?.name || ""}
-            currentStatus={selectedItem?.hidden ? 'hidden' : 'visible'}
-            loading={hideModalLoading}
-          />
+            {/* Botones de acción */}
+            <div className="flex gap-2 justify-end mt-8 pt-6 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditingCategory(null)
+                  setEditingCategoryDescription("")
+                }}
+                className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  const name = (document.getElementById('editCategoryName') as HTMLInputElement)?.value
+                  const hidden = (document.getElementById('editCategoryHidden') as HTMLInputElement)?.checked
 
-          {/* Modal para configurar horarios de categorías */}
-          <TimeRangeModal
-            isOpen={timeRangeModalOpen}
-            onClose={() => setTimeRangeModalOpen(false)}
-            onSave={handleSaveTimeRange}
-            categoryName={categories[selectedCategoryForTime]?.name || ""}
-            currentData={selectedCategoryTimeData}
-          />
-
-          {/* Modal para aumento porcentual de precios */}
-          {showPriceIncreaseModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-96 max-h-[90vh] overflow-y-auto">
-                <h3 className="text-lg font-semibold mb-4 text-black flex items-center gap-2">
-                  <span className="text-2xl">📈</span>
-                  Aumentar Precios de Toda la Carta
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="priceIncreasePercentage" className="text-black">
-                      Porcentaje de Aumento (%)
-                    </Label>
-                    <Input
-                      id="priceIncreasePercentage"
-                      type="number"
-                      min="0.1"
-                      step="0.1"
-                      value={priceIncreasePercentage}
-                      onChange={(e) => setPriceIncreasePercentage(e.target.value)}
-                      placeholder="Ej: 10 para aumentar 10%"
-                      className="mt-1"
-                    />
-                    <p className="text-sm text-gray-600 mt-1">
-                      Ingresa el porcentaje que deseas aumentar en todos los precios
-                    </p>
-                  </div>
-
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-start gap-2">
-                      <span className="text-yellow-600 text-lg">⚠️</span>
-                      <div>
-                        <p className="text-yellow-800 font-medium text-sm">Advertencia Importante:</p>
-                        <ul className="text-yellow-700 text-xs mt-1 space-y-1">
-                          <li>• Esta acción afectará TODOS los productos de la carta</li>
-                          <li>• Los cambios NO se pueden deshacer</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                  <Button
-                    onClick={() => {
-                      setShowPriceIncreaseModal(false)
-                      setPriceIncreasePercentage("")
-                    }}
-                    variant="outline"
-                    className="flex-1 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800"
-                    disabled={isIncreasingPrices}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleIncreaseAllPrices}
-                    className="flex-1 bg-black hover:bg-gray-800 text-white"
-                    disabled={isIncreasingPrices || !priceIncreasePercentage}
-                  >
-                    {isIncreasingPrices ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Procesando...
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-lg mr-1">📈</span>
-                        Aumentar Precios
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Modal para agregar productos */}
-          {isAddingProduct && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-96 max-h-[90vh] overflow-y-auto">
-                <h3 className="text-lg font-semibold mb-4 text-black">Agregar Nuevo Producto</h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="productName" className="text-black">Nombre del Producto</Label>
-                    <Input
-                      id="productName"
-                      value={newProduct.name}
-                      onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Ej: Hamburguesa Clásica"
-                      className="text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="productDescription" className="text-black">Descripción</Label>
-                    <textarea
-                      id="productDescription"
-                      value={newProduct.description}
-                      onChange={(e) => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Descripción del producto"
-                      className="w-full p-2 border border-gray-300 rounded-md text-black focus:border-blue-500 focus:ring-blue-500"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="productPrice" className="text-black">Precio</Label>
-                    <Input
-                      id="productPrice"
-                      type="number"
-                      step="0.01"
-                      value={newProduct.price}
-                      onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
-                      placeholder="0.00"
-                      className="text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-black">Etiquetas</Label>
-                    <div className="flex gap-2 mt-2">
-                      {(["vegan", "sin-tacc", "picante"] as const).map((tag) => (
-                        <Button
-                          key={tag}
-                          type="button"
-                          size="sm"
-                          aria-pressed={newProduct.tags.includes(tag)}
-                          onClick={() => {
-                            setNewProduct(prev => ({
-                              ...prev,
-                              tags: prev.tags.includes(tag)
-                                ? prev.tags.filter(t => t !== tag)
-                                : [...prev.tags, tag]
-                            }))
-                          }}
-                          className={`text-xs transition-all duration-200 border ${newProduct.tags.includes(tag)
-                            ? (tag === "vegan"
-                              ? "bg-green-600 text-white border-green-600 ring-2 ring-green-300 ring-offset-1"
-                              : tag === "sin-tacc"
-                                ? "bg-purple-600 text-white border-purple-600 ring-2 ring-purple-300 ring-offset-1"
-                                : "bg-red-600 text-white border-red-600 ring-2 ring-red-300 ring-offset-1")
-                            : (tag === "vegan"
-                              ? "bg-white text-green-700 border-green-600 hover:bg-green-50 opacity-80"
-                              : tag === "sin-tacc"
-                                ? "bg-white text-purple-700 border-purple-600 hover:bg-purple-50 opacity-80"
-                                : "bg-white text-red-700 border-red-600 hover:bg-red-50 opacity-80")
-                            }`}
-                        >
-                          <span className="mr-1">{tag === "vegan" ? "🌱" : tag === "sin-tacc" ? "🌾" : "🔥"}</span>
-                          {tag}
-                          {newProduct.tags.includes(tag) && <span className="ml-1">✓</span>}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 justify-end pt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setIsAddingProduct(false)
-                        setNewProduct({ name: "", description: "", price: "", tags: [] })
-                        setSelectedSectionForProduct("")
-                      }}
-                      className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={handleAddNewProduct}
-                      className="bg-black hover:bg-gray-800 text-white border-0 font-semibold"
-                      disabled={!newProduct.name.trim() || !newProduct.price.trim()}
-                    >
-                      Agregar Producto
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Estilos CSS personalizados para los botones */}
-          {/* Modal para reordenar categorías */}
-          {isReorderingCategories && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-semibold text-black">Reordenar Categorías</h3>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsReorderingCategories(false)}
-                    className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                  >
-                    <X className="w-4 h-4" />
-                    Cerrar
-                  </Button>
-                </div>
-
-                <CategoryDragDrop
-                  categories={allCategories}
-                  onCategoriesReorder={handleCategoriesReorder}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Modal para reordenar subcategorías */}
-          {isReorderingSubcategories && selectedCategoryForReorder && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-semibold text-black">Reordenar Subcategorías</h3>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsReorderingSubcategories(false)
-                      setSelectedCategoryForReorder("")
-                    }}
-                    className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
-                  >
-                    <X className="w-4 h-4" />
-                    Cerrar
-                  </Button>
-                </div>
-
-                <SubcategoryDragDrop
-                  subcategories={
-                    Object.entries(subcategoryMapping)
-                      .filter(([, parentId]) => parentId === selectedCategoryForReorder)
-                      .map(([subcatId]) => {
-                        const subcatData = menuSections[subcatId] || []
-                        const parentId = subcategoryMapping[subcatId] || ""
-                        const subcatName = getSubcategoryDisplayName(subcatId, parentId)
-                        return {
-                          id: subcatId,
-                          name: subcatName,
-                          itemCount: Array.isArray(subcatData) ? subcatData.length : 0
-                        }
-                      })
-                      .sort((a, b) => {
-                        // Ordenar según el orden guardado
-                        const order = subcategoryOrder[selectedCategoryForReorder] || []
-                        const indexA = order.indexOf(a.id)
-                        const indexB = order.indexOf(b.id)
-                        if (indexA === -1 && indexB === -1) return 0
-                        if (indexA === -1) return 1
-                        if (indexB === -1) return -1
-                        return indexA - indexB
-                      })
+                  if (name) {
+                    handleSaveCategory({
+                      ...editingCategory,
+                      name,
+                      description: editingCategoryDescription,
+                      hidden
+                    })
                   }
-                  onSubcategoriesReorder={handleSubcategoriesReorder}
-                  categoryName={categories[selectedCategoryForReorder]?.name || selectedCategoryForReorder}
+                }}
+                className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
+              >
+                Guardar Cambios
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para agregar subcategoría */}
+      {isAddingSubcategory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">Agregar Nueva Subcategoría</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="subcategoryName">Nombre de la Subcategoría</Label>
+                <Input
+                  id="subcategoryName"
+                  value={newSubcategoryName}
+                  onChange={(e) => setNewSubcategoryName(e.target.value)}
+                  placeholder="Ej: CAFÉ"
                 />
               </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAddingSubcategory(false)}
+                  className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleAddNewSubcategory}
+                  className="bg-black text-white hover:bg-gray-800 border-0 font-semibold"
+                >
+                  Agregar
+                </Button>
+              </div>
             </div>
-          )}
+          </div>
+        </div>
+      )}
 
-          <style jsx>{`
+      {/* Modal para ocultar/mostrar productos */}
+      <HideItemModal
+        isOpen={hideModalOpen}
+        onClose={() => setHideModalOpen(false)}
+        onConfirm={handleConfirmVisibilityToggle}
+        itemName={selectedItem?.name || ""}
+        currentStatus={selectedItem?.hidden ? 'hidden' : 'visible'}
+        loading={hideModalLoading}
+      />
+
+      {/* Modal para configurar horarios de categorías */}
+      <TimeRangeModal
+        isOpen={timeRangeModalOpen}
+        onClose={() => setTimeRangeModalOpen(false)}
+        onSave={handleSaveTimeRange}
+        categoryName={categories[selectedCategoryForTime]?.name || ""}
+        currentData={selectedCategoryTimeData}
+      />
+
+      {/* Modal para aumento porcentual de precios */}
+      {showPriceIncreaseModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4 text-black flex items-center gap-2">
+              <span className="text-2xl">📈</span>
+              Aumentar Precios de Toda la Carta
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="priceIncreasePercentage" className="text-black">
+                  Porcentaje de Aumento (%)
+                </Label>
+                <Input
+                  id="priceIncreasePercentage"
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={priceIncreasePercentage}
+                  onChange={(e) => setPriceIncreasePercentage(e.target.value)}
+                  placeholder="Ej: 10 para aumentar 10%"
+                  className="mt-1"
+                />
+                <p className="text-sm text-gray-600 mt-1">
+                  Ingresa el porcentaje que deseas aumentar en todos los precios
+                </p>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <span className="text-yellow-600 text-lg">⚠️</span>
+                  <div>
+                    <p className="text-yellow-800 font-medium text-sm">Advertencia Importante:</p>
+                    <ul className="text-yellow-700 text-xs mt-1 space-y-1">
+                      <li>• Esta acción afectará TODOS los productos de la carta</li>
+                      <li>• Los cambios NO se pueden deshacer</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={() => {
+                  setShowPriceIncreaseModal(false)
+                  setPriceIncreasePercentage("")
+                }}
+                variant="outline"
+                className="flex-1 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800"
+                disabled={isIncreasingPrices}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleIncreaseAllPrices}
+                className="flex-1 bg-black hover:bg-gray-800 text-white"
+                disabled={isIncreasingPrices || !priceIncreasePercentage}
+              >
+                {isIncreasingPrices ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg mr-1">📈</span>
+                    Aumentar Precios
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para agregar productos */}
+      {isAddingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4 text-black">Agregar Nuevo Producto</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="productName" className="text-black">Nombre del Producto</Label>
+                <Input
+                  id="productName"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Ej: Hamburguesa Clásica"
+                  className="text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="productDescription" className="text-black">Descripción</Label>
+                <textarea
+                  id="productDescription"
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Descripción del producto"
+                  className="w-full p-2 border border-gray-300 rounded-md text-black focus:border-blue-500 focus:ring-blue-500"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="productPrice" className="text-black">Precio</Label>
+                <Input
+                  id="productPrice"
+                  type="number"
+                  step="0.01"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
+                  placeholder="0.00"
+                  className="text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <Label className="text-black">Etiquetas</Label>
+                <div className="flex gap-2 mt-2">
+                  {(["vegan", "sin-tacc", "picante"] as const).map((tag) => (
+                    <Button
+                      key={tag}
+                      type="button"
+                      size="sm"
+                      aria-pressed={newProduct.tags.includes(tag)}
+                      onClick={() => {
+                        setNewProduct(prev => ({
+                          ...prev,
+                          tags: prev.tags.includes(tag)
+                            ? prev.tags.filter(t => t !== tag)
+                            : [...prev.tags, tag]
+                        }))
+                      }}
+                      className={`text-xs transition-all duration-200 border ${newProduct.tags.includes(tag)
+                        ? (tag === "vegan"
+                          ? "bg-green-600 text-white border-green-600 ring-2 ring-green-300 ring-offset-1"
+                          : tag === "sin-tacc"
+                            ? "bg-purple-600 text-white border-purple-600 ring-2 ring-purple-300 ring-offset-1"
+                            : "bg-red-600 text-white border-red-600 ring-2 ring-red-300 ring-offset-1")
+                        : (tag === "vegan"
+                          ? "bg-white text-green-700 border-green-600 hover:bg-green-50 opacity-80"
+                          : tag === "sin-tacc"
+                            ? "bg-white text-purple-700 border-purple-600 hover:bg-purple-50 opacity-80"
+                            : "bg-white text-red-700 border-red-600 hover:bg-red-50 opacity-80")
+                        }`}
+                    >
+                      <span className="mr-1">{tag === "vegan" ? "🌱" : tag === "sin-tacc" ? "🌾" : "🔥"}</span>
+                      {tag}
+                      {newProduct.tags.includes(tag) && <span className="ml-1">✓</span>}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddingProduct(false)
+                    setNewProduct({ name: "", description: "", price: "", tags: [] })
+                    setSelectedSectionForProduct("")
+                  }}
+                  className="bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleAddNewProduct}
+                  className="bg-black hover:bg-gray-800 text-white border-0 font-semibold"
+                  disabled={!newProduct.name.trim() || !newProduct.price.trim()}
+                >
+                  Agregar Producto
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Estilos CSS personalizados para los botones */}
+      {/* Modal para reordenar categorías */}
+      {isReorderingCategories && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-black">Reordenar Categorías</h3>
+              <Button
+                variant="outline"
+                onClick={() => setIsReorderingCategories(false)}
+                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+              >
+                <X className="w-4 h-4" />
+                Cerrar
+              </Button>
+            </div>
+
+            <CategoryDragDrop
+              categories={allCategories}
+              onCategoriesReorder={handleCategoriesReorder}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal para reordenar subcategorías */}
+      {isReorderingSubcategories && selectedCategoryForReorder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-black">Reordenar Subcategorías</h3>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsReorderingSubcategories(false)
+                  setSelectedCategoryForReorder("")
+                }}
+                className="flex items-center gap-2 bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 font-semibold"
+              >
+                <X className="w-4 h-4" />
+                Cerrar
+              </Button>
+            </div>
+
+            <SubcategoryDragDrop
+              subcategories={
+                Object.entries(subcategoryMapping)
+                  .filter(([, parentId]) => parentId === selectedCategoryForReorder)
+                  .map(([subcatId]) => {
+                    const subcatData = menuSections[subcatId] || []
+                    const parentId = subcategoryMapping[subcatId] || ""
+                    const subcatName = getSubcategoryDisplayName(subcatId, parentId)
+                    return {
+                      id: subcatId,
+                      name: subcatName,
+                      itemCount: Array.isArray(subcatData) ? subcatData.length : 0
+                    }
+                  })
+                  .sort((a, b) => {
+                    // Ordenar según el orden guardado
+                    const order = subcategoryOrder[selectedCategoryForReorder] || []
+                    const indexA = order.indexOf(a.id)
+                    const indexB = order.indexOf(b.id)
+                    if (indexA === -1 && indexB === -1) return 0
+                    if (indexA === -1) return 1
+                    if (indexB === -1) return -1
+                    return indexA - indexB
+                  })
+              }
+              onSubcategoriesReorder={handleSubcategoriesReorder}
+              categoryName={categories[selectedCategoryForReorder]?.name || selectedCategoryForReorder}
+            />
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
 
         
                   /* Estilos para las pestañas */
@@ -4711,7 +4719,7 @@ export default function AdminPanel() {
           border-color: #b91c1c;
         }
       `}</style>
-        </div>
-      )
-    }
+    </div>
+  )
+}
 

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
-import { readJsonFileWithCache, fileCache } from "@/lib/cache"
+import connectDB from "@/lib/db"
+import Product from "@/models/Product"
 
 export async function POST(request: Request) {
   try {
@@ -16,82 +15,51 @@ export async function POST(request: Request) {
       )
     }
 
-    // OPTIMIZACIÓN: Usar cache y operaciones asíncronas en lugar de síncronas
-    // Leer el archivo de menú actual usando cache
-    const menuPath = path.join(process.cwd(), "data", "menu.json")
-    const menuData = await readJsonFileWithCache<any>(menuPath, 5000)
+    await connectDB()
 
-    // Función para aumentar el precio de un elemento
-    const increasePrice = (price: string): string => {
-      // Limpiar el precio (remover puntos y comas, convertir a número)
-      const cleanPrice = price.replace(/[.,]/g, "")
+    // 1. Obtener todos los productos
+    const products = await Product.find({})
+
+    // 2. Calcular nuevas operaciones
+    const bulkOps: any[] = []
+
+    products.forEach((product: any) => {
+      // Precio puede ser string ("1.200") o number (1200)
+      const priceStr = String(product.price)
+      const cleanPrice = priceStr.replace(/[.,]/g, "")
       const numericPrice = parseFloat(cleanPrice)
-      
-      if (isNaN(numericPrice)) {
-        return price // Si no es un número válido, devolver el precio original
-      }
 
-      // Calcular el nuevo precio con el porcentaje
-      const newPrice = numericPrice * (1 + percentage / 100)
-      
-      // Formatear el precio con puntos como separadores de miles
-      return Math.round(newPrice).toLocaleString("es-AR")
-    }
+      if (!isNaN(numericPrice)) {
+        const newPriceVal = numericPrice * (1 + percentage / 100)
+        // Formatear estilo AR
+        const formattedPrice = Math.round(newPriceVal).toLocaleString("es-AR")
 
-    // OPTIMIZACIÓN: Función recursiva optimizada para procesar todas las secciones
-    // Evita crear objetos innecesarios y usa un solo pase cuando es posible
-    const processSection = (section: any): any => {
-      if (Array.isArray(section)) {
-        // OPTIMIZACIÓN: Solo crear nuevo array si hay cambios
-        const processed = section.map(item => {
-          if (item.price) {
-            return {
-              ...item,
-              price: increasePrice(item.price)
-            }
+        bulkOps.push({
+          updateOne: {
+            filter: { _id: product._id },
+            update: { $set: { price: formattedPrice } }
           }
-          return item
         })
-        // Verificar si hubo cambios antes de retornar nuevo array
-        return processed.some((item, idx) => item !== section[idx]) ? processed : section
-      } else if (typeof section === "object" && section !== null) {
-        const processedSection: any = {}
-        const keys = Object.keys(section)
-        let hasChanges = false
-        
-        // OPTIMIZACIÓN: Procesar en un solo bucle
-        for (let i = 0; i < keys.length; i++) {
-          const key = keys[i]
-          const processed = processSection(section[key])
-          processedSection[key] = processed
-          if (processed !== section[key]) {
-            hasChanges = true
-          }
-        }
-        
-        return hasChanges ? processedSection : section
       }
-      return section
+    })
+
+    if (bulkOps.length > 0) {
+      await Product.bulkWrite(bulkOps)
     }
-
-    // Procesar todo el menú
-    const updatedMenuData = processSection(menuData)
-
-    // OPTIMIZACIÓN: Usar operación asíncrona y invalidar cache después de escribir
-    await fs.writeFile(menuPath, JSON.stringify(updatedMenuData, null, 2), "utf8")
-    fileCache.invalidate(menuPath)
 
     return NextResponse.json({
-      message: `Precios aumentados exitosamente en un ${percentage}%`,
+      message: `Precios aumentados exitosamente en un ${percentage}% `,
       percentage: percentage,
-      success: true
+      success: true,
+      updatedCount: bulkOps.length
     })
 
   } catch (error) {
-    console.error("Error al aumentar precios:", error)
+    console.error("Error al aumentar precios en DB:", error)
     return NextResponse.json(
       { error: "Error interno del servidor al procesar los precios" },
       { status: 500 }
     )
   }
 }
+

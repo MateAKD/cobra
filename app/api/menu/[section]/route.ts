@@ -1,34 +1,48 @@
 import { NextRequest, NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
-import { readJsonFileWithCache, fileCache } from "@/lib/cache"
-
-const MENU_FILE_PATH = path.join(process.cwd(), "data", "menu.json")
+import connectDB from "@/lib/db"
+import Product from "@/models/Product"
 
 // GET - Obtener una sección específica del menú
-// OPTIMIZACIÓN: Usa cache en memoria
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ section: string }> }
+  props: { params: Promise<{ section: string }> }
 ) {
+  const params = await props.params;
   try {
-    // OPTIMIZACIÓN: Usar cache en lugar de leer directamente
-    const menuData = await readJsonFileWithCache<any>(MENU_FILE_PATH, 5000)
-    const { section } = await params
-    
-    if (!menuData[section]) {
-      return NextResponse.json(
-        { error: `Sección no encontrada: ${section}` },
-        { status: 404 }
-      )
+    await connectDB()
+    const { section } = params
+
+    // Intentar buscar por 'section' (ej: 'vinos', 'promociones')
+    // Esto devolverá productos que tienen section='vinos', agrupados por categoryId
+    const productsBySection = await Product.find({ section: section }).sort({ order: 1 }).lean()
+
+    if (productsBySection.length > 0) {
+      // Es una sección contenedora (como vinos), devolver objeto agrupado
+      const grouped: any = {}
+      productsBySection.forEach((p: any) => {
+        if (!grouped[p.categoryId]) grouped[p.categoryId] = []
+        grouped[p.categoryId].push(p)
+      })
+      return NextResponse.json(grouped)
     }
-    
-    const response = NextResponse.json(menuData[section])
-    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
-    
-    return response
+
+    // Si no buscamos por section, buscar por 'categoryId' (ej: 'entradas')
+    // Asumimos que son parte de la sección 'menu' o genérica
+    const productsByCategory = await Product.find({ categoryId: section }).sort({ order: 1 }).lean()
+
+    if (productsByCategory.length > 0) {
+      // Es una categoría directa, devolver array
+      return NextResponse.json(productsByCategory)
+    }
+
+    // Si no hay nada, 404
+    return NextResponse.json(
+      { error: `Sección/Categoría no encontrada: ${section}` },
+      { status: 404 }
+    )
+
   } catch (error) {
-    console.error("Error reading menu section:", error)
+    console.error("Error reading menu section from DB:", error)
     return NextResponse.json(
       { error: "Error al leer la sección del menú" },
       { status: 500 }
@@ -36,35 +50,82 @@ export async function GET(
   }
 }
 
-
-
 // PUT - Actualizar o crear una sección específica del menú
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ section: string }> }
+  props: { params: Promise<{ section: string }> }
 ) {
+  const params = await props.params;
   try {
     const sectionData = await request.json()
-    const { section } = await params
-    
-    // OPTIMIZACIÓN: Leer datos actuales usando cache
-    const menuData = await readJsonFileWithCache<any>(MENU_FILE_PATH, 5000)
-    
-    // Crear o actualizar la sección (no verificar si existe)
-    menuData[section] = sectionData
-    
-    // Escribir los datos actualizados
-    await fs.writeFile(MENU_FILE_PATH, JSON.stringify(menuData, null, 2), "utf8")
-    
-    // OPTIMIZACIÓN: Invalidar cache después de escribir
-    fileCache.invalidate(MENU_FILE_PATH)
-    
-    return NextResponse.json({ 
-      message: `Sección ${section} ${menuData.hasOwnProperty(section) ? 'actualizada' : 'creada'} exitosamente`,
+    const { section } = params
+
+    await connectDB()
+
+    // sectionData puede ser:
+    // 1. Array de productos (si section es 'entradas')
+    // 2. Objeto con arrays (si section es 'vinos')
+
+    const bulkOps: any[] = []
+
+    // Helper
+    const createOps = (items: any[], catId: string, secName: string) => {
+      items.forEach((item, idx) => {
+        // Asegurar ID
+        const itemId = item.id || `${catId}-${idx}-${Date.now()}`
+        bulkOps.push({
+          updateOne: {
+            filter: { id: itemId },
+            update: {
+              $set: {
+                name: item.name,
+                description: item.description,
+                price: item.price,
+                categoryId: catId,
+                section: secName,
+                image: item.image,
+                visible: !item.hidden,
+                hidden: item.hidden,
+                hiddenReason: item.hiddenReason,
+                hiddenBy: item.hiddenBy,
+                ingredients: item.ingredients,
+                tags: item.tags,
+                order: idx // Mantener orden del array enviado
+              }
+            },
+            upsert: true
+          }
+        })
+      })
+    }
+
+    if (Array.isArray(sectionData)) {
+      // Caso: Array directo (ej: PUT /api/menu/entradas)
+      // Asumimos que la sección es 'menu' y la categoria es el param 'section'
+      // O podemos intentar inferir. Para consistencia con migración:
+      // Si la section es 'menu-principal' o similar, usamos eso.
+      // Pero lo más probable es que 'section' del URL sea el categoryId.
+      createOps(sectionData, section, 'menu')
+    } else if (typeof sectionData === 'object' && sectionData !== null) {
+      // Caso: Objeto agrupado (ej: PUT /api/menu/vinos)
+      // section URL es la section DB. Keys del objeto son categoryIds.
+      Object.entries(sectionData).forEach(([subCatId, items]) => {
+        if (Array.isArray(items)) {
+          createOps(items, subCatId, section)
+        }
+      })
+    }
+
+    if (bulkOps.length > 0) {
+      await Product.bulkWrite(bulkOps)
+    }
+
+    return NextResponse.json({
+      message: `Sección ${section} actualizada exitosamente en MongoDB`,
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error("Error updating/creating menu section:", error)
+    console.error("Error updating/creating menu section in DB:", error)
     return NextResponse.json(
       { error: "Error al actualizar/crear la sección del menú" },
       { status: 500 }
@@ -75,36 +136,40 @@ export async function PUT(
 // DELETE - Eliminar una sección completa del menú
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ section: string }> }
+  props: { params: Promise<{ section: string }> }
 ) {
+  const params = await props.params;
   try {
-    const { section } = await params
-    
-    // OPTIMIZACIÓN: Leer datos actuales usando cache
-    const menuData = await readJsonFileWithCache<any>(MENU_FILE_PATH, 5000)
-    
-    if (!menuData.hasOwnProperty(section)) {
-      return NextResponse.json(
-        { error: `Sección no encontrada: ${section}` },
-        { status: 404 }
-      )
+    const { section } = params
+
+    await connectDB()
+
+    // Intentar borrar por section (ej: borrar todos los vinos)
+    const delBySection = await Product.deleteMany({ section: section })
+
+    if (delBySection.deletedCount > 0) {
+      return NextResponse.json({
+        message: `Sección ${section} (Agrupador) eliminada. ${delBySection.deletedCount} productos borrados.`,
+        timestamp: new Date().toISOString()
+      })
     }
-    
-    // Eliminar la sección completa
-    delete menuData[section]
-    
-    // Escribir los datos actualizados
-    await fs.writeFile(MENU_FILE_PATH, JSON.stringify(menuData, null, 2), "utf8")
-    
-    // OPTIMIZACIÓN: Invalidar cache después de escribir
-    fileCache.invalidate(MENU_FILE_PATH)
-    
-    return NextResponse.json({ 
-      message: `Sección ${section} eliminada exitosamente`,
-      timestamp: new Date().toISOString()
-    })
+
+    // Si no, intentar por categoryId (ej: borrar entradas)
+    const delByCat = await Product.deleteMany({ categoryId: section })
+
+    if (delByCat.deletedCount > 0) {
+      return NextResponse.json({
+        message: `Categoría ${section} eliminada. ${delByCat.deletedCount} productos borrados.`,
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    return NextResponse.json(
+      { error: `Sección no encontrada: ${section}` },
+      { status: 404 }
+    )
   } catch (error) {
-    console.error("Error deleting menu section:", error)
+    console.error("Error deleting menu section in DB:", error)
     return NextResponse.json(
       { error: "Error al eliminar la sección del menú" },
       { status: 500 }

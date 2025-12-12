@@ -577,7 +577,17 @@ export default function MenuPage() {
           <MenuItemComponent key={item.id || index} item={item} />
         ))
       case 'principales':
-        return renderSubcategoriesInCategory("principales")
+        // Obtener productos directos de 'principales' (puede venir como 'principales', 'principalesItems', etc. o estar en customCategories)
+        const principalesItems = (menuData as any)['principales'] || (customCategories as any)['principales'] || []
+
+        return (
+          <>
+            {Array.isArray(principalesItems) && principalesItems.map((item: any, index: number) => (
+              <MenuItemComponent key={item.id || index} item={item} />
+            ))}
+            {renderSubcategoriesInCategory("principales")}
+          </>
+        )
       case 'sandwicheria':
         return sandwicheria?.map((item, index) => (
           <MenuItemComponent key={item.id || index} item={item} />

@@ -1,47 +1,33 @@
 import { NextRequest, NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
-
-const MENU_FILE_PATH = path.join(process.cwd(), "data", "menu.json")
+import connectDB from "@/lib/db"
+import Product from "@/models/Product"
 
 // GET - Obtener un elemento específico
 export async function GET(
   request: NextRequest,
-  { params }: { params: { section: string; id: string } }
+  props: { params: Promise<{ section: string; id: string }> }
 ) {
+  const params = await props.params;
   try {
-    const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
-    const menuData = JSON.parse(fileContents)
-    const { section, id } = params
-    
-    if (!menuData[section]) {
-      return NextResponse.json(
-        { error: `Sección no encontrada: ${section}` },
-        { status: 404 }
-      )
-    }
-    
-    let item
-    if (section === "vinos") {
-      // Para vinos, buscar en subcategorías
-      const [, subcategory] = section.split("-")
-      if (subcategory && menuData.vinos[subcategory]) {
-        item = menuData.vinos[subcategory].find((item: any) => item.id === id)
-      }
-    } else {
-      item = menuData[section].find((item: any) => item.id === id)
-    }
-    
+    // Nota: 'section' en params es menos relevante si buscamos por ID único,
+    // pero podemos usarlo para validar si queremos ser estrictos.
+    // Por flexibilidad, buscaremos por ID directamente.
+
+    await connectDB()
+    const { id } = params
+
+    const item = await Product.findOne({ id: id }).lean()
+
     if (!item) {
       return NextResponse.json(
         { error: `Elemento no encontrado: ${id}` },
         { status: 404 }
       )
     }
-    
+
     return NextResponse.json(item)
   } catch (error) {
-    console.error("Error reading menu item:", error)
+    console.error("Error reading menu item from DB:", error)
     return NextResponse.json(
       { error: "Error al leer el elemento del menú" },
       { status: 500 }
@@ -52,61 +38,52 @@ export async function GET(
 // PUT - Actualizar un elemento específico
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { section: string; id: string } }
+  props: { params: Promise<{ section: string; id: string }> }
 ) {
+  const params = await props.params;
   try {
-    const updatedItem = await request.json()
-    const { section, id } = params
-    
-    // Leer datos actuales
-    const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
-    const menuData = JSON.parse(fileContents)
-    
-    if (!menuData[section]) {
-      return NextResponse.json(
-        { error: `Sección no encontrada: ${section}` },
-        { status: 404 }
-      )
-    }
-    
-    // Encontrar y actualizar el elemento
-    let found = false
-    if (section.startsWith("vinos-")) {
-      // Para vinos, buscar en subcategorías
-      const subcategory = section.split("-")[1]
-      if (subcategory && menuData.vinos[subcategory]) {
-        const index = menuData.vinos[subcategory].findIndex((item: any) => item.id === id)
-        if (index !== -1) {
-          menuData.vinos[subcategory][index] = updatedItem
-          found = true
+    const updatedData = await request.json()
+    const { id, section } = params // Section from URL
+
+    await connectDB()
+
+    const updatedItem = await Product.findOneAndUpdate(
+      { id: id },
+      {
+        $set: {
+          name: updatedData.name,
+          description: updatedData.description,
+          price: updatedData.price,
+          // Si cambian la categoría/sección, actualizarla
+          // Si no, mantener la que tiene o la del URL (si queremos forzar)
+          // Asumimos que updatedData trae lo necesario, o hacemos merge.
+          // Si updatedData no trae categoryId, cuidado.
+          ...(updatedData.categoryId && { categoryId: updatedData.categoryId }),
+          ...(updatedData.section && { section: updatedData.section }),
+          image: updatedData.image,
+          ingredients: updatedData.ingredients,
+          glass: updatedData.glass,
+          technique: updatedData.technique,
+          garnish: updatedData.garnish,
+          tags: updatedData.tags
         }
-      }
-    } else {
-      if (menuData[section]) {
-        const index = menuData[section].findIndex((item: any) => item.id === id)
-        if (index !== -1) {
-          menuData[section][index] = updatedItem
-          found = true
-        }
-      }
-    }
-    
-    if (!found) {
+      },
+      { new: true }
+    )
+
+    if (!updatedItem) {
       return NextResponse.json(
         { error: `Elemento no encontrado: ${id}` },
         { status: 404 }
       )
     }
-    
-    // Escribir los datos actualizados
-    await fs.writeFile(MENU_FILE_PATH, JSON.stringify(menuData, null, 2), "utf8")
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       message: `Elemento ${id} actualizado exitosamente`,
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error("Error updating menu item:", error)
+    console.error("Error updating menu item in DB:", error)
     return NextResponse.json(
       { error: "Error al actualizar el elemento del menú" },
       { status: 500 }
@@ -117,60 +94,28 @@ export async function PUT(
 // DELETE - Eliminar un elemento específico
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { section: string; id: string } }
+  props: { params: Promise<{ section: string; id: string }> }
 ) {
+  const params = await props.params;
   try {
-    const { section, id } = params
-    
-    // Leer datos actuales
-    const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
-    const menuData = JSON.parse(fileContents)
-    
-    if (!menuData[section]) {
-      return NextResponse.json(
-        { error: `Sección no encontrada: ${section}` },
-        { status: 404 }
-      )
-    }
-    
-    // Encontrar y eliminar el elemento
-    let found = false
-    if (section.startsWith("vinos-")) {
-      // Para vinos, buscar en subcategorías
-      const subcategory = section.split("-")[1]
-      if (subcategory && menuData.vinos[subcategory]) {
-        const index = menuData.vinos[subcategory].findIndex((item: any) => item.id === id)
-        if (index !== -1) {
-          menuData.vinos[subcategory].splice(index, 1)
-          found = true
-        }
-      }
-    } else {
-      if (menuData[section]) {
-        const index = menuData[section].findIndex((item: any) => item.id === id)
-        if (index !== -1) {
-          menuData[section].splice(index, 1)
-          found = true
-        }
-      }
-    }
-    
-    if (!found) {
+    const { id } = params
+
+    await connectDB()
+    const deleted = await Product.findOneAndDelete({ id: id })
+
+    if (!deleted) {
       return NextResponse.json(
         { error: `Elemento no encontrado: ${id}` },
         { status: 404 }
       )
     }
-    
-    // Escribir los datos actualizados
-    await fs.writeFile(MENU_FILE_PATH, JSON.stringify(menuData, null, 2), "utf8")
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       message: `Elemento ${id} eliminado exitosamente`,
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error("Error deleting menu item:", error)
+    console.error("Error deleting menu item from DB:", error)
     return NextResponse.json(
       { error: "Error al eliminar el elemento del menú" },
       { status: 500 }
@@ -181,78 +126,71 @@ export async function DELETE(
 // POST - Agregar un nuevo elemento (solo si el id es "new")
 export async function POST(
   request: NextRequest,
-  { params }: { params: { section: string; id: string } }
+  props: { params: Promise<{ section: string; id: string }> }
 ) {
-      // Solo permitir POST si el id es "new"
-    if (params.id !== "new") {
-      return NextResponse.json(
-        { error: "Método no permitido para este endpoint" },
-        { status: 405 }
-      )
-    }
-    try {
-      const newItem = await request.json()
-      const { section } = params
-      
-      // Leer datos actuales
-      const fileContents = await fs.readFile(MENU_FILE_PATH, "utf8")
-      const menuData = JSON.parse(fileContents)
-      
-      // Generar un nuevo ID
-      const timestamp = Date.now()
-      newItem.id = timestamp.toString()
-      
-      // Agregar el nuevo elemento
-      if (section.startsWith("vinos-")) {
-        // Para vinos, agregar a subcategoría
-        const subcategory = section.split("-")[1]
-        if (subcategory && menuData.vinos && menuData.vinos[subcategory]) {
-          menuData.vinos[subcategory].push(newItem)
-        } else {
-          return NextResponse.json(
-            { error: `Subcategoría de vinos no encontrada: ${subcategory}` },
-            { status: 404 }
-          )
-        }
-      } else if (section.startsWith("promociones-")) {
-        // Para promociones, agregar a subcategoría
-        const subcategory = section.split("-")[1]
-        if (subcategory && menuData.promociones && menuData.promociones[subcategory]) {
-          menuData.promociones[subcategory].push(newItem)
-        } else {
-          return NextResponse.json(
-            { error: `Subcategoría de promociones no encontrada: ${subcategory}` },
-            { status: 404 }
-          )
-        }
-      } else {
-        // Para secciones normales o categorías personalizadas
-        if (!menuData[section]) {
-          // Si la sección no existe, crearla como un array vacío
-          menuData[section] = []
-        }
-        
-        // Verificar que la sección sea un array
-        if (!Array.isArray(menuData[section])) {
-          menuData[section] = []
-        }
-        
-        menuData[section].push(newItem)
+  const params = await props.params;
+  // Solo permitir POST si el id es "new"
+  if (params.id !== "new") {
+    return NextResponse.json(
+      { error: "Método no permitido para este endpoint" },
+      { status: 405 }
+    )
+  }
+  try {
+    const newItem = await request.json()
+    const { section } = params // section from URL could be 'vinos' or 'entradas'
+    // Pero 'vinos' es section DB, 'entradas' es categoryId DB.
+    // Necesitamos desambiguar si el frontend no manda categoryId.
+
+    await connectDB()
+
+    // Generar ID
+    const timestamp = Date.now()
+    const generatedId = newItem.id || timestamp.toString()
+
+    // Determinar section y categoryId
+    let dbSection = 'menu'
+    let dbCategoryId = section
+
+    if (section.startsWith('vinos') || section === 'vinos') {
+      dbSection = 'vinos'
+      // Si section URL es 'vinos-tintos', categoryId es 'tintos'
+      if (section.includes('-')) {
+        dbCategoryId = section.split('-')[1]
+      } else if (newItem.categoryId) {
+        dbCategoryId = newItem.categoryId
       }
-      
-      // Escribir los datos actualizados
-      await fs.writeFile(MENU_FILE_PATH, JSON.stringify(menuData, null, 2), "utf8")
-      
-      return NextResponse.json({ 
-        message: `Elemento agregado exitosamente`,
-        item: newItem,
-        timestamp: new Date().toISOString()
-      })
-    } catch (error) {
-      console.error("Error adding menu item:", error)
-      return NextResponse.json(
-        { error: "Error al agregar el elemento del menú" },
-        { status: 500 }
-      )
+    } else if (section.startsWith('promociones')) {
+      dbSection = 'promociones'
+      if (section.includes('-')) {
+        dbCategoryId = section.split('-')[1]
+      }
+    } else {
+      // Asumimos genérico: URL param es categoryId, section es 'menu'
+      // Salvo que venga en el body
+      if (newItem.section) dbSection = newItem.section
     }
+
+    const product = new Product({
+      ...newItem,
+      id: generatedId,
+      section: dbSection,
+      categoryId: newItem.categoryId || dbCategoryId,
+      order: newItem.order || 999
+    })
+
+    await product.save()
+
+    return NextResponse.json({
+      message: `Elemento agregado exitosamente`,
+      item: product,
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    console.error("Error adding menu item to DB:", error)
+    return NextResponse.json(
+      { error: "Error al agregar el elemento del menú" },
+      { status: 500 }
+    )
+  }
 }
