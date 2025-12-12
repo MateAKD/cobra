@@ -754,12 +754,12 @@ export default function MenuPage() {
             'parrilla'
           ).map(([subcatId]) => {
             const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
+            // FIXED: Don't fallback to main category data
+            // Only look in the parent category ('parrilla') or custom categories
             const subcatData = (customCategories as any)[subcatId]
               || (customCategories as any)[altId]
               || ((menuData as any)?.['parrilla']?.[subcatId])
               || ((menuData as any)?.['parrilla']?.[altId])
-              || ((menuData as any)?.[subcatId])
-              || ((menuData as any)?.[altId])
               || []
             // Si no hay datos directos, verificar si tiene sub-subcategorías
             const hasSubSubcategories = Object.entries(subcategoryMapping)
@@ -793,12 +793,12 @@ export default function MenuPage() {
             'principales'
           ).map(([subcatId]) => {
             const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
+            // FIXED: Don't fallback to main category data
+            // Only look in the parent category ('principales') or custom categories
             const subcatData = (customCategories as any)[subcatId]
               || (customCategories as any)[altId]
               || ((menuData as any)?.['principales']?.[subcatId])
               || ((menuData as any)?.['principales']?.[altId])
-              || ((menuData as any)?.[subcatId])
-              || ((menuData as any)?.[altId])
               || []
 
             const hasSubSubcategories = Object.entries(subcategoryMapping)
@@ -830,12 +830,12 @@ export default function MenuPage() {
       categoryName
     ).map(([subcatId]) => {
       const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
+      // FIXED: Don't fallback to main category data for known subcategories
+      // Only look in the parent category or custom categories  
       const subcatData = (customCategories as any)[subcatId]
         || (customCategories as any)[altId]
         || ((menuData as any)?.[categoryName]?.[subcatId])
         || ((menuData as any)?.[categoryName]?.[altId])
-        || ((menuData as any)?.[subcatId])
-        || ((menuData as any)?.[altId])
         || []
 
       const hasSubSubcategories = Object.entries(subcategoryMapping)
