@@ -1,7 +1,30 @@
 import { NextRequest, NextResponse } from "next/server"
 import Product from "@/models/Product"
+import Category from "@/models/Category"
 import connectDB from "@/lib/db"
 import { revalidatePath } from 'next/cache'
+
+// Helper function to check if current time is within a time range
+function isTimeInRange(startTime: string, endTime: string): boolean {
+  const now = new Date()
+  const currentHour = now.getHours()
+  const currentMinute = now.getMinutes()
+  const currentTimeInMinutes = currentHour * 60 + currentMinute
+
+  const [startHour, startMinute] = startTime.split(':').map(Number)
+  const startTimeInMinutes = startHour * 60 + startMinute
+
+  const [endHour, endMinute] = endTime.split(':').map(Number)
+  const endTimeInMinutes = endHour * 60 + endMinute
+
+  // If range crosses midnight (e.g., 22:00 to 02:00)
+  if (startTimeInMinutes > endTimeInMinutes) {
+    return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes <= endTimeInMinutes
+  }
+
+  // Normal range within same day
+  return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes
+}
 
 // GET - Obtener todos los datos del menú desde MongoDB
 export async function GET() {
@@ -10,6 +33,13 @@ export async function GET() {
 
     // Obtener todos los productos ordenados
     const products = await Product.find({}).sort({ order: 1 }).lean()
+
+    // Obtener todas las categorías para verificar restricciones de tiempo
+    const categories = await Category.find({}).lean()
+    const categoriesMap = categories.reduce((acc, cat: any) => {
+      acc[cat.id] = cat
+      return acc
+    }, {} as Record<string, any>)
 
     // Reconstruir la estructura JSON que espera el frontend
     const menuData: any = {}
@@ -34,7 +64,28 @@ export async function GET() {
       }
     })
 
-    const response = NextResponse.json(menuData)
+    // FILTER: Remove categories that are outside their time range
+    const filteredMenuData: any = {}
+
+    Object.entries(menuData).forEach(([categoryId, data]) => {
+      const category = categoriesMap[categoryId]
+
+      // Check if category has time restriction
+      if (category?.timeRestricted && category.startTime && category.endTime) {
+        const isInRange = isTimeInRange(category.startTime, category.endTime)
+
+        // Only include if current time is WITHIN the allowed range
+        if (isInRange) {
+          filteredMenuData[categoryId] = data
+        }
+        // Otherwise skip this category entirely (it's hidden)
+      } else {
+        // No restriction or invalid config - include it
+        filteredMenuData[categoryId] = data
+      }
+    })
+
+    const response = NextResponse.json(filteredMenuData)
     // Cache de 5s para no saturar DB pero datos frescos
     response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
 
