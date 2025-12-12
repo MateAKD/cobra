@@ -2274,6 +2274,21 @@ export default function AdminPanel() {
         console.warn("Error eliminando del servidor:", error)
       }
 
+      // CRÍTICO: Eliminar la categoría de MongoDB usando el endpoint DELETE
+      try {
+        const deleteCategoryResponse = await fetch(`/api/categories/${subcategoryId}`, {
+          method: "DELETE",
+        })
+
+        if (deleteCategoryResponse.ok) {
+          console.log(`Subcategoría ${subcategoryId} eliminada de MongoDB`)
+        } else if (deleteCategoryResponse.status !== 404) {
+          console.warn(`No se pudo eliminar categoría ${subcategoryId} de MongoDB:`, deleteCategoryResponse.status)
+        }
+      } catch (error) {
+        console.warn("Error eliminando categoría de MongoDB:", error)
+      }
+
       setNotificationStatus(`✅ Subcategoría "${subcategoryId}" eliminada completamente`)
       setTimeout(() => setNotificationStatus(""), 4000)
 
