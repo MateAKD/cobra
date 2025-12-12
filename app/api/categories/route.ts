@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Category, { ICategory } from '@/models/Category'
 import connectDB from '@/lib/db'
+import { revalidatePath } from 'next/cache'
 
 // GET - Obtener todas las categorías para el Admin y el cliente
 export async function GET() {
@@ -63,6 +64,11 @@ export async function PUT(request: NextRequest) {
     if (bulkOps.length > 0) {
       await Category.bulkWrite(bulkOps)
     }
+
+    // Force revalidation of menu and admin pages
+    revalidatePath('/menu')
+    revalidatePath('/admin')
+    revalidatePath('/api/categories')
 
     return NextResponse.json({ message: 'Categorías actualizadas exitosamente con MongoDB' })
   } catch (error) {

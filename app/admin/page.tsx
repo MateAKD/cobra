@@ -1912,7 +1912,7 @@ export default function AdminPanel() {
           })
       }
 
-      // Eliminar del servidor solo si la categoría existe en el archivo JSON
+      // Eliminar del servidor solo si la categoría existe en el archivo JSON (MongoDB ahora)
       try {
         const response = await fetch(`/api/menu/${categoryId}`, {
           method: "DELETE",
@@ -1926,34 +1926,28 @@ export default function AdminPanel() {
       }
 
       // Actualizar el archivo de categorías para eliminar la categoría
+      // CRITICO: Actualizar estado local a través del hook useCategories
       try {
-        const response = await fetch('/api/categories')
-        if (response.ok) {
-          const categoriesData = await response.json()
-          const updatedCategories = { ...categoriesData }
-          delete updatedCategories[categoryId]
+        const updatedCategories = { ...categories }
+        delete updatedCategories[categoryId]
 
-          console.log("Eliminando categoría del archivo categories.json:", categoryId)
-          console.log("Categorías actualizadas:", updatedCategories)
+        // Actualizar servidor y estado local a través del hook
+        await updateCategories(updatedCategories)
 
-          const updateResponse = await fetch('/api/categories', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedCategories),
-          })
+        console.log("Categoría eliminada exitosamente y sincronizada")
 
-          if (updateResponse.ok) {
-            console.log("Categoría eliminada exitosamente del archivo categories.json")
-            // Recargar los datos del admin para sincronizar
-            await refetchAdminMenu()
-          } else {
-            console.error("Error al actualizar categories.json:", updateResponse.statusText)
-          }
-        }
+        // Recargar explícitamente las categorías para asegurar que el estado esté limpio
+        await loadCategories()
+
+        // Recargar los datos del admin para sincronizar productos
+        await refetchAdminMenu()
+
       } catch (error) {
-        console.warn("No se pudo actualizar el archivo de categorías:", error)
+        console.error("Error al actualizar categorías:", error)
+        // Fallback manual si falla el hook
+        try {
+          // ... lógica legacy de fallback si se desea, o simplemente alertar
+        } catch (e) { console.warn(e) }
       }
 
       setNotificationStatus("✅ Categoría eliminada")

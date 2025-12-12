@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Product from '@/models/Product'
 import connectDB from '@/lib/db'
+import { revalidatePath } from 'next/cache'
 
 export async function PATCH(
   request: NextRequest,
@@ -42,6 +43,11 @@ export async function PATCH(
         { status: 404 }
       )
     }
+
+    // INVALIDAR CACHE
+    revalidatePath('/menu')
+    revalidatePath('/admin')
+    revalidatePath(`/api/menu/${section}`)
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Product from "@/models/Product"
 import connectDB from "@/lib/db"
+import { revalidatePath } from 'next/cache'
 
 // GET - Obtener todos los datos del menú desde MongoDB
 export async function GET() {
@@ -110,6 +111,11 @@ export async function POST(request: NextRequest) {
     if (bulkOps.length > 0) {
       await Product.bulkWrite(bulkOps)
     }
+
+    // INVALIDAR CACHE
+    revalidatePath('/menu')
+    revalidatePath('/admin')
+    revalidatePath('/api/menu')
 
     return NextResponse.json({
       message: "Menú actualizado exitosamente en MongoDB",
