@@ -30,6 +30,56 @@ export async function GET() {
   }
 }
 
+// POST - Crear una nueva categoría o subcategoría
+export async function POST(request: NextRequest) {
+  try {
+    await connectDB()
+    const categoryData = await request.json()
+
+    // Validar payload
+    if (!categoryData.id || !categoryData.name) {
+      return NextResponse.json({ error: 'ID y nombre son requeridos' }, { status: 400 })
+    }
+
+    // Verificar si la categoría ya existe
+    const existingCategory = await Category.findOne({ id: categoryData.id })
+    if (existingCategory) {
+      return NextResponse.json({ error: 'La categoría ya existe' }, { status: 409 })
+    }
+
+    // Crear la nueva categoría
+    const newCategory = new Category({
+      id: categoryData.id,
+      name: categoryData.name,
+      description: categoryData.description || '',
+      order: categoryData.order || 0,
+      timeRestricted: categoryData.timeRestricted || false,
+      startTime: categoryData.startTime,
+      endTime: categoryData.endTime,
+      visible: categoryData.visible !== undefined ? categoryData.visible : true,
+      isSubcategory: categoryData.isSubcategory || false,
+      parentCategory: categoryData.parentCategory,
+      image: categoryData.image
+    })
+
+    await newCategory.save()
+
+    // Force revalidation of menu and admin pages
+    revalidatePath('/menu')
+    revalidatePath('/admin')
+    revalidatePath('/api/categories')
+
+    return NextResponse.json({
+      success: true,
+      message: 'Categoría creada exitosamente',
+      category: newCategory
+    })
+  } catch (error) {
+    console.error('Error creating category in DB:', error)
+    return NextResponse.json({ error: 'Error al crear la categoría' }, { status: 500 })
+  }
+}
+
 // PUT - Actualizar categorías (usado para reordenar o editar)
 export async function PUT(request: NextRequest) {
   try {
