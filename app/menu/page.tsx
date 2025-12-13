@@ -703,7 +703,7 @@ export default function MenuPage() {
   const renderSubcategoryWithChildren = (subcatId: string, subcatData: any[], subcatName: string, parentCategoryId?: string) => {
     // Verificar si la subcategoría debe ocultarse
     const parentId = parentCategoryId || subcategoryMapping[subcatId] || ''
-    const shouldHide = shouldHideSubcategory(subcatId, parentId, categories, subcatData, subcategoryMapping)
+    const shouldHide = shouldHideSubcategory(subcatId, parentId, categories, subcatData, subcategoryMapping, menuData)
 
     if (shouldHide) {
       return null // No renderizar esta subcategoría
