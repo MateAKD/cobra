@@ -220,12 +220,13 @@ export function shouldHideCategory(
 // NUEVA FUNCIÓN: Verificar si una subcategoría debe ocultarse
 // Una subcategoría se oculta si:
 // 1. Su categoría padre está oculta por horario
-// 2. Todos sus productos están ocultos
+// 2. Todos sus productos están ocultos Y no tiene sub-subcategorías
 export function shouldHideSubcategory(
   subcategoryId: string,
   parentCategoryId: string,
   categories: Record<string, Category>,
-  subcategoryData: any
+  subcategoryData: any,
+  subcategoryMapping?: Record<string, string>
 ): boolean {
   // 1. Si la categoría padre está oculta por horario, ocultar la subcategoría
   const parentCategory = categories[parentCategoryId]
@@ -236,7 +237,15 @@ export function shouldHideSubcategory(
     }
   }
 
-  // 2. Verificar si todos los productos de la subcategoría están ocultos
+  // 2. Verificar si tiene sub-subcategorías (no ocultar si las tiene)
+  if (subcategoryMapping) {
+    const hasSubSubcategories = Object.values(subcategoryMapping).includes(subcategoryId)
+    if (hasSubSubcategories) {
+      return false // NO ocultar si tiene sub-subcategorías
+    }
+  }
+
+  // 3. Verificar si todos los productos de la subcategoría están ocultos
   if (subcategoryData && Array.isArray(subcategoryData)) {
     const visibleProducts = subcategoryData.filter((item: any) => !item.hidden)
     if (visibleProducts.length === 0) {
@@ -246,6 +255,7 @@ export function shouldHideSubcategory(
 
   return false // No ocultar
 }
+
 
 
 // DEPRECATED: Esta función ya no se usa para filtrar categorías del menú
