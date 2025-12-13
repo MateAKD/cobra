@@ -3795,8 +3795,8 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            {/* Renderizar subcategorías dinámicamente */}
-            {renderSubcategories("bebidas")}
+            {/* Subcategorías dinámicas deshabilitadas para bebidas - ya están renderizadas arriba */}
+            {/* {renderSubcategories("bebidas")} */}
           </TabsContent>
 
           {/* Tragos */}
