@@ -782,12 +782,11 @@ export default function MenuPage() {
             'parrilla'
           ).map(([subcatId]) => {
             const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
-            // FIXED: Don't fallback to main category data
-            // Only look in the parent category ('parrilla') or custom categories
-            const subcatData = (customCategories as any)[subcatId]
+            // FIXED: Products are stored directly in menuData[subcatId]
+            const subcatData = (menuData as any)?.[subcatId]
+              || (menuData as any)?.[altId]
+              || (customCategories as any)[subcatId]
               || (customCategories as any)[altId]
-              || ((menuData as any)?.['parrilla']?.[subcatId])
-              || ((menuData as any)?.['parrilla']?.[altId])
               || []
             // Si no hay datos directos, verificar si tiene sub-subcategorías
             const hasSubSubcategories = Object.entries(subcategoryMapping)
@@ -821,12 +820,11 @@ export default function MenuPage() {
             'principales'
           ).map(([subcatId]) => {
             const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
-            // FIXED: Don't fallback to main category data
-            // Only look in the parent category ('principales') or custom categories
-            const subcatData = (customCategories as any)[subcatId]
+            // FIXED: Products are stored directly in menuData[subcatId]
+            const subcatData = (menuData as any)?.[subcatId]
+              || (menuData as any)?.[altId]
+              || (customCategories as any)[subcatId]
               || (customCategories as any)[altId]
-              || ((menuData as any)?.['principales']?.[subcatId])
-              || ((menuData as any)?.['principales']?.[altId])
               || []
 
             const hasSubSubcategories = Object.entries(subcategoryMapping)
@@ -837,14 +835,7 @@ export default function MenuPage() {
 
             const subcatName = getSubcategoryDisplayName(subcatId, 'principales')
 
-            // Usar datos específicos para subcategorías hardcodeadas
-            let dataToUse = subcatData
-            if (subcatId === 'milanesas') dataToUse = milanesas || []
-            else if (subcatId === 'hamburguesas') dataToUse = hamburguesas || []
-            else if (subcatId === 'ensaladas') dataToUse = ensaladas || []
-            else if (subcatId === 'otros') dataToUse = otros || []
-
-            return renderSubcategoryWithChildren(subcatId, dataToUse, subcatName, 'principales')
+            return renderSubcategoryWithChildren(subcatId, subcatData, subcatName, 'principales')
           })}
         </>
       );
