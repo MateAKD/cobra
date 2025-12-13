@@ -622,17 +622,8 @@ export default function MenuPage() {
           <MenuItemComponent key={item.id || index} item={item} />
         ))
       case 'bebidas':
-        return (
-          <>
-            {bebidasSinAlcohol?.map((item, index) => (
-              <MenuItemComponent key={item.id || index} item={item} />
-            ))}
-            <h3 className="bebas-title text-xl sm:text-2xl mb-3 sm:mb-4 text-gray-light mt-8">CERVEZAS</h3>
-            {cervezas?.map((item, index) => (
-              <MenuItemComponent key={item.id || index} item={item} />
-            ))}
-          </>
-        )
+        return renderSubcategoriesInCategory('bebidas')
+
       case 'tragos':
         return (
           <>
