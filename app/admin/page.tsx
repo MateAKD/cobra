@@ -423,9 +423,25 @@ export default function AdminPanel() {
 
       // VALIDACIÓN: Verificar que las subcategorías en el mapeo tienen padres válidos
       Object.entries(currentSubcategoryMapping).forEach(([subcatId, parentId]) => {
-        const parentExists = adminMenuData[parentId as keyof typeof adminMenuData]
-        if (!parentExists) {
-          console.warn(`⚠️ MAPEO INVÁLIDO: Subcategoría "${subcatId}" tiene padre "${parentId}" que no existe en adminMenuData`)
+        // FIXED: Si el padre no está en la lista (por no tener productos directos), AGREGARLO
+        const parentAdded = jsonCategories.some(cat => cat.id === parentId)
+
+        if (!parentAdded && typeof parentId === 'string') {
+          console.log(`⚠️ Recuperando categoría padre "${parentId}" basada en mapeo`)
+
+          let name = parentId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+          // Intentar obtener nombre real de categories si existe
+          if (categories[parentId]?.name) {
+            name = categories[parentId].name
+          }
+
+          jsonCategories.push({
+            id: parentId,
+            name: name,
+            isStandard: false,
+            description: categories[parentId]?.description || "",
+            order: categories[parentId]?.order ?? (jsonCategories.length + 1)
+          })
         }
       })
 
