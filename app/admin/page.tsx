@@ -366,90 +366,35 @@ export default function AdminPanel() {
 
     // Actualizar el estado de todas las categorías
     setAllCategories(prev => {
+      // SOLUCIÓN DEFINITIVA: Solo mostrar las 6 categorías principales
+      const MAIN_CATEGORY_IDS = [
+        'parrilla',
+        'tapeos',
+        'principales',
+        'desayunos-y-meriendas',
+        'bebidas',
+        'promociones'
+      ]
+
       const jsonCategories: any[] = []
 
-      // 1. Primero agregar todas las categorías que están en categories.json
-      Object.keys(categories).forEach(key => {
-        // CRÍTICO: Si es una subcategoría, NO mostrarla como categoría principal
-        if (Object.keys(currentSubcategoryMapping).includes(key)) return
-
-        const categoryInfo = categories[key]
+      // SOLO agregar las 6 categorías principales
+      MAIN_CATEGORY_IDS.forEach(catId => {
+        const categoryInfo = categories[catId]
 
         jsonCategories.push({
-          id: key,
-          name: categoryInfo.name || key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          id: catId,
+          name: categoryInfo?.name || catId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
           isStandard: false,
-          description: categoryInfo.description || "",
-          order: categoryInfo.order ?? Number.MAX_SAFE_INTEGER
+          description: categoryInfo?.description || "",
+          order: categoryInfo?.order ?? MAIN_CATEGORY_IDS.indexOf(catId) + 1
         })
-      })
-
-      // 2. Luego verificar si hay categorías en adminMenuData que NO están en categories.json
-      //    FIXED: SIEMPRE incluir categorías que tienen datos, NO excluir por subcategoryMapping
-      //    Esto previene que categorías desaparezcan si están incorrectamente marcadas como subcategorías
-      Object.keys(adminMenuData).forEach(key => {
-        const categoryData = adminMenuData[key as keyof typeof adminMenuData]
-        const isArray = Array.isArray(categoryData)
-        const isObject = typeof categoryData === 'object' && categoryData !== null && !Array.isArray(categoryData)
-
-        // Solo agregar si:
-        // 1. Es un array o objeto (tiene datos)
-        // 2. NO está ya en jsonCategories
-        const alreadyAdded = jsonCategories.some(cat => cat.id === key)
-
-        // FIXED: Restaurada la exclusión de subcategorías
-        const isSubcategory = Object.keys(currentSubcategoryMapping).includes(key)
-
-        if ((isArray || isObject) && !alreadyAdded && !isSubcategory) {
-          // Esta categoría existe en el menú pero no en categories.json
-          // Agregarla para que sea visible
-          const categoryName = key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-
-          // Verificar si está incorrectamente en subcategoryMapping
-          const isInSubcategoryMapping = Object.keys(currentSubcategoryMapping).includes(key)
-          if (isInSubcategoryMapping) {
-            console.warn(`⚠️ ADVERTENCIA: "${key}" está en subcategoryMapping pero tiene datos propios. Mostrando de todos modos.`)
-          }
-
-          jsonCategories.push({
-            id: key,
-            name: categoryName,
-            isStandard: false,
-            description: "",
-            order: Number.MAX_SAFE_INTEGER
-          })
-        }
-      })
-
-      // VALIDACIÓN: Verificar que las subcategorías en el mapeo tienen padres válidos
-      Object.entries(currentSubcategoryMapping).forEach(([subcatId, parentId]) => {
-        // FIXED: Si el padre no está en la lista (por no tener productos directos), AGREGARLO
-        const parentAdded = jsonCategories.some(cat => cat.id === parentId)
-
-        if (!parentAdded && typeof parentId === 'string') {
-          console.log(`⚠️ Recuperando categoría padre "${parentId}" basada en mapeo`)
-
-          let name = parentId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-          // Intentar obtener nombre real de categories si existe
-          if (categories[parentId]?.name) {
-            name = categories[parentId].name
-          }
-
-          jsonCategories.push({
-            id: parentId,
-            name: name,
-            isStandard: false,
-            description: categories[parentId]?.description || "",
-            order: categories[parentId]?.order ?? (jsonCategories.length + 1)
-          })
-        }
       })
 
       // Logging defensivo
       console.log(`📊 Sincronización completada:`)
-      console.log(`   - Categorías del servidor: ${Object.keys(adminMenuData).length}`)
+      console.log(`   - Categorías principales: ${jsonCategories.length}`)
       console.log(`   - Subcategorías mapeadas: ${Object.keys(currentSubcategoryMapping).length}`)
-      console.log(`   - Categorías finales visibles: ${jsonCategories.length}`)
 
       // Ordenar según el 'order'
       jsonCategories.sort((a, b) => a.order - b.order)
