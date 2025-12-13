@@ -858,9 +858,11 @@ export default function MenuPage() {
       categoryName
     ).map(([subcatId]) => {
       const altId = subcatId.endsWith('s') ? subcatId.slice(0, -1) : `${subcatId}s`
-      // FIXED: Don't fallback to main category data for known subcategories
-      // Only look in the parent category or custom categories  
-      const subcatData = (customCategories as any)[subcatId]
+      // FIXED: Products are stored directly in menuData[subcatId], not nested under parent
+      // Check direct lookup first, then fallback to other locations
+      const subcatData = (menuData as any)?.[subcatId]
+        || (menuData as any)?.[altId]
+        || (customCategories as any)[subcatId]
         || (customCategories as any)[altId]
         || ((menuData as any)?.[categoryName]?.[subcatId])
         || ((menuData as any)?.[categoryName]?.[altId])
