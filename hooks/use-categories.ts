@@ -27,16 +27,16 @@ export function useCategories() {
     try {
       setLoading(true)
       setError(null)
-      
-      // OPTIMIZACIÓN: Agregar cache con revalidación
+
+      // OPTIMIZACIÓN: Forzar recarga sin cache
       const response = await fetch('/api/categories', {
-        next: { revalidate: 5 }, // Revalidar cada 5 segundos
+        cache: 'no-store', // No usar cache del navegador
       })
-      
+
       if (!response.ok) {
         throw new Error('Error al cargar las categorías')
       }
-      
+
       const data = await response.json()
       setCategories(data)
     } catch (err) {
@@ -52,7 +52,7 @@ export function useCategories() {
     try {
       setLoading(true)
       setError(null)
-      
+
       const response = await fetch('/api/categories', {
         method: 'PUT',
         headers: {
@@ -60,11 +60,11 @@ export function useCategories() {
         },
         body: JSON.stringify(updatedCategories),
       })
-      
+
       if (!response.ok) {
         throw new Error('Error al actualizar las categorías')
       }
-      
+
       const data = await response.json()
       setCategories(updatedCategories)
       return data
@@ -86,7 +86,7 @@ export function useCategories() {
         ...updates,
       },
     }
-    
+
     return await updateCategories(updatedCategories)
   }, [categories, updateCategories])
 
