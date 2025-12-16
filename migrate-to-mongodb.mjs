@@ -3,17 +3,57 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import Category from './models/Category.js';
-import Product from './models/Product.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: '.env.local' });
 
+// Define Schemas Inline
+const CategorySchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    description: { type: String, default: '' },
+    order: { type: Number, default: 0 },
+    timeRestricted: { type: Boolean, default: false },
+    startTime: { type: String },
+    endTime: { type: String },
+    visible: { type: Boolean, default: true },
+    isSubcategory: { type: Boolean, default: false },
+    parentCategory: { type: String },
+    image: { type: String }
+}, { timestamps: true });
+
+const ProductSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    description: { type: String, default: '' },
+    price: { type: String },
+    categoryId: { type: String, required: true },
+    section: { type: String, required: true }, // 'menu', 'vinos', etc.
+    image: { type: String },
+    ingredients: { type: String },
+    glass: { type: String },
+    technique: { type: String },
+    garnish: { type: String },
+    tags: [{ type: String }],
+    hidden: { type: Boolean, default: false },
+    hiddenReason: { type: String },
+    hiddenBy: { type: String },
+    hiddenAt: { type: Date },
+    order: { type: Number, default: 0 }
+}, { timestamps: true });
+
+// Avoid overwriting models if they exist
+const Category = mongoose.models.Category || mongoose.model('Category', CategorySchema);
+const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
+
 async function migrate() {
     try {
         console.log('🔌 Conectando a MongoDB...');
+        if (!process.env.MONGODB_URI) {
+            throw new Error('MONGODB_URI no definida en .env.local');
+        }
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ Conectado a MongoDB Atlas\n');
 
@@ -138,3 +178,4 @@ async function migrate() {
 }
 
 migrate();
+
