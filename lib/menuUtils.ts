@@ -173,12 +173,13 @@ export function isCategoryVisible(categoryId: string, categories: Record<string,
 // NUEVA FUNCIÓN: Verificar si una categoría debe ocultarse completamente
 // Retorna true si la categoría debe ocultarse por:
 // 1. Restricción de horario (fuera del horario permitido)
-// 2. Todos los productos están ocultos
+// 2. Todos los productos están ocultos (incluyendo subcategorías)
 export function shouldHideCategory(
   categoryId: string,
   categories: Record<string, Category>,
   categoryData: any,
-  subcategoryMapping?: Record<string, string>
+  subcategoryMapping?: Record<string, string>,
+  menuData?: any
 ): boolean {
   const category = categories[categoryId]
 
@@ -196,25 +197,43 @@ export function shouldHideCategory(
     }
   }
 
-  // 2. Verificar si todos los productos están ocultos
-  // Si la categoría tiene datos (productos)
+  // 2. Verificar si hay productos visibles directos
+  let hasVisibleProducts = false
   if (categoryData && Array.isArray(categoryData)) {
-    // Si no hay productos visibles, ocultar la categoría
-    const visibleProducts = categoryData.filter((item: any) => !item.hidden)
-    if (visibleProducts.length === 0) {
-      // Solo ocultar si no tiene subcategorías
-      if (subcategoryMapping) {
-        const hasSubcategories = Object.values(subcategoryMapping).includes(categoryId)
-        if (!hasSubcategories) {
-          return true // Ocultar si no tiene productos visibles ni subcategorías
-        }
-      } else {
-        return true // Ocultar si no hay productos visibles
-      }
+    hasVisibleProducts = categoryData.some((item: any) => !item.hidden)
+  }
+
+  // 3. Verificar si hay subcategorías visibles (si tenemos la data)
+  let hasVisibleSubcategories = false
+  if (subcategoryMapping && menuData) {
+    // Encontrar IDs de subcategorías que pertenecen a esta categoría
+    const subcategoryIds = Object.entries(subcategoryMapping)
+      .filter(([, parentId]) => parentId === categoryId)
+      .map(([id]) => id)
+
+    if (subcategoryIds.length > 0) {
+      // Verificar si alguna subcategoría es visible
+      hasVisibleSubcategories = subcategoryIds.some(subId => {
+        const subData = menuData[subId]
+        // Una subcategoría es visible si NO debe ocultarse
+        return !shouldHideSubcategory(subId, categoryId, categories, subData, subcategoryMapping, menuData)
+      })
+    }
+  } else if (subcategoryMapping) {
+    // Fallback: Si no tenemos menuData pero sabemos que hay subcategorías, asumimos visibles para evitar parpadeos
+    if (Object.values(subcategoryMapping).includes(categoryId)) {
+      hasVisibleSubcategories = true
     }
   }
 
-  return false // No ocultar
+  // Si tiene productos visibles -> MOSTRAR
+  if (hasVisibleProducts) return false
+
+  // Si tiene subcategorías visibles -> MOSTRAR
+  if (hasVisibleSubcategories) return false
+
+  // Si no tiene nada visible -> OCULTAR
+  return true
 }
 
 // NUEVA FUNCIÓN: Verificar si una subcategoría debe ocultarse

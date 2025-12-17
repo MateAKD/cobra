@@ -373,7 +373,8 @@ export default function AdminPanel() {
         'principales',
         'desayunos-y-meriendas',
         'bebidas',
-        'promociones'
+        'promociones',
+        'postres'
       ]
 
       const jsonCategories: any[] = []
@@ -1196,6 +1197,9 @@ export default function AdminPanel() {
               }))
             }
         }
+
+        // Actualizar datos desde el servidor
+        await refetchAdminMenu()
 
         // Notificación deshabilitada para eliminar (solo se notifica ocultar/mostrar)
         alert("Elemento eliminado exitosamente")
@@ -3517,240 +3521,7 @@ export default function AdminPanel() {
             )
           })}
 
-          {/* Tapeo */}
-          <TabsContent value="tapeo" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-gray-900">Tapeo</h2>
-              <div className="flex gap-2 items-center">
-                <select
-                  className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
-                  defaultValue="none"
-                  onChange={(e) => applySortToSection('tapeo', e.target.value as any)}
-                  aria-label="Ordenar Tapeo"
-                >
-                  <option value="none">Orden original</option>
-                  <option value="priceDesc">Precio ↓</option>
-                  <option value="priceAsc">Precio ↑</option>
-                  <option value="nameAsc">A-Z</option>
-                  <option value="nameDesc">Z-A</option>
-                </select>
-                <Button
-                  size="sm"
-                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                  onClick={() => {
-                    setSelectedCategoryForSubcategory("tapeo")
-                    setIsAddingSubcategory(true)
-                  }}
-                >
-                  <Plus className="w-4 h-4 text-white" />
-                  <span className="text-white">Agregar Subcategoría</span>
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                  onClick={() => setIsAdding("tapeo")}
-                >
-                  <Plus className="w-4 h-4 text-white" />
-                  <span className="text-white">Agregar Tapeo</span>
-                </Button>
-              </div>
-            </div>
-            {Array.isArray(tapeo) && tapeo.map((item) => renderMenuItem(item, "tapeo"))}
 
-            {/* Renderizar subcategorías dinámicamente */}
-            {renderSubcategories("tapeo")}
-          </TabsContent>
-
-          {/* Principales */}
-          <TabsContent value="principales" className="space-y-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Platos Principales</h2>
-              <Button
-                size="sm"
-                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                onClick={() => {
-                  setSelectedCategoryForSubcategory("principales")
-                  setIsAddingSubcategory(true)
-                }}
-              >
-                <Plus className="w-4 h-4 text-white" />
-                <span className="text-white">Agregar Subcategoría</span>
-              </Button>
-            </div>
-
-            {/* Renderizar subcategorías dinámicamente */}
-            {renderSubcategories("principales")}
-          </TabsContent>
-
-          {/* Cafetería */}
-          <TabsContent value="cafeteria" className="space-y-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Cafetería y Pastelería</h2>
-              <Button
-                size="sm"
-                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                onClick={() => {
-                  setSelectedCategoryForSubcategory("cafeteria")
-                  setIsAddingSubcategory(true)
-                }}
-              >
-                <Plus className="w-4 h-4 text-white" />
-                <span className="text-white">Agregar Subcategoría</span>
-              </Button>
-            </div>
-
-            <div className="space-y-8">
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900">Cafetería</h3>
-                  <div className="flex gap-2 items-center">
-                    <select
-                      className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
-                      defaultValue="none"
-                      onChange={(e) => applySortToSection('cafeteria', e.target.value as any)}
-                      aria-label="Ordenar Cafetería"
-                    >
-                      <option value="none">Orden original</option>
-                      <option value="priceDesc">Precio ↓</option>
-                      <option value="priceAsc">Precio ↑</option>
-                      <option value="nameAsc">A-Z</option>
-                      <option value="nameDesc">Z-A</option>
-                    </select>
-                    <Button
-                      size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => setIsAdding("cafeteria")}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar
-                    </Button>
-                  </div>
-                </div>
-                {Array.isArray(cafeteria) && cafeteria.map((item) => renderWineItem(item, "cafeteria"))}
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900">Pastelería</h3>
-                  <div className="flex gap-2 items-center">
-                    <select
-                      className="text-sm border rounded-md px-2 py-1 text-gray-800 bg-white"
-                      defaultValue="none"
-                      onChange={(e) => applySortToSection('pasteleria', e.target.value as any)}
-                      aria-label="Ordenar Pastelería"
-                    >
-                      <option value="none">Orden original</option>
-                      <option value="priceDesc">Precio ↓</option>
-                      <option value="priceAsc">Precio ↑</option>
-                      <option value="nameAsc">A-Z</option>
-                      <option value="nameDesc">Z-A</option>
-                    </select>
-                    <Button
-                      size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => setIsAdding("pasteleria")}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar
-                    </Button>
-                  </div>
-                </div>
-                {Array.isArray(pasteleria) && pasteleria.map((item) => renderWineItem(item, "pasteleria"))}
-              </div>
-            </div>
-
-            {/* Renderizar subcategorías dinámicamente */}
-            {renderSubcategories("cafeteria")}
-          </TabsContent>
-
-          {/* Bebidas */}
-          <TabsContent value="bebidas" className="space-y-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Bebidas</h2>
-              <Button
-                size="sm"
-                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                onClick={() => {
-                  setSelectedCategoryForSubcategory("bebidas")
-                  setIsAddingSubcategory(true)
-                }}
-              >
-                <Plus className="w-4 h-4 text-white" />
-                <span className="text-white">Agregar Subcategoría</span>
-              </Button>
-            </div>
-
-            {/* Renderizar SOLO subcategorías dinámicamente */}
-            {renderSubcategories("bebidas")}
-          </TabsContent>
-
-          {/* Tragos */}
-          <TabsContent value="tragos" className="space-y-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Tragos</h2>
-              <Button
-                size="sm"
-                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                onClick={() => {
-                  setSelectedCategoryForSubcategory("tragos")
-                  setIsAddingSubcategory(true)
-                }}
-              >
-                <Plus className="w-4 h-4 text-white" />
-                <span className="text-white">Agregar Subcategoría</span>
-              </Button>
-            </div>
-
-            <div className="space-y-8">
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900">Tragos Clásicos</h3>
-                  <Button
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => setIsAdding("tragosClasicos")}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Agregar
-                  </Button>
-                </div>
-                {Array.isArray(tragosClasicos) && tragosClasicos.map((item) => renderWineItem(item, "tragosClasicos"))}
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900">Tragos Especiales</h3>
-                  <Button
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => setIsAdding("tragosEspeciales")}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Agregar
-                  </Button>
-                </div>
-                {Array.isArray(tragosEspeciales) && tragosEspeciales.map((item) => renderWineItem(item, "tragosEspeciales"))}
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900">Tragos con Red Bull</h3>
-                  <Button
-                    size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                    onClick={() => setIsAdding("tragosRedBull")}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Agregar
-                  </Button>
-                </div>
-                {Array.isArray(tragosRedBull) && tragosRedBull.map((item) => renderWineItem(item, "tragosRedBull"))}
-              </div>
-            </div>
-
-            {/* Renderizar subcategorías dinámicamente */}
-            {renderSubcategories("tragos")}
-          </TabsContent>
 
 
         </Tabs>

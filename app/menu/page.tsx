@@ -183,7 +183,7 @@ export default function MenuPage() {
         const categoryData = (menuData as any)[key]
 
         // Verificar si debe ocultarse por horario o productos ocultos
-        const shouldHide = shouldHideCategory(key, categories, categoryData, subcategoryMapping)
+        const shouldHide = shouldHideCategory(key, categories, categoryData, subcategoryMapping, menuData)
 
         if (shouldHide) {
           return false // Ocultar esta categoría
@@ -529,12 +529,77 @@ export default function MenuPage() {
       .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
       .map(([key]) => key)
 
-    // Dividir en 3 columnas aproximadamente iguales
-    const itemsPerColumn = Math.ceil(sortedCategories.length / 3)
+    // Distribución balanceada por "peso" visual (altura)
+    // Objetivo: Que las 3 columnas tengan aproximadamente la misma altura visual
+
+    // 1. Helper para calcular el peso de una categoría (Direct items + Subcategory items)
+    const getCategoryWeight = (catId: string) => {
+      let weight = 4 // Peso base del título/header (equivalente a ~4 items)
+
+      // Items directos
+      const directItems = (menuData as any)[catId] || []
+      if (Array.isArray(directItems)) {
+        weight += directItems.length
+      }
+
+      // Items en subcategorías
+      Object.entries(subcategoryMapping).forEach(([subId, parentId]) => {
+        if (parentId === catId) {
+          weight += 2 // Peso del título de subcategoría
+          const subItems = (menuData as any)[subId] || []
+          if (Array.isArray(subItems)) {
+            weight += subItems.length
+          }
+        }
+      })
+
+      return weight
+    }
+
+    // 2. Calcular pesos
+    const weights = sortedCategories.map(catId => getCategoryWeight(catId))
+    const totalWeight = weights.reduce((a, b) => a + b, 0)
+
+    // 3. Encontrar los mejores puntos de corte (fuerza bruta optimizada para N pequeño)
+    let bestSplit = [Math.ceil(sortedCategories.length / 3), Math.ceil(sortedCategories.length * 2 / 3)]
+    let minDiff = Infinity
+
+    // Helper para sumar pesos en un rango [start, end)
+    const sumWeights = (start: number, end: number) => {
+      let sum = 0
+      for (let k = start; k < end; k++) sum += weights[k]
+      return sum
+    }
+
+    // Probar cortes posibles
+    // i es el fin de la col 1, j es el fin de la col 2
+    // Optimización: restringir rango de búsqueda para no probar cortes absurdos
+    const minItemsPerCol = 1
+    const maxItemsPerCol = sortedCategories.length - 2
+
+    for (let i = minItemsPerCol; i <= maxItemsPerCol; i++) {
+      for (let j = i + 1; j < sortedCategories.length; j++) {
+        const h1 = sumWeights(0, i)
+        const h2 = sumWeights(i, j)
+        const h3 = sumWeights(j, sortedCategories.length)
+
+        const maxH = Math.max(h1, h2, h3)
+        const minH = Math.min(h1, h2, h3)
+        const diff = maxH - minH
+
+        if (diff < minDiff) {
+          minDiff = diff
+          bestSplit = [i, j]
+        }
+      }
+    }
+
+    const [i, j] = bestSplit
+
     const columns = [
-      sortedCategories.slice(0, itemsPerColumn),
-      sortedCategories.slice(itemsPerColumn, itemsPerColumn * 2),
-      sortedCategories.slice(itemsPerColumn * 2)
+      sortedCategories.slice(0, i),
+      sortedCategories.slice(i, j),
+      sortedCategories.slice(j)
     ]
 
     return columns.map((columnCategories, columnIndex) => (
