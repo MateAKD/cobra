@@ -35,9 +35,18 @@ export async function GET() {
     const products = await Product.find({}).sort({ order: 1 }).lean()
 
     // Obtener todas las categorías para verificar restricciones de tiempo
-    const categories = await Category.find({}).lean()
+    let categories: any[] = []
+    try {
+      categories = await Category.find({}).lean()
+    } catch (catError) {
+      console.error("Error fetching categories:", catError)
+      // Non-critical: continue without categories
+    }
+
     const categoriesMap = categories.reduce((acc, cat: any) => {
-      acc[cat.id] = cat
+      if (cat && cat.id) {
+        acc[cat.id] = cat
+      }
       return acc
     }, {} as Record<string, any>)
 
@@ -91,9 +100,12 @@ export async function GET() {
 
     return response
   } catch (error) {
-    console.error("Error reading menu data from DB:", error)
+    console.error("CRITICAL: Error reading menu data from DB:", error)
     return NextResponse.json(
-      { error: "Error al leer los datos del menú" },
+      {
+        error: "Error al leer los datos del menú",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }

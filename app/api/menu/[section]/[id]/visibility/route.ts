@@ -5,9 +5,10 @@ import { revalidatePath } from 'next/cache'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { section: string; id: string } }
+  props: { params: Promise<{ section: string; id: string }> }
 ) {
   try {
+    const params = await props.params
     const { section, id } = params
     const body = await request.json()
     const { hidden, reason, hiddenBy, timestamp } = body
