@@ -2675,14 +2675,12 @@ export default function AdminPanel() {
                   </select>
                   <Button
                     size="sm"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 font-bold"
                     onClick={() => {
                       setIsEditingCategories(true)
-                      // Podemos opcionalmente desplazarnos a la subcategoría
                     }}
                   >
-                    <Edit className="w-4 h-4 text-white" />
-                    <span className="text-white">Editar</span>
+                    <span>✏️ EDITAR</span>
                   </Button>
                   <Button
                     size="sm"
@@ -3447,20 +3445,11 @@ export default function AdminPanel() {
                         {categories[category.id]?.startTime} - {categories[category.id]?.endTime}
                       </Badge>
                     )}
-                    {!isCategoryVisibleNow && categories[category.id]?.timeRestricted && (
+                    {categories[category.id]?.timeRestricted && !isCategoryVisibleNow && (
                       <Badge variant="outline" className="flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-300">
                         Fuera de horario
                       </Badge>
                     )}
-                    {/* Botón para editar categoría directamente */}
-                    <Button
-                      size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
-                      onClick={() => handleEditCategory(categories[category.id] || { id: category.id, name: category.name })}
-                    >
-                      <Edit className="w-4 h-4 text-white" />
-                      <span className="text-white">Editar Categoría</span>
-                    </Button>
                   </div>
                   <div className="flex gap-2 items-center">
                     <select
@@ -3475,10 +3464,18 @@ export default function AdminPanel() {
                       <option value="nameAsc">A-Z</option>
                       <option value="nameDesc">Z-A</option>
                     </select>
+                    {/* Botón para editar categoría - Simplificado y resaltado */}
+                    <Button
+                      size="sm"
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 font-bold"
+                      onClick={() => handleEditCategory(categories[category.id] || { id: category.id, name: category.name })}
+                    >
+                      <span>✏️ EDITAR</span>
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 bg-black text-white"
                       onClick={() => handleOpenTimeRangeModal(category.id)}
                     >
                       <Clock className="w-4 h-4" />
@@ -3486,7 +3483,7 @@ export default function AdminPanel() {
                     </Button>
                     <Button
                       size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold"
                       onClick={() => {
                         setSelectedCategoryForSubcategory(category.id)
                         setIsAddingSubcategory(true)
@@ -3497,7 +3494,7 @@ export default function AdminPanel() {
                     </Button>
                     <Button
                       size="sm"
-                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                      className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white border-0 font-semibold"
                       onClick={() => {
                         setSelectedCategoryForReorder(category.id)
                         setIsReorderingSubcategories(true)
@@ -3508,6 +3505,7 @@ export default function AdminPanel() {
                     </Button>
                     {(!Object.values(subcategoryMapping).includes(category.id)) && (
                       <Button
+                        id={`add-product-btn-${category.id}`}
                         size="sm"
                         disabled={saving}
                         className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button disabled:opacity-50 disabled:cursor-not-allowed"
