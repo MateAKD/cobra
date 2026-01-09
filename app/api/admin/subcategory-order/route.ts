@@ -55,15 +55,24 @@ export async function POST(request: NextRequest) {
 
     await connectDB()
 
+    // First, verify all subcategories exist
+    console.log('🔍 Verifying subcategories exist in DB...')
+    const verificationResults = []
+    for (const subcatId of subcategoryOrder) {
+      const found = await Category.findOne({ id: subcatId })
+      if (!found) {
+        console.error(`❌ Subcategory NOT FOUND in DB: ${subcatId}`)
+        verificationResults.push({ id: subcatId, found: false })
+      } else {
+        console.log(`✅ Found: ${subcatId} -> ${found.name} (order: ${found.order}, parent: ${found.parentCategory})`)
+        verificationResults.push({ id: subcatId, found: true, current: found })
+      }
+    }
+
+    // Build bulk operations with direct id match only
     const bulkOps = subcategoryOrder.map((subcatId: string, index: number) => ({
       updateOne: {
-        // Fallback: try to match by id OR by name (case-insensitive) to be extra robust
-        filter: {
-          $or: [
-            { id: subcatId },
-            { name: { $regex: new RegExp("^" + subcatId + "$", "i") } }
-          ]
-        },
+        filter: { id: subcatId },
         update: {
           $set: {
             order: index,
@@ -74,22 +83,38 @@ export async function POST(request: NextRequest) {
       }
     }))
 
-    console.log('🔧 Bulk operations to execute:', JSON.stringify(bulkOps, null, 2))
+    console.log('🔧 Executing bulkWrite with', bulkOps.length, 'operations')
 
     if (bulkOps.length > 0) {
       const result = await Category.bulkWrite(bulkOps)
-      console.log('✅ BulkWrite execution completed')
-      console.log('📊 Result details:', {
+      console.log('✅ BulkWrite completed:', {
         matchedCount: result.matchedCount,
         modifiedCount: result.modifiedCount,
-        upsertedCount: result.upsertedCount,
-        insertedCount: result.insertedCount
+        upsertedCount: result.upsertedCount
       })
 
+      // Verify the updates were applied
+      console.log('🔍 Verifying updates were applied...')
+      for (let i = 0; i < subcategoryOrder.length; i++) {
+        const subcatId = subcategoryOrder[i]
+        const updated = await Category.findOne({ id: subcatId })
+        if (updated) {
+          console.log(`📝 ${subcatId}: order=${updated.order} (expected ${i}), parent=${updated.parentCategory}`)
+          if (updated.order !== i) {
+            console.error(`❌ ORDER MISMATCH for ${subcatId}: got ${updated.order}, expected ${i}`)
+          }
+        }
+      }
+
       if (result.matchedCount < subcategoryOrder.length) {
-        console.warn(`⚠️ Warning: Only matched ${result.matchedCount} out of ${subcategoryOrder.length} subcategories.`)
-        // Log which ones didn't match (simplified check)
-        console.log('Requested IDs:', subcategoryOrder)
+        console.error(`❌ Only matched ${result.matchedCount}/${subcategoryOrder.length} subcategories!`)
+        return NextResponse.json(
+          {
+            error: `Solo se encontraron ${result.matchedCount} de ${subcategoryOrder.length} subcategorías`,
+            details: verificationResults
+          },
+          { status: 400 }
+        )
       }
     }
 

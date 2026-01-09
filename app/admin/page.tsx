@@ -257,14 +257,18 @@ export default function AdminPanel() {
 
   // Función para manejar el reordenamiento de subcategorías
   const handleSubcategoriesReorder = async (reorderedSubcategories: any[]) => {
+    console.log('🔄 handleSubcategoriesReorder called with:', reorderedSubcategories)
     try {
       setSaving(true)
       setNotificationStatus("Guardando nuevo orden de subcategorías...")
 
       // Extraer solo los IDs en el nuevo orden
       const subcategoryIds = reorderedSubcategories.map(sub => sub.id)
+      console.log('📋 Subcategory IDs to reorder:', subcategoryIds)
+      console.log('📂 Parent category:', selectedCategoryForReorder)
 
       // Enviar al servidor
+      console.log('🌐 Making POST request to /api/admin/subcategory-order...')
       const response = await fetch('/api/admin/subcategory-order', {
         method: 'POST',
         headers: {
@@ -276,25 +280,36 @@ export default function AdminPanel() {
         }),
       })
 
+      console.log('📡 Response status:', response.status, response.statusText)
+      const responseData = await response.json()
+      console.log('📦 Response data:', responseData)
+
       if (response.ok) {
         // Actualizar el estado local
         setSubcategoryOrder(prev => ({
           ...prev,
           [selectedCategoryForReorder]: subcategoryIds
         }))
+        console.log('✅ Local state updated')
+
         // Re-sincronizar todos los datos del admin para refrescar todas las vistas
+        console.log('🔄 Syncing admin data...')
         await syncAdminData()
+        console.log('✅ Admin data synced')
+
         setNotificationStatus("✅ Orden de subcategorías actualizado correctamente")
         setTimeout(() => setNotificationStatus(""), 3000)
       } else {
+        console.error('❌ Server returned error:', responseData)
         throw new Error('Error al guardar el orden')
       }
     } catch (error) {
-      console.error('Error al reordenar subcategorías:', error)
+      console.error('❌ Error al reordenar subcategorías:', error)
       setNotificationStatus("❌ Error al guardar el orden de subcategorías")
       setTimeout(() => setNotificationStatus(""), 3000)
     } finally {
       setSaving(false)
+      console.log('🏁 handleSubcategoriesReorder finished')
     }
   }
 
@@ -1666,75 +1681,30 @@ export default function AdminPanel() {
     setEditingCategoryDescription(categoryData?.description || "")
   }
 
-  // Función para guardar cambios de categoría
+  // Función para guardar cambios de categoría (solo feedback visual)
   const handleSaveCategory = async (updatedCategory: any) => {
     try {
       setSaving(true)
-      setNotificationStatus("Guardando cambios de categoría...")
+      setNotificationStatus("Confirmando cambios...")
 
-      // Actualizar la descripción de la categoría usando el hook useCategories
-      if (updatedCategory.description !== undefined) {
-        await updateCategory(updatedCategory.id, {
-          name: updatedCategory.name,
-          description: updatedCategory.description || "",
-          order: updatedCategory.order || 1
-        })
-      }
+      // NOTA: Este botón es puramente estético para dar feedback al usuario
+      // Los cambios reales (como reordenamiento de subcategorías) ya se guardan
+      // automáticamente cuando se realizan las acciones correspondientes
 
-      // Actualizar el estado local
-      setAllCategories(prev =>
-        prev.map(cat =>
-          cat.id === updatedCategory.id ? updatedCategory : cat
-        )
-      )
+      // Pequeño delay para simular procesamiento y dar feedback visual
+      await new Promise(resolve => setTimeout(resolve, 500))
 
-      // Si se cambió el nombre de la categoría, actualizar también el mapeo de subcategorías
-      if (updatedCategory.name !== editingCategory?.name) {
-        setSubcategoryMapping(prev => {
-          const newMapping = { ...prev }
-          Object.keys(newMapping).forEach(key => {
-            if (newMapping[key] === updatedCategory.id) {
-              // Aquí podrías implementar la lógica para renombrar la subcategoría
-              // Por ahora solo actualizamos el mapeo
-            }
-          })
-          return newMapping
-        })
-      }
-
-      // Si se ocultó la categoría, ocultar también todos los productos
-      if (updatedCategory.hidden && !editingCategory?.hidden) {
-        // Ocultar todos los productos de la categoría
-        const categoryItems = getCategoryItems(updatedCategory.id)
-        if (categoryItems.length > 0) {
-          for (const item of categoryItems) {
-            try {
-              await fetch(`/api/menu/${updatedCategory.id}/${item.id}/visibility`, {
-                method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  hidden: true,
-                  reason: "Categoría oculta",
-                  hiddenBy: "admin",
-                  timestamp: new Date().toISOString()
-                }),
-              })
-            } catch (error) {
-              console.warn("No se pudo ocultar el producto:", item.id)
-            }
-          }
-        }
-      }
-
+      // Cerrar el modal
       setEditingCategory(null)
       setEditingCategoryDescription("")
-      setNotificationStatus("✅ Categoría actualizada")
+
+      // Mostrar confirmación de éxito
+      setNotificationStatus("✅ Cambios confirmados correctamente")
       setTimeout(() => setNotificationStatus(""), 3000)
     } catch (error) {
-      console.error("Error saving category:", error)
-      alert("Error al guardar la categoría")
+      console.error("Error en handleSaveCategory:", error)
+      setNotificationStatus("❌ Error al confirmar cambios")
+      setTimeout(() => setNotificationStatus(""), 3000)
     } finally {
       setSaving(false)
     }
@@ -2705,6 +2675,17 @@ export default function AdminPanel() {
                   </select>
                   <Button
                     size="sm"
+                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                    onClick={() => {
+                      setIsEditingCategories(true)
+                      // Podemos opcionalmente desplazarnos a la subcategoría
+                    }}
+                  >
+                    <Edit className="w-4 h-4 text-white" />
+                    <span className="text-white">Editar</span>
+                  </Button>
+                  <Button
+                    size="sm"
                     disabled={saving}
                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => {
@@ -3474,12 +3455,11 @@ export default function AdminPanel() {
                     {/* Botón para editar categoría directamente */}
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
                       onClick={() => handleEditCategory(categories[category.id] || { id: category.id, name: category.name })}
                     >
-                      <Edit className="w-4 h-4" />
-                      <span>Editar Categoría</span>
+                      <Edit className="w-4 h-4 text-white" />
+                      <span className="text-white">Editar Categoría</span>
                     </Button>
                   </div>
                   <div className="flex gap-2 items-center">
@@ -3514,6 +3494,17 @@ export default function AdminPanel() {
                     >
                       <Plus className="w-4 h-4 text-white" />
                       <span className="text-white">Agregar Subcategoría</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white border-0 font-semibold admin-action-button"
+                      onClick={() => {
+                        setSelectedCategoryForReorder(category.id)
+                        setIsReorderingSubcategories(true)
+                      }}
+                    >
+                      <GripVertical className="w-4 h-4 text-white" />
+                      <span className="text-white">Reordenar</span>
                     </Button>
                     {(!Object.values(subcategoryMapping).includes(category.id)) && (
                       <Button

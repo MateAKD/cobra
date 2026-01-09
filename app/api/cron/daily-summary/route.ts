@@ -12,8 +12,7 @@ export async function GET(request: NextRequest) {
         // Validar autorización (simple API key check si es necesario, o confiar en Vercel Cron headers)
         const authHeader = request.headers.get('authorization');
         if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-            // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); 
-            // Por simplicidad en desarrollo local/VPS, lo dejamos abierto o lo protegemos luego.
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         // Buscar notificaciones no procesadas
