@@ -4,7 +4,9 @@
   "framework": "nextjs",
   "installCommand": "npm install --legacy-peer-deps",
   "devCommand": "npm run dev",
-  "regions": ["iad1"],
+  "regions": [
+    "iad1"
+  ],
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
@@ -27,6 +29,12 @@
           "value": "1; mode=block"
         }
       ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily-summary",
+      "schedule": "45 2 * * *"
     }
   ]
 }

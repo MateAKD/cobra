@@ -7,12 +7,12 @@ export function useSubcategoryOrder() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        // OPTIMIZACIÓN: Usar cache con revalidación en lugar de no-store
-        // Reduce requests al servidor mientras mantiene datos relativamente frescos
+        // Sin cache - siempre obtener datos frescos de MongoDB
+        // Esto asegura que el /menu refleje los cambios del admin inmediatamente al recargar
         const response = await fetch("/api/admin/subcategory-order", {
-          next: { revalidate: 5 }, // Revalidar cada 5 segundos
+          cache: 'no-store',
         })
-        
+
         if (response.ok) {
           const data = await response.json()
           setSubcategoryOrder(data)

@@ -282,6 +282,8 @@ export default function AdminPanel() {
           ...prev,
           [selectedCategoryForReorder]: subcategoryIds
         }))
+        // Re-sincronizar todos los datos del admin para refrescar todas las vistas
+        await syncAdminData()
         setNotificationStatus("✅ Orden de subcategorías actualizado correctamente")
         setTimeout(() => setNotificationStatus(""), 3000)
       } else {
@@ -303,7 +305,7 @@ export default function AdminPanel() {
     // Siempre cargar el mapeo de subcategorías más reciente desde la API
     let currentSubcategoryMapping = subcategoryMapping
     try {
-      const mappingResponse = await fetch("/api/admin/subcategory-mapping")
+      const mappingResponse = await fetch("/api/admin/subcategory-mapping", { cache: 'no-store' })
       if (mappingResponse.ok) {
         currentSubcategoryMapping = await mappingResponse.json()
         setSubcategoryMapping(currentSubcategoryMapping)
@@ -314,7 +316,7 @@ export default function AdminPanel() {
 
     // Cargar el orden de subcategorías
     try {
-      const orderResponse = await fetch("/api/admin/subcategory-order")
+      const orderResponse = await fetch("/api/admin/subcategory-order", { cache: 'no-store' })
       if (orderResponse.ok) {
         const order = await orderResponse.json()
         setSubcategoryOrder(order)
@@ -2607,6 +2609,20 @@ export default function AdminPanel() {
     const subcategories = Object.entries(subcategoryMapping)
       .filter(([subcatId, parentId]) => parentId === categoryId)
       .map(([subcatId]) => subcatId)
+      // SORT: Ordenar según subcategoryOrder para mantener consistencia con el reordenamiento
+      .sort((a, b) => {
+        const order = subcategoryOrder[categoryId] || []
+        const indexA = order.indexOf(a)
+        const indexB = order.indexOf(b)
+        // Si ninguno está en el orden, mantener orden actual
+        if (indexA === -1 && indexB === -1) return 0
+        // Si solo A no está en el orden, va al final
+        if (indexA === -1) return 1
+        // Si solo B no está en el orden, va al final
+        if (indexB === -1) return -1
+        // Ambos están en el orden, usar posición
+        return indexA - indexB
+      })
 
     // Debug: mostrar información de subcategorías (solo en desarrollo)
     if (process.env.NODE_ENV === 'development') {
@@ -3455,6 +3471,16 @@ export default function AdminPanel() {
                         Fuera de horario
                       </Badge>
                     )}
+                    {/* Botón para editar categoría directamente */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 font-semibold"
+                      onClick={() => handleEditCategory(categories[category.id] || { id: category.id, name: category.name })}
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>Editar Categoría</span>
+                    </Button>
                   </div>
                   <div className="flex gap-2 items-center">
                     <select
@@ -3640,6 +3666,16 @@ export default function AdminPanel() {
                   {/* Mostrar subcategorías si existen */}
                   {Object.entries(subcategoryMapping)
                     .filter(([subcatId, parentId]) => parentId === category.id)
+                    // SORT: Ordenar según subcategoryOrder para mantener consistencia
+                    .sort((a, b) => {
+                      const order = subcategoryOrder[category.id] || []
+                      const indexA = order.indexOf(a[0])
+                      const indexB = order.indexOf(b[0])
+                      if (indexA === -1 && indexB === -1) return 0
+                      if (indexA === -1) return 1
+                      if (indexB === -1) return -1
+                      return indexA - indexB
+                    })
                     .map(([subcatId]) => {
                       const subcatName = getSubcategoryDisplayName(subcatId, category.id)
 
@@ -3892,6 +3928,16 @@ export default function AdminPanel() {
                 <div className="space-y-2">
                   {Object.entries(subcategoryMapping)
                     .filter(([subcatId, parentId]) => parentId === editingCategory.id)
+                    // SORT: Ordenar según subcategoryOrder para mantener consistencia
+                    .sort((a, b) => {
+                      const order = subcategoryOrder[editingCategory.id] || []
+                      const indexA = order.indexOf(a[0])
+                      const indexB = order.indexOf(b[0])
+                      if (indexA === -1 && indexB === -1) return 0
+                      if (indexA === -1) return 1
+                      if (indexB === -1) return -1
+                      return indexA - indexB
+                    })
                     .map(([subcatId, parentId]) => {
                       const subcatName = getSubcategoryDisplayName(subcatId, parentId)
 

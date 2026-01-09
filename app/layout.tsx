@@ -41,11 +41,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${bebasNeue.variable} ${inter.variable} antialiased`}>
+    <html lang="es" className={`${bebasNeue.variable} ${inter.variable} antialiased`} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
       </head>
-      <body>{children}</body>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   )
 }

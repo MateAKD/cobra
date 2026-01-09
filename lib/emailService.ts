@@ -41,9 +41,9 @@ export const sendProductNotification = async (
     }
 
     const result = await response.json()
-    
-    console.log('✅ Notificación enviada exitosamente:', {
-      messageId: result.messageId,
+
+    console.log('✅ Notificación registrada exitosamente:', {
+      logId: result.logId,
       action,
       product: product.name
     })
@@ -96,9 +96,9 @@ export const sendTimeRangeNotification = async (
     }
 
     const result = await response.json()
-    
-    console.log('✅ Notificación de horario enviada exitosamente:', {
-      messageId: result.messageId,
+
+    console.log('✅ Notificación de horario registrada exitosamente:', {
+      logId: result.logId,
       action,
       category: timeRange.categoryName
     })

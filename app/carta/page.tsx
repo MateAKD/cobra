@@ -35,7 +35,7 @@ export default function CartaPage() {
             <img src="/logo-Johnnie-Walker.png" alt="Johnnie Walker" className="sponsor-logo-small" />
             <img src="/Tanqueray-Logo.png" alt="Tanqueray" className="sponsor-logo-small" />
           </div>
-          
+
           {/* Logo central */}
           <div className="header-center">
             <img
@@ -45,7 +45,7 @@ export default function CartaPage() {
             />
             <h1 className="carta-main-title bebas-title">Menú</h1>
           </div>
-          
+
           {/* Logos derecha */}
           <div className="sponsors-logos-right">
             <img src="/SERNOVA-Logotipo-Black-NTB433.png" alt="Sernova" className="sponsor-logo-small" />
@@ -64,7 +64,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Tapeos</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item">
                 <h3 className="bebas-title">Boniatos asados</h3>
                 <p className="carta-description">Con dressing de yogurt y hierbas.</p>
@@ -140,7 +140,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Hamburguesas</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item">
                 <h3 className="bebas-title">Sweet Island</h3>
                 <p className="carta-description">Con honey bacon y salsa mil islas.</p>
@@ -166,7 +166,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Ensaladas</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item">
                 <h3 className="bebas-title">Caesar Salad</h3>
                 <p className="carta-description">Lechuga, pollo grillado, crutones, parmesano y aderezo Caesar.</p>
@@ -188,12 +188,12 @@ export default function CartaPage() {
           <div className="carta-column">
             {/* PARRILLA */}
             <section className="carta-category">
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px'}}>
-                <h2 className="carta-category-title bebas-title" style={{marginBottom: '0'}}>Parrilla</h2>
-                <span style={{fontSize: '0.85em', fontStyle: 'italic', color: '#666', fontWeight: '300'}}>Hasta las 16.00</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                <h2 className="carta-category-title bebas-title" style={{ marginBottom: '0' }}>Parrilla</h2>
+                <span style={{ fontSize: '0.85em', fontStyle: 'italic', color: '#666', fontWeight: '300' }}>Hasta las 16.00</span>
               </div>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item">
                 <h3 className="bebas-title">Entraña</h3>
                 <p className="carta-description">250 g</p>
@@ -219,14 +219,14 @@ export default function CartaPage() {
                 <p className="carta-description">Dos unidades.</p>
               </div>
 
-              <p style={{fontSize: '0.85em', fontStyle: 'italic', color: '#666', fontWeight: '300', marginTop: '12px', marginBottom: '0'}}>Pedí tu guarnición aparte</p>
+              <p style={{ fontSize: '0.85em', fontStyle: 'italic', color: '#666', fontWeight: '300', marginTop: '12px', marginBottom: '0' }}>Pedí tu guarnición aparte</p>
             </section>
 
             {/* GUARNICIONES */}
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Guarniciones</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item">
                 <h3 className="bebas-title">Ensalada de verdes</h3>
               </div>
@@ -240,9 +240,9 @@ export default function CartaPage() {
             {/* MILANESAS */}
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Milanesas</h2>
-              <p style={{fontSize: '0.85em', fontStyle: 'italic', color: '#666', fontWeight: '300', marginTop: '4px', marginBottom: '8px'}}> Todas salen con papas fritas y mix de verdes</p>
+              <p style={{ fontSize: '0.85em', fontStyle: 'italic', color: '#666', fontWeight: '300', marginTop: '4px', marginBottom: '8px' }}> Todas salen con papas fritas y mix de verdes</p>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item">
                 <h3 className="bebas-title">Clásica</h3>
               </div>
@@ -282,7 +282,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Principales</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item">
                 <h3 className="bebas-title">Ojo de bife</h3>
                 <p className="carta-description">Con ensalada de verdes y papas fritas.</p>
@@ -320,7 +320,7 @@ export default function CartaPage() {
             <img src="/logo-Johnnie-Walker.png" alt="Johnnie Walker" className="sponsor-logo-small" />
             <img src="/Tanqueray-Logo.png" alt="Tanqueray" className="sponsor-logo-small" />
           </div>
-          
+
           {/* Logo central */}
           <div className="header-center">
             <img
@@ -329,7 +329,7 @@ export default function CartaPage() {
               className="carta-logo-center"
             />
           </div>
-          
+
           {/* Logos derecha */}
           <div className="sponsors-logos-right">
             <img src="/SERNOVA-Logotipo-Black-NTB433.png" alt="Sernova" className="sponsor-logo-small" />
@@ -348,7 +348,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Cafetería</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item-simple">
                 <h3 className="bebas-title">Espresso</h3>
               </div>
@@ -398,7 +398,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Pastelería</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item-simple">
                 <h3 className="bebas-title">Budín de limón</h3>
               </div>
@@ -432,7 +432,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Postres</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item">
                 <h3 className="bebas-title">Brownie</h3>
                 <p className="carta-description">Con helado, salsa de dulce de leche y praliné de nuez.</p>
@@ -448,34 +448,29 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Promociones</h2>
               <div className="carta-divider"></div>
-              
+
               {/* CAFE */}
               <div className="carta-subcategory">
                 <h4 className="bebas-title">CAFE</h4>
-                <div className="carta-item-with-price">
+                <div className="carta-item-simple">
                   <h3 className="bebas-title">1 AMERICANO O CAPUCCINO + 2 MEDIALUNAS</h3>
-                  <span className="carta-item-price">$9000</span>
                 </div>
-                <div className="carta-item-with-price">
+                <div className="carta-item-simple">
                   <h3 className="bebas-title">1 CAFE A ELECCION + CHIPA</h3>
-                  <span className="carta-item-price">$9500</span>
                 </div>
-                <div className="carta-item-with-price">
+                <div className="carta-item-simple">
                   <h3 className="bebas-title">1 FLAT WHITE O LATTE + 1 BUDIN DE LIMON O BANANA</h3>
-                  <span className="carta-item-price">$10500</span>
                 </div>
-                <div className="carta-item-with-price">
+                <div className="carta-item-simple">
                   <h3 className="bebas-title">2 CAFES A ELECCION + BROWNIE + COOKIE</h3>
-                  <span className="carta-item-price">$21500</span>
                 </div>
               </div>
 
               {/* TAPEOS */}
               <div className="carta-subcategory">
                 <h4 className="bebas-title">TAPEOS</h4>
-                <div className="carta-item-with-price">
+                <div className="carta-item-simple">
                   <h3 className="bebas-title">PAPAS FRITAS + 2 CORONAS</h3>
-                  <span className="carta-item-price">$18200</span>
                 </div>
               </div>
             </section>
@@ -487,7 +482,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Bebidas</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item-simple">
                 <h3 className="bebas-title">Agua sin gas</h3>
               </div>
@@ -517,7 +512,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Licuados y jugos</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-item-simple">
                 <h3 className="bebas-title">Limonada</h3>
               </div>
@@ -547,7 +542,7 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Cervezas</h2>
               <div className="carta-divider"></div>
-              
+
               <div className="carta-subcategory">
                 <h4 className="bebas-title">Tiradas</h4>
                 <p>Línea Patagonia</p>
@@ -570,8 +565,8 @@ export default function CartaPage() {
             <section className="carta-category">
               <h2 className="carta-category-title bebas-title">Tragos clásicos</h2>
               <div className="carta-divider"></div>
-              
-              
+
+
               <div className="carta-item-simple">
                 <h3 className="bebas-title">Fernet con Coca-Cola</h3>
               </div>
@@ -610,15 +605,15 @@ export default function CartaPage() {
             </section>
 
             {/* Texto antes del QR */}
-            <div style={{textAlign: 'center', marginBottom: 0, marginTop: '4px'}}>
-              <p style={{fontSize: '0.9em', fontStyle: 'italic', color: '#666', fontWeight: 300, marginBottom: 0}}>Escaneando este QR podés ver nuestros tragos de autor</p>
+            <div style={{ textAlign: 'center', marginBottom: 0, marginTop: '4px' }}>
+              <p style={{ fontSize: '0.9em', fontStyle: 'italic', color: '#666', fontWeight: 300, marginBottom: 0 }}>Escaneando este QR podés ver nuestros tragos de autor</p>
             </div>
 
             {/* QR CODE */}
             <div className="carta-qr-container">
-              <img 
-                src="/qr-cobra.png" 
-                alt="QR Code Cobra" 
+              <img
+                src="/qr-cobra.png"
+                alt="QR Code Cobra"
                 className="carta-qr-image"
               />
             </div>
