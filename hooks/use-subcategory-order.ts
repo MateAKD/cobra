@@ -9,7 +9,7 @@ export function useSubcategoryOrder() {
       try {
         // Sin cache - siempre obtener datos frescos de MongoDB
         // Esto asegura que el /menu refleje los cambios del admin inmediatamente al recargar
-        const response = await fetch("/api/admin/subcategory-order", {
+        const response = await fetch(`/api/admin/subcategory-order?t=${Date.now()}`, {
           cache: 'no-store',
         })
 

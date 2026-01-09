@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/db"
 import Category from "@/models/Category"
 
+export const dynamic = 'force-dynamic'
+
 // GET - Obtener el mapeo de subcategorías
 export async function GET() {
   try {
@@ -21,7 +23,7 @@ export async function GET() {
     })
 
     const response = NextResponse.json(mappingData)
-    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
+    response.headers.set('Cache-Control', 'no-store, max-age=0')
 
     return response
   } catch (error) {
@@ -33,7 +35,7 @@ export async function GET() {
 // POST - Actualizar el mapeo de subcategorías
 export async function POST(request: NextRequest) {
   try {
-    const newMapping = await request.json()
+    const newMapping = (await request.json()) as Record<string, string>
 
     if (typeof newMapping !== 'object' || newMapping === null) {
       return NextResponse.json(

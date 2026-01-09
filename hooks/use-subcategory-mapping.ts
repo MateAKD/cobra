@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 
 export const useSubcategoryMapping = () => {
-  const [subcategoryMapping, setSubcategoryMapping] = useState<{[key: string]: string}>({})
+  const [subcategoryMapping, setSubcategoryMapping] = useState<{ [key: string]: string }>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const loadSubcategoryMapping = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/subcategory-mapping')
+      const response = await fetch(`/api/admin/subcategory-mapping?t=${Date.now()}`)
       if (response.ok) {
         const data = await response.json()
         setSubcategoryMapping(data)

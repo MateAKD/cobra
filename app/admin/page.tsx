@@ -305,7 +305,7 @@ export default function AdminPanel() {
     // Siempre cargar el mapeo de subcategorías más reciente desde la API
     let currentSubcategoryMapping = subcategoryMapping
     try {
-      const mappingResponse = await fetch("/api/admin/subcategory-mapping", { cache: 'no-store' })
+      const mappingResponse = await fetch(`/api/admin/subcategory-mapping?t=${Date.now()}`, { cache: 'no-store' })
       if (mappingResponse.ok) {
         currentSubcategoryMapping = await mappingResponse.json()
         setSubcategoryMapping(currentSubcategoryMapping)
@@ -316,7 +316,7 @@ export default function AdminPanel() {
 
     // Cargar el orden de subcategorías
     try {
-      const orderResponse = await fetch("/api/admin/subcategory-order", { cache: 'no-store' })
+      const orderResponse = await fetch(`/api/admin/subcategory-order?t=${Date.now()}`, { cache: 'no-store' })
       if (orderResponse.ok) {
         const order = await orderResponse.json()
         setSubcategoryOrder(order)

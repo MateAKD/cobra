@@ -3,6 +3,8 @@ import connectDB from "@/lib/db"
 import Category from "@/models/Category"
 import { revalidatePath } from "next/cache"
 
+export const dynamic = 'force-dynamic'
+
 // GET - Obtener el orden de subcategorías
 export async function GET() {
   try {
@@ -26,7 +28,7 @@ export async function GET() {
     })
 
     const response = NextResponse.json(subcategoryOrder)
-    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
+    response.headers.set('Cache-Control', 'no-store, max-age=0')
 
     return response
   } catch (error) {
