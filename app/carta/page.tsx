@@ -50,7 +50,7 @@ export default function CartaPage() {
           <div className="sponsors-logos-right">
             <img src="/SERNOVA-Logotipo-Black-NTB433.png" alt="Sernova" className="sponsor-logo-small" />
             <img src="/Gordons-Gin-Logo.png" alt="Gordon's" className="sponsor-logo-small" />
-            <img src="https://logos-world.net/wp-content/uploads/2020/11/Red-Bull-Logo.png" alt="Red Bull" className="sponsor-logo-small" />
+            <img src="/Latitas.png" alt="Red Bull" className="sponsor-logo-small remove-background keep-colors" />
             <img src="/Puerto blest logo.png" alt="Puerto Blest" className="sponsor-logo-small" />
             <img src="/Terrazas de los andes logo.png" alt="Terrazas de los Andes" className="sponsor-logo-small remove-background" />
           </div>
@@ -334,7 +334,7 @@ export default function CartaPage() {
           <div className="sponsors-logos-right">
             <img src="/SERNOVA-Logotipo-Black-NTB433.png" alt="Sernova" className="sponsor-logo-small" />
             <img src="/Gordons-Gin-Logo.png" alt="Gordon's" className="sponsor-logo-small" />
-            <img src="https://logos-world.net/wp-content/uploads/2020/11/Red-Bull-Logo.png" alt="Red Bull" className="sponsor-logo-small" />
+            <img src="/Latitas.png" alt="Red Bull" className="sponsor-logo-small remove-background keep-colors" />
             <img src="/Puerto blest logo.png" alt="Puerto Blest" className="sponsor-logo-small" />
             <img src="/Terrazas de los andes logo.png" alt="Terrazas de los Andes" className="sponsor-logo-small remove-background" />
           </div>

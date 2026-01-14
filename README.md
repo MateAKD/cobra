@@ -16,6 +16,7 @@ Un menú digital moderno y elegante para el restaurante Cobra Bar, construido co
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS, CSS Modules
 - **UI Components**: Radix UI, Lucide React
+- **Base de Datos**: MongoDB Atlas (vía Mongoose)
 - **Deployment**: Vercel
 
 ## 📁 Estructura del Proyecto
@@ -24,11 +25,11 @@ Un menú digital moderno y elegante para el restaurante Cobra Bar, construido co
 ├── app/
 │   ├── page.tsx              # Menú público principal
 │   ├── admin/page.tsx         # Panel de administración
-│   ├── api/                  # API routes
+│   ├── api/                  # API routes (conectadas a MongoDB)
 │   └── globals.css           # Estilos globales
 ├── components/               # Componentes reutilizables
-├── hooks/                   # Custom hooks
-├── data/                    # Archivos JSON de datos
+├── hooks/                   # Custom hooks (data fetching de DB)
+├── models/                  # Modelos de MongoDB (Mongoose)
 └── public/                  # Assets estáticos
 ```
 

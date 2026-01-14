@@ -32,7 +32,7 @@
   pointer-events: none;
 }
 
-.carta-container > * {
+.carta-container>* {
   position: relative;
   z-index: 2;
 }
@@ -96,7 +96,8 @@
   min-height: 297mm;
   margin: 0 auto 20mm auto;
   background: transparent;
-  padding: 9mm 12mm; /* Reducido arriba/abajo */
+  padding: 9mm 12mm;
+  /* Reducido arriba/abajo */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
   position: relative;
@@ -108,20 +109,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3.5mm; /* Reducido para pantalla */
-  gap: 2.5mm; /* Reducido para pantalla */
+  margin-bottom: 3.5mm;
+  /* Reducido para pantalla */
+  gap: 2.5mm;
+  /* Reducido para pantalla */
 }
 
 .header-center {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.8mm; /* Reducido levemente */
+  gap: 0.8mm;
+  /* Reducido levemente */
   flex-shrink: 0;
 }
 
 .carta-logo-center {
-  height: 17mm; /* Reducido 1mm */
+  height: 17mm;
+  /* Reducido 1mm */
   width: auto;
   object-fit: contain;
   opacity: 0.9;
@@ -129,11 +134,13 @@
 
 .carta-main-title {
   font-family: var(--font-bebas);
-  font-size: 15pt; /* Reducido 1pt */
+  font-size: 15pt;
+  /* Reducido 1pt */
   font-weight: 700;
   color: #C35C3C;
   margin: 0;
-  letter-spacing: 1.4px; /* Reducido levemente */
+  letter-spacing: 1.4px;
+  /* Reducido levemente */
   text-transform: uppercase;
 }
 
@@ -143,8 +150,10 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 2.2mm; /* Reducido levemente */
-  max-width: 68mm; /* Reducido levemente */
+  gap: 2.2mm;
+  /* Reducido levemente */
+  max-width: 68mm;
+  /* Reducido levemente */
   flex: 1;
 }
 
@@ -153,16 +162,20 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 2.2mm; /* Reducido levemente */
-  max-width: 68mm; /* Reducido levemente */
+  gap: 2.2mm;
+  /* Reducido levemente */
+  max-width: 68mm;
+  /* Reducido levemente */
   flex: 1;
 }
 
 .sponsor-logo-small {
   flex-shrink: 0;
-  height: 5.5mm; /* Reducido 0.5mm */
+  height: 5.5mm;
+  /* Reducido 0.5mm */
   width: auto;
-  max-width: 9.5mm; /* Reducido 0.5mm */
+  max-width: 9.5mm;
+  /* Reducido 0.5mm */
   object-fit: contain;
   filter: grayscale(100%) brightness(0.4) contrast(2) saturate(0);
   opacity: 0.7;
@@ -174,13 +187,26 @@
   mix-blend-mode: multiply;
 }
 
+.keep-colors {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Ajuste para Red Bull en la carta (4 latas) */
+.a4-page img[alt="Red Bull"] {
+  max-width: 18mm !important;
+  height: 6mm !important;
+}
+
 /* ===== COLUMNAS ===== */
 
 .carta-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3.8mm; /* Reducido levemente */
-  column-gap: 5.8mm; /* Reducido levemente */
+  gap: 3.8mm;
+  /* Reducido levemente */
+  column-gap: 5.8mm;
+  /* Reducido levemente */
 }
 
 .carta-column {
@@ -194,90 +220,115 @@
 .carta-category {
   border: 1px solid #AEAEAE;
   border-radius: 10px;
-  padding: 0.75rem; /* Reducido levemente */
-  margin: 0.6rem 0; /* Reducido para mejor simetría */
+  padding: 0.75rem;
+  /* Reducido levemente */
+  margin: 0.6rem 0;
+  /* Reducido para mejor simetría */
   background: transparent;
   position: relative;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   break-inside: avoid;
 }
 
-.carta-column > .carta-category:first-child {
+.carta-column>.carta-category:first-child {
   margin-top: 0;
 }
 
-.carta-column > .carta-category:last-child {
+.carta-column>.carta-category:last-child {
   margin-bottom: 0;
 }
 
 .carta-category-title {
   font-family: var(--font-bebas);
   font-weight: 700;
-  font-size: 25px; /* Reducido 1px */
-  line-height: 21px; /* Reducido 1px */
-  letter-spacing: 1.15px; /* Reducido levemente */
+  font-size: 25px;
+  /* Reducido 1px */
+  line-height: 21px;
+  /* Reducido 1px */
+  letter-spacing: 1.15px;
+  /* Reducido levemente */
   color: #C35C3C;
   text-transform: uppercase;
-  margin-bottom: 0.23rem; /* Reducido levemente */
+  margin-bottom: 0.23rem;
+  /* Reducido levemente */
 }
 
 .carta-divider {
-  height: 2.4px; /* Reducido levemente */
-  margin: 0.18rem 0 0.55rem 0; /* Reducido levemente */
+  height: 2.4px;
+  /* Reducido levemente */
+  margin: 0.18rem 0 0.55rem 0;
+  /* Reducido levemente */
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 4' preserveAspectRatio='none'><path d='M1 2c8-1 16 1 24 0s16-2 24-1 16 3 24 1 16-2 24 0' fill='none' stroke='%23C35C3C' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' opacity='0.95'/></svg>");
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  width: 105px; /* Reducido levemente */
+  width: 105px;
+  /* Reducido levemente */
   max-width: 70%;
 }
 
 /* ===== ITEMS ===== */
 
 .carta-item {
-  margin-bottom: 0.32rem; /* Reducido levemente */
-  padding: 0.18rem 0; /* Reducido levemente */
+  margin-bottom: 0.32rem;
+  /* Reducido levemente */
+  padding: 0.18rem 0;
+  /* Reducido levemente */
   break-inside: avoid;
 }
 
 .carta-item h3 {
   font-family: var(--font-bebas);
-  font-size: 13.5px; /* Reducido 0.5px */
-  color: #000000; /* Negro para nombres de platos */
-  margin-bottom: 0.09rem; /* Reducido levemente */
-  line-height: 1.08; /* Más compacto */
+  font-size: 13.5px;
+  /* Reducido 0.5px */
+  color: #000000;
+  /* Negro para nombres de platos */
+  margin-bottom: 0.09rem;
+  /* Reducido levemente */
+  line-height: 1.08;
+  /* Más compacto */
   text-transform: uppercase;
 }
 
 .carta-description {
   font-family: var(--font-podium);
   font-weight: 300;
-  font-size: 9.8px; /* Reducido 0.2px */
-  line-height: 1.32; /* Más compacto */
+  font-size: 9.8px;
+  /* Reducido 0.2px */
+  line-height: 1.32;
+  /* Más compacto */
   color: #775729;
   margin: 0;
 }
 
 .carta-item-simple {
-  margin-bottom: 0.23rem; /* Reducido levemente */
-  padding: 0.13rem 0; /* Reducido levemente */
+  margin-bottom: 0.23rem;
+  /* Reducido levemente */
+  padding: 0.13rem 0;
+  /* Reducido levemente */
   break-inside: avoid;
 }
 
 .carta-item-simple h3 {
   font-family: var(--font-bebas);
-  font-size: 11.5px; /* Reducido 0.5px */
-  color: #000000; /* Negro para nombres de platos */
+  font-size: 11.5px;
+  /* Reducido 0.5px */
+  color: #000000;
+  /* Negro para nombres de platos */
   margin: 0;
-  line-height: 1.12; /* Más compacto */
+  line-height: 1.12;
+  /* Más compacto */
   text-transform: uppercase;
 }
 
 /* ===== SUBCATEGORÍAS ===== */
 
 .carta-subcategory {
-  border-left: 5.5px solid transparent; /* Reducido levemente */
-  padding-left: 0.85rem; /* Reducido levemente */
-  margin: 0.55rem 0; /* Reducido levemente */
+  border-left: 5.5px solid transparent;
+  /* Reducido levemente */
+  padding-left: 0.85rem;
+  /* Reducido levemente */
+  margin: 0.55rem 0;
+  /* Reducido levemente */
   border-radius: 0 4px 4px 0;
   position: relative;
   break-inside: avoid;
@@ -289,7 +340,8 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 5.5px; /* Reducido levemente */
+  width: 5.5px;
+  /* Reducido levemente */
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 100' preserveAspectRatio='none'><path d='M 6 0 C 3 5, 1 15, 1 50 C 1 85, 3 95, 6 100' fill='none' stroke='%23C35C3C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' opacity='0.95'/></svg>");
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -298,31 +350,43 @@
 .carta-subcategory h4 {
   font-family: var(--font-bebas);
   font-weight: 400;
-  font-size: 14.5px; /* Reducido 0.5px */
-  line-height: 13.5px; /* Reducido 0.5px */
-  letter-spacing: 0.75px; /* Reducido levemente */
-  color: #000000; /* Negro para subcategorías */
+  font-size: 14.5px;
+  /* Reducido 0.5px */
+  line-height: 13.5px;
+  /* Reducido 0.5px */
+  letter-spacing: 0.75px;
+  /* Reducido levemente */
+  color: #000000;
+  /* Negro para subcategorías */
   text-transform: uppercase;
-  margin-bottom: 0.18rem; /* Reducido levemente */
+  margin-bottom: 0.18rem;
+  /* Reducido levemente */
 }
 
 .carta-subcategory p {
   font-family: var(--font-podium);
-  font-size: 10.5px; /* Reducido 0.5px */
+  font-size: 10.5px;
+  /* Reducido 0.5px */
   color: #775729;
-  margin: 0.18rem 0; /* Reducido levemente */
-  padding-left: 0.38rem; /* Reducido levemente */
-  line-height: 1.28; /* Más compacto */
+  margin: 0.18rem 0;
+  /* Reducido levemente */
+  padding-left: 0.38rem;
+  /* Reducido levemente */
+  line-height: 1.28;
+  /* Más compacto */
 }
 
 .carta-subtitle {
   font-family: var(--font-podium);
   font-weight: 300;
-  font-size: 9.5px; /* Reducido 0.5px */
+  font-size: 9.5px;
+  /* Reducido 0.5px */
   color: #775729;
-  margin-bottom: 0.38rem; /* Reducido levemente */
+  margin-bottom: 0.38rem;
+  /* Reducido levemente */
   font-style: italic;
-  line-height: 1.28; /* Más compacto */
+  line-height: 1.28;
+  /* Más compacto */
 }
 
 /* ===== ITEMS CON PRECIO (PROMOCIONES) ===== */
@@ -379,6 +443,7 @@
 /* ===================================== */
 
 @media print {
+
   /* Reset completo */
   * {
     -webkit-print-color-adjust: exact !important;
@@ -386,7 +451,8 @@
     color-adjust: exact !important;
   }
 
-  html, body {
+  html,
+  body {
     margin: 0 !important;
     padding: 0 !important;
     width: 210mm !important;
@@ -417,7 +483,8 @@
     min-height: 297mm !important;
     max-height: 297mm !important;
     margin: 0 !important;
-    padding: 8mm 12mm !important; /* Reducido arriba/abajo */
+    padding: 8mm 12mm !important;
+    /* Reducido arriba/abajo */
     box-shadow: none !important;
     page-break-after: always !important;
     page-break-inside: avoid !important;
@@ -451,107 +518,141 @@
     pointer-events: none !important;
   }
 
-  .a4-page > * {
+  .a4-page>* {
     position: relative !important;
     z-index: 1 !important;
   }
 
   /* Header */
   .carta-header-centered {
-    margin-bottom: 2.5mm !important; /* Reducido levemente */
+    margin-bottom: 2.5mm !important;
+    /* Reducido levemente */
   }
 
   .carta-logo-center {
-    height: 14mm !important; /* Reducido 1mm */
+    height: 14mm !important;
+    /* Reducido 1mm */
   }
 
   .carta-main-title {
-    font-size: 13pt !important; /* Reducido 1pt */
+    font-size: 13pt !important;
+    /* Reducido 1pt */
   }
 
   .sponsor-logo-small {
-    height: 4.5mm !important; /* Reducido 0.5mm */
-    max-width: 8.5mm !important; /* Reducido levemente */
+    height: 4.5mm !important;
+    /* Reducido 0.5mm */
+    max-width: 8.5mm !important;
+    /* Reducido levemente */
   }
 
   /* Contenido */
   .carta-category {
-    margin: 0.5rem 0 !important; /* Reducido para mejor simetría */
-    padding: 0.65rem !important; /* Reducido levemente */
+    margin: 0.5rem 0 !important;
+    /* Reducido para mejor simetría */
+    padding: 0.65rem !important;
+    /* Reducido levemente */
   }
 
-  .carta-column > .carta-category:first-child {
+  .carta-column>.carta-category:first-child {
     margin-top: 0 !important;
   }
 
-  .carta-column > .carta-category:last-child {
+  .carta-column>.carta-category:last-child {
     margin-bottom: 0 !important;
   }
 
   .carta-category-title {
-    font-size: 21px !important; /* Reducido 1px */
+    font-size: 21px !important;
+    /* Reducido 1px */
     line-height: 19px !important;
-    margin-bottom: 0.18rem !important; /* Reducido levemente */
+    margin-bottom: 0.18rem !important;
+    /* Reducido levemente */
   }
 
   .carta-divider {
-    margin: 0.12rem 0 0.45rem 0 !important; /* Reducido levemente */
+    margin: 0.12rem 0 0.45rem 0 !important;
+    /* Reducido levemente */
     width: 100px !important;
   }
 
   .carta-item {
-    margin-bottom: 0.28rem !important; /* Reducido levemente */
-    padding: 0.12rem 0 !important; /* Reducido levemente */
+    margin-bottom: 0.28rem !important;
+    /* Reducido levemente */
+    padding: 0.12rem 0 !important;
+    /* Reducido levemente */
   }
 
   .carta-item h3 {
-    font-size: 11.5px !important; /* Reducido 0.5px */
-    line-height: 1.05 !important; /* Más compacto */
-    color: #000000 !important; /* Negro para nombres de platos */
+    font-size: 11.5px !important;
+    /* Reducido 0.5px */
+    line-height: 1.05 !important;
+    /* Más compacto */
+    color: #000000 !important;
+    /* Negro para nombres de platos */
   }
 
   .carta-description {
-    font-size: 8.5px !important; /* Reducido 0.5px */
-    line-height: 1.28 !important; /* Más compacto */
+    font-size: 8.5px !important;
+    /* Reducido 0.5px */
+    line-height: 1.28 !important;
+    /* Más compacto */
   }
 
   .carta-item-simple {
-    margin-bottom: 0.18rem !important; /* Reducido levemente */
-    padding: 0.08rem 0 !important; /* Reducido levemente */
+    margin-bottom: 0.18rem !important;
+    /* Reducido levemente */
+    padding: 0.08rem 0 !important;
+    /* Reducido levemente */
   }
 
   .carta-item-simple h3 {
-    font-size: 10.5px !important; /* Reducido 0.5px */
-    line-height: 1.08 !important; /* Más compacto */
-    color: #000000 !important; /* Negro para nombres de platos */
+    font-size: 10.5px !important;
+    /* Reducido 0.5px */
+    line-height: 1.08 !important;
+    /* Más compacto */
+    color: #000000 !important;
+    /* Negro para nombres de platos */
   }
 
   .carta-subcategory {
-    margin: 0.45rem 0 !important; /* Reducido levemente */
-    padding-left: 0.75rem !important; /* Reducido levemente */
+    margin: 0.45rem 0 !important;
+    /* Reducido levemente */
+    padding-left: 0.75rem !important;
+    /* Reducido levemente */
   }
 
   .carta-subcategory h4 {
-    font-size: 12.5px !important; /* Reducido 0.5px */
+    font-size: 12.5px !important;
+    /* Reducido 0.5px */
     line-height: 11.5px !important;
-    margin-bottom: 0.12rem !important; /* Reducido levemente */
-    color: #000000 !important; /* Negro para subcategorías */
+    margin-bottom: 0.12rem !important;
+    /* Reducido levemente */
+    color: #000000 !important;
+    /* Negro para subcategorías */
   }
 
   .carta-subcategory p {
-    font-size: 9.5px !important; /* Reducido 0.5px */
-    margin: 0.12rem 0 !important; /* Reducido levemente */
-    line-height: 1.22 !important; /* Más compacto */
+    font-size: 9.5px !important;
+    /* Reducido 0.5px */
+    margin: 0.12rem 0 !important;
+    /* Reducido levemente */
+    line-height: 1.22 !important;
+    /* Más compacto */
   }
 
   .carta-subtitle {
-    font-size: 8.5px !important; /* Reducido 0.5px */
-    margin-bottom: 0.25rem !important; /* Reducido levemente */
+    font-size: 8.5px !important;
+    /* Reducido 0.5px */
+    margin-bottom: 0.25rem !important;
+    /* Reducido levemente */
   }
 
   .carta-columns {
-    gap: 3.5mm !important; /* Reducido levemente */
-    column-gap: 5.5mm !important; /* Reducido levemente */
+    gap: 3.5mm !important;
+    /* Reducido levemente */
+    column-gap: 5.5mm !important;
+    /* Reducido levemente */
   }
 
   .carta-column {
@@ -602,7 +703,7 @@
 /* ===== PANTALLA - SEPARADOR ENTRE HOJAS ===== */
 
 @media screen {
-  .a4-page + .a4-page {
+  .a4-page+.a4-page {
     margin-top: 20mm;
     border-top: 2px dashed #AEAEAE;
   }

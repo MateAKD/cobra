@@ -123,6 +123,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground font-sans;
   }
@@ -132,23 +133,28 @@
 
 /* Colores principales de la paleta */
 .text-gold {
-  color: #f4b942; /* Amarillo dorado - para títulos, precios destacados, acentos principales */
+  color: #f4b942;
+  /* Amarillo dorado - para títulos, precios destacados, acentos principales */
 }
 
 .text-green {
-  color: #00ff41; /* Verde neón - para elementos veganos, divisores, acentos secundarios */
+  color: #00ff41;
+  /* Verde neón - para elementos veganos, divisores, acentos secundarios */
 }
 
 .text-coral {
-  color: #ff7043; /* Coral - para precios, elementos picantes, llamadas a la acción */
+  color: #ff7043;
+  /* Coral - para precios, elementos picantes, llamadas a la acción */
 }
 
 .text-gray-light {
-  color: #cccccc; /* Gris claro - para descripciones, subtítulos, texto secundario */
+  color: #cccccc;
+  /* Gris claro - para descripciones, subtítulos, texto secundario */
 }
 
 .text-white {
-  color: #ffffff; /* Blanco - para títulos principales, texto importante */
+  color: #ffffff;
+  /* Blanco - para títulos principales, texto importante */
 }
 
 /* Agregando estilos para logo sin fondo */
@@ -167,39 +173,47 @@
 
 /* Colores limpios y elegantes */
 .cobra-yellow {
-  color: #f4b942; /* Amarillo dorado consistente */
+  color: #f4b942;
+  /* Amarillo dorado consistente */
 }
 
 .cobra-gray {
-  color: #cccccc; /* Gris claro consistente */
+  color: #cccccc;
+  /* Gris claro consistente */
 }
 
 .podium-text {
-  color: #cccccc; /* Gris claro para texto general */
+  color: #cccccc;
+  /* Gris claro para texto general */
 }
 
 .podium-soft {
-  color: #cccccc; /* Gris claro para texto suave */
+  color: #cccccc;
+  /* Gris claro para texto suave */
 }
 
 /* Íconos con colores consistentes de la paleta */
 .icon-vegan {
-  color: #2f6f3a; /* Verde más sobrio sobre fondo claro */
+  color: #2f6f3a;
+  /* Verde más sobrio sobre fondo claro */
 }
 
 .icon-gluten-free {
-  color: #b4703b; /* Tono cálido acorde al divisor */
+  color: #b4703b;
+  /* Tono cálido acorde al divisor */
 }
 
 .icon-spicy {
-  color: #c9573a; /* Coral más apagado */
+  color: #c9573a;
+  /* Coral más apagado */
 }
 
 /* Tipografías con colores consistentes */
 /* Tipografía base para títulos Bebas Neue */
 .bebas-title {
   font-family: var(--font-bebas);
-  color: #c45a2a; /* Naranja/rojizo como en la imagen */
+  color: #c45a2a;
+  /* Naranja/rojizo como en la imagen */
   text-transform: uppercase;
   vertical-align: middle;
 }
@@ -270,13 +284,15 @@
 .podium-text {
   font-family: var(--font-podium);
   font-weight: 400;
-  color: #333333; /* Gris oscuro para texto general */
+  color: #333333;
+  /* Gris oscuro para texto general */
 }
 
 .podium-soft {
   font-family: var(--font-podium);
   font-weight: 300;
-  color: #4a4a4a; /* Gris medio para texto suave */
+  color: #4a4a4a;
+  /* Gris medio para texto suave */
 }
 
 /* Divisores con colores de la paleta */
@@ -340,7 +356,8 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 8px; /* Ancho del corchete más visible */
+  width: 8px;
+  /* Ancho del corchete más visible */
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 100' preserveAspectRatio='none'><path d='M 6 0 C 3 5, 1 15, 1 50 C 1 85, 3 95, 6 100' fill='none' stroke='%23C35C3C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' opacity='0.95'/></svg>");
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -413,8 +430,10 @@
   border-radius: 8px;
   padding: 0.75rem 0;
   margin-bottom: 0.5rem;
-  user-select: none; /* No seleccionable */
-  pointer-events: none; /* No clickeable */
+  user-select: none;
+  /* No seleccionable */
+  pointer-events: none;
+  /* No clickeable */
   cursor: default;
 }
 
@@ -445,7 +464,8 @@
 /* Caja de promociones con gradiente diagonal naranja */
 .promo-box {
   background: linear-gradient(135deg, rgba(244, 185, 66, 0.5) 0%, rgba(244, 185, 66, 1) 100%);
-  border: 1px solid #000000; /* Borde negro fino */
+  border: 1px solid #000000;
+  /* Borde negro fino */
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
@@ -463,10 +483,12 @@
 }
 
 @keyframes shimmer {
+
   0%,
   100% {
     transform: translateX(-100%) translateY(-100%) rotate(45deg);
   }
+
   50% {
     transform: translateX(100%) translateY(100%) rotate(45deg);
   }
@@ -476,6 +498,7 @@
    BENEFICIO: Reduce uso de CPU en 5-10% cuando usuario tiene animaciones reducidas activadas
    Los usuarios con sensibilidad al movimiento o dispositivos de bajo rendimiento se benefician */
 @media (prefers-reduced-motion: reduce) {
+
   /* Pausar todas las animaciones infinitas cuando el usuario prefiere movimiento reducido */
   .promo-box::before,
   .logos-track-large,
@@ -483,7 +506,7 @@
   .logo-fill-wrapper img {
     animation-play-state: paused !important;
   }
-  
+
   /* Desactivar transiciones y animaciones para usuarios con sensibilidad al movimiento */
   *,
   *::before,
@@ -506,8 +529,10 @@
 
 /* Estilos para los tabs de navegación móvil */
 .mobile-tabs {
-  background: #EDE9DD82; /* Fondo sólido blanco */
-  border: 1px solid #C5C5C5; /* Borde gris claro */
+  background: #EDE9DD82;
+  /* Fondo sólido blanco */
+  border: 1px solid #C5C5C5;
+  /* Borde gris claro */
   border-radius: 0;
   backdrop-filter: blur(12px);
   margin: 0;
@@ -575,9 +600,12 @@
 
 /* Botón activo con estilo naranja oscuro del proyecto */
 .category-button.active {
-  background: rgba(195, 92, 60, 0.2); /* Fondo naranja suave usando #C35C3C */
-  border: 2px solid #C35C3C; /* Recuadro naranja oscuro */
-  color: #C35C3C; /* Texto naranja oscuro */
+  background: rgba(195, 92, 60, 0.2);
+  /* Fondo naranja suave usando #C35C3C */
+  border: 2px solid #C35C3C;
+  /* Recuadro naranja oscuro */
+  color: #C35C3C;
+  /* Texto naranja oscuro */
   font-weight: 600;
   font-size: 0.875rem;
   box-shadow: 0 2px 4px rgba(195, 92, 60, 0.3);
@@ -585,13 +613,15 @@
 
 /* Botón inactivo */
 .category-button:not(.active) {
-  color: #000000; /* Texto negro */
+  color: #000000;
+  /* Texto negro */
   background: transparent;
   border: 1px solid transparent;
 }
 
 .category-button:not(.active):hover {
-  color: #333333; /* Texto negro más oscuro al hover */
+  color: #333333;
+  /* Texto negro más oscuro al hover */
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid #C5C5C5;
 }
@@ -618,12 +648,14 @@
 }
 
 .tab-button:not(.active) {
-  color: #333333; /* Gris oscuro para tema claro */
+  color: #333333;
+  /* Gris oscuro para tema claro */
   background: transparent;
 }
 
 .tab-button:not(.active):hover {
-  color: #f4b942; /* Amarillo dorado consistente */
+  color: #f4b942;
+  /* Amarillo dorado consistente */
   background: rgba(244, 185, 66, 0.1);
   transform: translateY(-1px);
 }
@@ -665,7 +697,8 @@
     top: 0;
     z-index: 50;
     margin-bottom: 2rem;
-    background: rgba(237, 233, 221, 0.95); /* Fondo semi-transparente para mejor visibilidad */
+    background: rgba(237, 233, 221, 0.95);
+    /* Fondo semi-transparente para mejor visibilidad */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     padding: 0.75rem 0;
@@ -675,7 +708,8 @@
   .tab-button {
     font-size: 0.75rem;
     padding: 0.375rem 0.75rem;
-    min-height: 44px; /* Área táctil mínima recomendada */
+    min-height: 44px;
+    /* Área táctil mínima recomendada */
     min-width: 44px;
   }
 
@@ -684,8 +718,10 @@
     padding: 0.625rem 1.25rem;
     margin: 0 0.5rem;
     font-size: 11px;
-    min-height: 44px; /* Área táctil mínima recomendada */
-    min-width: 60px; /* Ancho mínimo para mejor usabilidad */
+    min-height: 44px;
+    /* Área táctil mínima recomendada */
+    min-width: 60px;
+    /* Ancho mínimo para mejor usabilidad */
     flex-shrink: 0;
   }
 
@@ -761,7 +797,8 @@
 
 /* Fondo beige claro con imagen fusionada en modo aclarar */
 .cobra-snake-bg {
-  background-color: #EDE9DD; /* Color de fondo específico solicitado */
+  background-color: #EDE9DD;
+  /* Color de fondo específico solicitado */
   min-height: 100vh;
   position: relative;
   /* Asegurar que el contenedor no interfiera con mix-blend-mode */
@@ -771,7 +808,8 @@
 /* Imagen de fondo con modo de fusión aclarar para el efecto de escamas */
 .cobra-snake-bg::before {
   content: '';
-  position: fixed; /* Fixed para efecto parallax en desktop */
+  position: fixed;
+  /* Fixed para efecto parallax en desktop */
   top: 0;
   left: 0;
   right: 0;
@@ -782,10 +820,13 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  mix-blend-mode: lighten; /* Modo de fusión aclarar como en Figma */
-  opacity: 0.68; /* 68% de opacidad */
+  mix-blend-mode: lighten;
+  /* Modo de fusión aclarar como en Figma */
+  opacity: 0.68;
+  /* 68% de opacidad */
   z-index: 1;
-  pointer-events: none; /* Permitir interacción con el contenido */
+  pointer-events: none;
+  /* Permitir interacción con el contenido */
   /* Optimizaciones para iOS Safari */
   will-change: transform;
   transform: translateZ(0);
@@ -797,9 +838,11 @@
 /* En móvil, mantener fixed para que siempre cubra todo el contenido */
 @media (max-width: 1023px) {
   .cobra-snake-bg::before {
-    position: fixed; /* Fixed para que siempre cubra todo el contenido al hacer scroll */
+    position: fixed;
+    /* Fixed para que siempre cubra todo el contenido al hacer scroll */
     height: 100vh;
-    height: 100dvh; /* Dynamic viewport height para mejor soporte móvil */
+    height: 100dvh;
+    /* Dynamic viewport height para mejor soporte móvil */
     min-height: 100vh;
     min-height: 100dvh;
     /* Asegurar que los filtros se apliquen correctamente */
@@ -820,19 +863,21 @@
 }
 
 /* Asegurar que el contenido esté por encima del overlay */
-.cobra-snake-bg > * {
+.cobra-snake-bg>* {
   position: relative;
   z-index: 2;
 }
 
 /* Contenedor para el fondo móvil - más confiable en iOS Safari */
 .cobra-snake-bg-mobile-overlay-wrapper {
-  display: none; /* Oculto por defecto, solo visible en móvil */
+  display: none;
+  /* Oculto por defecto, solo visible en móvil */
 }
 
 /* Elemento real para el fondo en móvil - más confiable en iOS Safari */
 .cobra-snake-bg-mobile-overlay {
-  display: none; /* Oculto por defecto, solo visible en móvil */
+  display: none;
+  /* Oculto por defecto, solo visible en móvil */
 }
 
 @media (max-width: 1023px) {
@@ -848,7 +893,8 @@
     height: 100dvh;
     min-height: 100vh;
     min-height: 100dvh;
-    background-color: #EDE9DD; /* Color de fondo base */
+    background-color: #EDE9DD;
+    /* Color de fondo base */
     z-index: 1;
     pointer-events: none;
     /* Optimizaciones para iOS Safari */
@@ -856,7 +902,7 @@
     transform: translate3d(0, 0, 0);
     -webkit-transform: translate3d(0, 0, 0);
   }
-  
+
   .cobra-snake-bg-mobile-overlay {
     display: block;
     position: absolute;
@@ -888,12 +934,12 @@
     -webkit-transform-style: preserve-3d !important;
     transform-style: preserve-3d !important;
   }
-  
+
   /* Ocultar el pseudo-elemento ::before en móvil cuando hay un elemento real */
   .menu-page.cobra-snake-bg::before {
     display: none !important;
   }
-  
+
   /* Ocultar el pseudo-elemento general en móvil solo cuando hay un elemento real presente */
   .menu-page.cobra-snake-bg:has(.cobra-snake-bg-mobile-overlay)::before {
     display: none !important;
@@ -969,7 +1015,7 @@
     -webkit-backface-visibility: hidden !important;
     backface-visibility: hidden !important;
   }
-  
+
   /* Fix específico para menu-page en iOS */
   .menu-page.cobra-snake-bg::before {
     transform: translate3d(0, 0, 0) !important;
@@ -1005,6 +1051,7 @@
   0% {
     transform: translate3d(0, 100%, 0);
   }
+
   100% {
     transform: translate3d(0, 0, 0);
   }
@@ -1014,6 +1061,7 @@
   0% {
     -webkit-transform: translate3d(0, 100%, 0);
   }
+
   100% {
     -webkit-transform: translate3d(0, 0, 0);
   }
@@ -1023,6 +1071,7 @@
   0% {
     clip-path: inset(100% 0 0 0);
   }
+
   100% {
     clip-path: inset(0 0 0 0);
   }
@@ -1032,6 +1081,7 @@
   0% {
     -webkit-clip-path: inset(100% 0 0 0);
   }
+
   100% {
     -webkit-clip-path: inset(0 0 0 0);
   }
@@ -1093,7 +1143,8 @@ html {
 /* Asegurar que el viewport height sea correcto en móviles - 100vh dinámico */
 .h-screen {
   height: 100vh;
-  height: 100dvh; /* Dynamic viewport height - mejor soporte móvil */
+  height: 100dvh;
+  /* Dynamic viewport height - mejor soporte móvil */
   width: 100%;
   position: relative;
 }
@@ -1103,11 +1154,11 @@ html {
   .h-screen {
     height: -webkit-fill-available;
   }
-  
+
   html {
     height: -webkit-fill-available;
   }
-  
+
   body {
     height: -webkit-fill-available;
   }
@@ -1115,26 +1166,30 @@ html {
 
 /* Optimizaciones para layout de pantalla completa */
 @media (max-width: 640px) {
+
   /* Permitir scroll en toda la app por defecto */
-  html, body {
-    overflow-x: hidden; /* Solo prevenir scroll horizontal */
+  html,
+  body {
+    overflow-x: hidden;
+    /* Solo prevenir scroll horizontal */
     -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Altura segura para footer en móviles */
   footer.pb-safe {
     padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
   }
 
   /* Mejorar áreas táctiles de botones en la página principal */
-  a[href], button {
+  a[href],
+  button {
     -webkit-tap-highlight-color: rgba(195, 92, 60, 0.2);
     -webkit-touch-callout: none;
     touch-action: manipulation;
   }
 
   /* Mejorar feedback táctil en botones de navegación */
-  a[href] > div:active,
+  a[href]>div:active,
   button:active {
     transform: scale(0.98);
     transition: transform 0.1s ease;
@@ -1150,6 +1205,7 @@ html {
 
 /* Prevenir zoom en inputs en móviles */
 @media (max-width: 640px) {
+
   input,
   textarea,
   select {
@@ -1204,10 +1260,13 @@ html {
 }
 
 @keyframes graffitiPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.7;
     transform: translate(-50%, -50%) scale(1);
   }
+
   50% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.1);
@@ -1224,9 +1283,12 @@ html {
 }
 
 @keyframes graffitiFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -1252,101 +1314,134 @@ html {
 
 /* Estilos para elementos ocultos en el panel admin */
 .admin-hidden-item {
-  background: #f3f4f6 !important; /* bg-gray-200 */
-  border: 2px solid #6b7280 !important; /* border-gray-500 */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important; /* shadow-md */
+  background: #f3f4f6 !important;
+  /* bg-gray-200 */
+  border: 2px solid #6b7280 !important;
+  /* border-gray-500 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  /* shadow-md */
 }
 
 .admin-hidden-item .item-name {
-  color: #111827 !important; /* text-gray-900 */
-  font-weight: 700 !important; /* font-bold */
+  color: #111827 !important;
+  /* text-gray-900 */
+  font-weight: 700 !important;
+  /* font-bold */
 }
 
 .admin-hidden-item .item-description {
-  color: #374151 !important; /* text-gray-700 */
+  color: #374151 !important;
+  /* text-gray-700 */
 }
 
 .admin-hidden-item .item-details {
-  color: #4b5563 !important; /* text-gray-600 */
+  color: #4b5563 !important;
+  /* text-gray-600 */
 }
 
 .admin-hidden-badge {
-  background: #fed7aa !important; /* bg-orange-200 */
-  color: #7c2d12 !important; /* text-orange-900 */
-  font-weight: 600 !important; /* font-semibold */
-  border: 1px solid #fdba74 !important; /* border-orange-300 */
+  background: #fed7aa !important;
+  /* bg-orange-200 */
+  color: #7c2d12 !important;
+  /* text-orange-900 */
+  font-weight: 600 !important;
+  /* font-semibold */
+  border: 1px solid #fdba74 !important;
+  /* border-orange-300 */
 }
 
 /* Estilos para elementos visibles en el panel admin */
 .admin-visible-item .item-name {
-  color: #111827 !important; /* text-gray-900 */
-  font-weight: 600 !important; /* font-semibold */
+  color: #111827 !important;
+  /* text-gray-900 */
+  font-weight: 600 !important;
+  /* font-semibold */
 }
 
 .admin-visible-item .item-description {
-  color: #374151 !important; /* text-gray-700 */
+  color: #374151 !important;
+  /* text-gray-700 */
 }
 
 .admin-visible-item .item-details {
-  color: #4b5563 !important; /* text-gray-600 */
+  color: #4b5563 !important;
+  /* text-gray-600 */
 }
 
 /* Estilos para formularios en el panel de administración */
 .admin-panel input,
 .admin-panel textarea,
 .admin-panel select {
-  color: #111827 !important; /* text-gray-900 */
-  background-color: #ffffff !important; /* bg-white */
-  border-color: #d1d5db !important; /* border-gray-300 */
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  border-color: #d1d5db !important;
+  /* border-gray-300 */
 }
 
 .admin-panel input:focus,
 .admin-panel textarea:focus,
 .admin-panel select:focus {
-  border-color: #3b82f6 !important; /* border-blue-500 */
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important; /* focus ring */
+  border-color: #3b82f6 !important;
+  /* border-blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  /* focus ring */
 }
 
 .admin-panel label {
-  color: #374151 !important; /* text-gray-700 */
-  font-weight: 500 !important; /* font-medium */
+  color: #374151 !important;
+  /* text-gray-700 */
+  font-weight: 500 !important;
+  /* font-medium */
 }
 
 .admin-panel .card {
-  background-color: #ffffff !important; /* bg-white */
-  border-color: #e5e7eb !important; /* border-gray-200 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  border-color: #e5e7eb !important;
+  /* border-gray-200 */
 }
 
 .admin-panel .card-title {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel .card-content {
-  color: #374151 !important; /* text-gray-700 */
+  color: #374151 !important;
+  /* text-gray-700 */
 }
 
 /* Estilos específicos para componentes de UI en el panel admin */
 .admin-panel [data-slot="input"],
 .admin-panel [data-slot="textarea"] {
-  color: #111827 !important; /* text-gray-900 */
-  background-color: #ffffff !important; /* bg-white */
-  border-color: #d1d5db !important; /* border-gray-300 */
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  border-color: #d1d5db !important;
+  /* border-gray-300 */
 }
 
 .admin-panel [data-slot="input"]:focus,
 .admin-panel [data-slot="textarea"]:focus {
-  border-color: #3b82f6 !important; /* border-blue-500 */
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important; /* focus ring */
+  border-color: #3b82f6 !important;
+  /* border-blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  /* focus ring */
 }
 
 .admin-panel [data-slot="input"]::placeholder,
 .admin-panel [data-slot="textarea"]::placeholder {
-  color: #6b7280 !important; /* text-gray-500 */
+  color: #6b7280 !important;
+  /* text-gray-500 */
 }
 
 /* Asegurar que los textos en los formularios sean legibles */
 .admin-panel form {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel form * {
@@ -1356,52 +1451,68 @@ html {
 /* Estilos específicos para los formularios de edición y agregar */
 .admin-panel .EditForm,
 .admin-panel .AddForm {
-  background-color: #ffffff !important; /* bg-white */
+  background-color: #ffffff !important;
+  /* bg-white */
 }
 
 .admin-panel .EditForm *,
 .admin-panel .AddForm * {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel .EditForm label,
 .admin-panel .AddForm label {
-  color: #374151 !important; /* text-gray-700 */
-  font-weight: 500 !important; /* font-medium */
+  color: #374151 !important;
+  /* text-gray-700 */
+  font-weight: 500 !important;
+  /* font-medium */
 }
 
 .admin-panel .EditForm input,
 .admin-panel .AddForm input,
 .admin-panel .EditForm textarea,
 .admin-panel .AddForm textarea {
-  color: #111827 !important; /* text-gray-900 */
-  background-color: #ffffff !important; /* bg-white */
-  border-color: #d1d5db !important; /* border-gray-300 */
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  border-color: #d1d5db !important;
+  /* border-gray-300 */
 }
 
 .admin-panel .EditForm input::placeholder,
 .admin-panel .AddForm input::placeholder,
 .admin-panel .EditForm textarea::placeholder,
 .admin-panel .AddForm textarea::placeholder {
-  color: #6b7280 !important; /* text-gray-500 */
+  color: #6b7280 !important;
+  /* text-gray-500 */
 }
 
 /* Estilos para checkboxes en el panel admin */
 .admin-panel [data-slot="checkbox"] {
-  background-color: #ffffff !important; /* bg-white */
-  border-color: #d1d5db !important; /* border-gray-300 */
-  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  border-color: #d1d5db !important;
+  /* border-gray-300 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="checkbox"]:checked {
-  background-color: #3b82f6 !important; /* bg-blue-500 */
-  border-color: #3b82f6 !important; /* border-blue-500 */
-  color: #ffffff !important; /* text-white */
+  background-color: #3b82f6 !important;
+  /* bg-blue-500 */
+  border-color: #3b82f6 !important;
+  /* border-blue-500 */
+  color: #ffffff !important;
+  /* text-white */
 }
 
 .admin-panel [data-slot="checkbox"]:focus {
-  border-color: #3b82f6 !important; /* border-blue-500 */
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important; /* focus ring */
+  border-color: #3b82f6 !important;
+  /* border-blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  /* focus ring */
 }
 
 /* Estilos para botones en el panel admin */
@@ -1410,162 +1521,219 @@ html {
 }
 
 .admin-panel [data-slot="button"].bg-primary {
-  color: #ffffff !important; /* text-white */
+  color: #ffffff !important;
+  /* text-white */
 }
 
 .admin-panel [data-slot="button"].bg-secondary {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="button"].bg-destructive {
-  color: #ffffff !important; /* text-white */
+  color: #ffffff !important;
+  /* text-white */
 }
 
 .admin-panel [data-slot="button"].border {
-  color: #111827 !important; /* text-gray-900 */
-  background-color: #ffffff !important; /* bg-white */
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
 }
 
 /* Estilos para modales en el panel admin */
 .admin-panel [data-slot="dialog-content"] {
-  background-color: #ffffff !important; /* bg-white */
-  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="dialog-title"] {
-  color: #111827 !important; /* text-gray-900 */
-  font-weight: 600 !important; /* font-semibold */
+  color: #111827 !important;
+  /* text-gray-900 */
+  font-weight: 600 !important;
+  /* font-semibold */
 }
 
 .admin-panel [data-slot="dialog-description"] {
-  color: #374151 !important; /* text-gray-700 */
+  color: #374151 !important;
+  /* text-gray-700 */
 }
 
 .admin-panel [data-slot="dialog-header"] {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="dialog-footer"] {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 /* Estilos para alertas en el panel admin */
 .admin-panel [data-slot="alert"] {
-  background-color: #ffffff !important; /* bg-white */
-  border-color: #e5e7eb !important; /* border-gray-200 */
-  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  border-color: #e5e7eb !important;
+  /* border-gray-200 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="alert"].bg-card {
-  background-color: #ffffff !important; /* bg-white */
-  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="alert-title"] {
-  color: #111827 !important; /* text-gray-900 */
-  font-weight: 500 !important; /* font-medium */
+  color: #111827 !important;
+  /* text-gray-900 */
+  font-weight: 500 !important;
+  /* font-medium */
 }
 
 .admin-panel [data-slot="alert-description"] {
-  color: #374151 !important; /* text-gray-700 */
+  color: #374151 !important;
+  /* text-gray-700 */
 }
 
 /* Estilos para alertas destructivas */
 .admin-panel [data-slot="alert"].text-destructive {
-  color: #dc2626 !important; /* text-red-600 */
-  border-color: #fecaca !important; /* border-red-200 */
-  background-color: #fef2f2 !important; /* bg-red-50 */
+  color: #dc2626 !important;
+  /* text-red-600 */
+  border-color: #fecaca !important;
+  /* border-red-200 */
+  background-color: #fef2f2 !important;
+  /* bg-red-50 */
 }
 
 /* Estilos para pestañas en el panel admin */
 .admin-panel [data-slot="tabs-list"] {
-  background-color: #f3f4f6 !important; /* bg-gray-100 */
-  border-color: #e5e7eb !important; /* border-gray-200 */
+  background-color: #f3f4f6 !important;
+  /* bg-gray-100 */
+  border-color: #e5e7eb !important;
+  /* border-gray-200 */
 }
 
 .admin-panel [data-slot="tabs-trigger"] {
-  color: #374151 !important; /* text-gray-700 */
+  color: #374151 !important;
+  /* text-gray-700 */
   background-color: transparent !important;
   border-color: transparent !important;
 }
 
 .admin-panel [data-slot="tabs-trigger"]:hover {
-  color: #111827 !important; /* text-gray-900 */
-  background-color: #ffffff !important; /* bg-white */
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
 }
 
 .admin-panel [data-slot="tabs-trigger"][data-state="active"] {
-  color: #111827 !important; /* text-gray-900 */
-  background-color: #ffffff !important; /* bg-white */
-  border-color: #d1d5db !important; /* border-gray-300 */
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important; /* shadow-sm */
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  border-color: #d1d5db !important;
+  /* border-gray-300 */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+  /* shadow-sm */
 }
 
 .admin-panel [data-slot="tabs-content"] {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 /* Estilos para tarjetas en el panel admin */
 .admin-panel [data-slot="card"] {
-  background-color: #ffffff !important; /* bg-white */
-  color: #111827 !important; /* text-gray-900 */
-  border-color: #e5e7eb !important; /* border-gray-200 */
+  background-color: #ffffff !important;
+  /* bg-white */
+  color: #111827 !important;
+  /* text-gray-900 */
+  border-color: #e5e7eb !important;
+  /* border-gray-200 */
 }
 
 .admin-panel [data-slot="card-header"] {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="card-title"] {
-  color: #111827 !important; /* text-gray-900 */
-  font-weight: 600 !important; /* font-semibold */
+  color: #111827 !important;
+  /* text-gray-900 */
+  font-weight: 600 !important;
+  /* font-semibold */
 }
 
 .admin-panel [data-slot="card-description"] {
-  color: #374151 !important; /* text-gray-700 */
+  color: #374151 !important;
+  /* text-gray-700 */
 }
 
 .admin-panel [data-slot="card-content"] {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="card-footer"] {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 .admin-panel [data-slot="card-action"] {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
 }
 
 /* Estilos para etiquetas en el panel admin */
 .admin-panel [data-slot="label"] {
-  color: #374151 !important; /* text-gray-700 */
-  font-weight: 500 !important; /* font-medium */
+  color: #374151 !important;
+  /* text-gray-700 */
+  font-weight: 500 !important;
+  /* font-medium */
 }
 
 /* Estilos para badges en el panel admin */
 .admin-panel [data-slot="badge"] {
-  color: #111827 !important; /* text-gray-900 */
-  background-color: #f3f4f6 !important; /* bg-gray-100 */
-  border-color: #d1d5db !important; /* border-gray-300 */
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #f3f4f6 !important;
+  /* bg-gray-100 */
+  border-color: #d1d5db !important;
+  /* border-gray-300 */
 }
 
 .admin-panel [data-slot="badge"].bg-primary {
-  color: #ffffff !important; /* text-white */
-  background-color: #3b82f6 !important; /* bg-blue-500 */
-  border-color: #3b82f6 !important; /* border-blue-500 */
+  color: #ffffff !important;
+  /* text-white */
+  background-color: #3b82f6 !important;
+  /* bg-blue-500 */
+  border-color: #3b82f6 !important;
+  /* border-blue-500 */
 }
 
 .admin-panel [data-slot="badge"].bg-secondary {
-  color: #111827 !important; /* text-gray-900 */
-  background-color: #f3f4f6 !important; /* bg-gray-100 */
-  border-color: #d1d5db !important; /* border-gray-300 */
+  color: #111827 !important;
+  /* text-gray-900 */
+  background-color: #f3f4f6 !important;
+  /* bg-gray-100 */
+  border-color: #d1d5db !important;
+  /* border-gray-300 */
 }
 
 .admin-panel [data-slot="badge"].bg-destructive {
-  color: #ffffff !important; /* text-white */
-  background-color: #dc2626 !important; /* bg-red-600 */
-  border-color: #dc2626 !important; /* border-red-600 */
+  color: #ffffff !important;
+  /* text-white */
+  background-color: #dc2626 !important;
+  /* bg-red-600 */
+  border-color: #dc2626 !important;
+  /* border-red-600 */
 }
 
 .admin-panel [data-slot="badge"].border-transparent {
@@ -1625,6 +1793,7 @@ html {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -1646,7 +1815,8 @@ html {
   border-radius: 4px;
   white-space: nowrap;
   user-select: none;
-  pointer-events: none; /* No clickeable */
+  pointer-events: none;
+  /* No clickeable */
   cursor: default;
 }
 
@@ -1656,12 +1826,12 @@ html {
     gap: 2rem;
     animation-duration: 25s;
   }
-  
+
   .logo-item {
     font-size: 0.75rem;
     padding: 0.375rem 0.75rem;
   }
-  
+
   .logos-carousel::before,
   .logos-carousel::after {
     width: 30px;
@@ -1674,7 +1844,7 @@ html {
     gap: 2.5rem;
     animation-duration: 28s;
   }
-  
+
   .logo-item {
     font-size: 0.8rem;
   }
@@ -1686,7 +1856,7 @@ html {
     gap: 4rem;
     animation-duration: 35s;
   }
-  
+
   .logo-item {
     font-size: 1rem;
     padding: 0.625rem 1.25rem;
@@ -1748,6 +1918,7 @@ html {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -1765,7 +1936,8 @@ html {
   filter: grayscale(100%) brightness(0.4) contrast(2) saturate(0);
   opacity: 0.7;
   user-select: none;
-  pointer-events: none; /* No clickeable */
+  pointer-events: none;
+  /* No clickeable */
   cursor: default;
 }
 
@@ -1776,22 +1948,36 @@ html {
   background: transparent;
 }
 
+.keep-colors {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Ajuste específico para el logo de Red Bull (4 latas) */
+img[alt="Red Bull"] {
+  height: 55px !important;
+  width: auto !important;
+  max-width: 140px !important;
+  /* Más ancho para que entren las 4 latas */
+  margin: 0 10px;
+}
+
 /* Responsive para móviles - carrusel grande */
 @media (max-width: 640px) {
   .logos-carousel-container-large {
     padding: 0.45rem 0;
   }
-  
+
   .logos-track-large {
     gap: 3rem;
     animation-duration: 30s;
   }
-  
+
   .logo-item-large {
     height: 35px;
     max-width: 70px;
   }
-  
+
   .logos-carousel-large::before,
   .logos-carousel-large::after {
     width: 50px;
@@ -1803,17 +1989,17 @@ html {
   .logos-carousel-container-large {
     padding: 0.525rem 0;
   }
-  
+
   .logos-track-large {
     gap: 3.5rem;
     animation-duration: 35s;
   }
-  
+
   .logo-item-large {
     height: 40px;
     max-width: 80px;
   }
-  
+
   .logos-carousel-large::before,
   .logos-carousel-large::after {
     width: 60px;
@@ -1825,17 +2011,17 @@ html {
   .logos-carousel-container-large {
     padding: 0.75rem 0;
   }
-  
+
   .logos-track-large {
     gap: 5rem;
     animation-duration: 45s;
   }
-  
+
   .logo-item-large {
     height: 55px;
     max-width: 110px;
   }
-  
+
   .logos-carousel-large::before,
   .logos-carousel-large::after {
     width: 100px;

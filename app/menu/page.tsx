@@ -1050,7 +1050,7 @@ export default function MenuPage() {
                     <img src="/Tanqueray-Logo.png" alt="Tanqueray" className="logo-item-large" />
                     <img src="/SERNOVA-Logotipo-Black-NTB433.png" alt="Sernova" className="logo-item-large" />
                     <img src="/Gordons-Gin-Logo.png" alt="Gordon's" className="logo-item-large" />
-                    <img src="https://logos-world.net/wp-content/uploads/2020/11/Red-Bull-Logo.png" alt="Red Bull" className="logo-item-large" />
+                    <img src="/Latitas.png" alt="Red Bull" className="logo-item-large remove-background keep-colors" />
                     <img src="/Puerto blest logo.png" alt="Puerto Blest" className="logo-item-large" />
                     <img src="/Terrazas de los andes logo.png" alt="Terrazas de los Andes" className="logo-item-large remove-background" />
                     {/* Segunda serie para el efecto infinito */}
@@ -1062,7 +1062,7 @@ export default function MenuPage() {
                     <img src="/Tanqueray-Logo.png" alt="Tanqueray" className="logo-item-large" />
                     <img src="/SERNOVA-Logotipo-Black-NTB433.png" alt="Sernova" className="logo-item-large" />
                     <img src="/Gordons-Gin-Logo.png" alt="Gordon's" className="logo-item-large" />
-                    <img src="https://logos-world.net/wp-content/uploads/2020/11/Red-Bull-Logo.png" alt="Red Bull" className="logo-item-large" />
+                    <img src="/Latitas.png" alt="Red Bull" className="logo-item-large remove-background keep-colors" />
                     <img src="/Puerto blest logo.png" alt="Puerto Blest" className="logo-item-large" />
                     <img src="/Terrazas de los andes logo.png" alt="Terrazas de los Andes" className="logo-item-large remove-background" />
                   </div>
