@@ -27,9 +27,13 @@ function isTimeInRange(startTime: string, endTime: string): boolean {
 }
 
 // GET - Obtener todos los datos del menú desde MongoDB
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB()
+
+    // Check if this is an admin request (admin panel should see ALL products)
+    const { searchParams } = new URL(request.url)
+    const isAdminRequest = searchParams.get('admin') === 'true'
 
     // Obtener todos los productos ordenados
     const products = await Product.find({}).sort({ order: 1 }).lean()
@@ -74,25 +78,34 @@ export async function GET() {
     })
 
     // FILTER: Remove categories that are outside their time range
+    // BUT: Skip filtering if this is an admin request (admin should see everything)
     const filteredMenuData: any = {}
 
-    Object.entries(menuData).forEach(([categoryId, data]) => {
-      const category = categoriesMap[categoryId]
+    if (isAdminRequest) {
+      // Admin mode: Return ALL categories without time filtering
+      Object.entries(menuData).forEach(([categoryId, data]) => {
+        filteredMenuData[categoryId] = data
+      })
+    } else {
+      // Public menu: Apply time-based filtering
+      Object.entries(menuData).forEach(([categoryId, data]) => {
+        const category = categoriesMap[categoryId]
 
-      // Check if category has time restriction
-      if (category?.timeRestricted && category.startTime && category.endTime) {
-        const isInRange = isTimeInRange(category.startTime, category.endTime)
+        // Check if category has time restriction
+        if (category?.timeRestricted && category.startTime && category.endTime) {
+          const isInRange = isTimeInRange(category.startTime, category.endTime)
 
-        // Only include if current time is WITHIN the allowed range
-        if (isInRange) {
+          // Only include if current time is WITHIN the allowed range
+          if (isInRange) {
+            filteredMenuData[categoryId] = data
+          }
+          // Otherwise skip this category entirely (it's hidden)
+        } else {
+          // No restriction or invalid config - include it
           filteredMenuData[categoryId] = data
         }
-        // Otherwise skip this category entirely (it's hidden)
-      } else {
-        // No restriction or invalid config - include it
-        filteredMenuData[categoryId] = data
-      }
-    })
+      })
+    }
 
     const response = NextResponse.json(filteredMenuData)
     // Cache de 5s para no saturar DB pero datos frescos

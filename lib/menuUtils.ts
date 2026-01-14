@@ -81,14 +81,18 @@ export function filterHiddenItems(data: any): any {
 // Función para obtener datos del menú con filtrado opcional
 // OPTIMIZACIÓN: Usa cache con revalidación en lugar de no-store
 // FIXED: Agregado parámetro bypassCache para forzar datos frescos cuando sea necesario
-export async function fetchMenuData(includeHidden: boolean = false, bypassCache: boolean = false) {
+// FIXED: Agregado parámetro isAdmin para deshabilitar filtrado por horario en admin
+export async function fetchMenuData(includeHidden: boolean = false, bypassCache: boolean = false, isAdmin: boolean = false) {
   try {
     // FIXED: Si bypassCache es true, usar no-store para obtener datos frescos
     const fetchOptions: RequestInit = bypassCache
       ? { cache: 'no-store' }
       : { next: { revalidate: 5 } }
 
-    const response = await fetch("/api/menu", fetchOptions)
+    // FIXED: Si es admin, agregar parámetro admin=true a la URL
+    const url = isAdmin ? "/api/menu?admin=true" : "/api/menu"
+
+    const response = await fetch(url, fetchOptions)
 
     if (!response.ok) {
       throw new Error("Error al cargar los datos del menú")

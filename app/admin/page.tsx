@@ -383,30 +383,26 @@ export default function AdminPanel() {
 
     // Actualizar el estado de todas las categorías
     setAllCategories(prev => {
-      // SOLUCIÓN DEFINITIVA: Solo mostrar las 6 categorías principales
-      const MAIN_CATEGORY_IDS = [
-        'parrilla',
-        'tapeos',
-        'principales',
-        'desayunos-y-meriendas',
-        'bebidas',
-        'promociones',
-        'postres'
-      ]
-
+      // FIXED: Cargar categorías principales dinámicamente (excluir subcategorías y duplicados)
       const jsonCategories: any[] = []
+      const seenIds = new Set<string>()
 
-      // SOLO agregar las 6 categorías principales
-      MAIN_CATEGORY_IDS.forEach(catId => {
-        const categoryInfo = categories[catId]
+      // Agregar solo las categorías principales (no subcategorías)
+      Object.entries(categories).forEach(([catId, categoryInfo]: [string, any]) => {
+        // FILTRAR: No agregar si es una subcategoría o si ya fue agregada
+        const isSubcategory = categoryInfo.isSubcategory === true ||
+          Object.keys(currentSubcategoryMapping).includes(catId)
 
-        jsonCategories.push({
-          id: catId,
-          name: categoryInfo?.name || catId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-          isStandard: false,
-          description: categoryInfo?.description || "",
-          order: categoryInfo?.order ?? MAIN_CATEGORY_IDS.indexOf(catId) + 1
-        })
+        if (!isSubcategory && !seenIds.has(catId)) {
+          seenIds.add(catId)
+          jsonCategories.push({
+            id: catId,
+            name: categoryInfo.name || catId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+            isStandard: false,
+            description: categoryInfo.description || "",
+            order: categoryInfo.order ?? 999
+          })
+        }
       })
 
       // Logging defensivo
@@ -419,16 +415,24 @@ export default function AdminPanel() {
 
       return jsonCategories
     })
+
+    // DEBUG: Log para diagnóstico
+    console.log('🔍 Estado de categories en syncAdminData:', {
+      categoriesCount: Object.keys(categories).length,
+      categoriesKeys: Object.keys(categories),
+      firstCategory: categories[Object.keys(categories)[0]]
+    })
   }
 
-  // Sincronizar datos cuando cambien los datos del admin
+  // Sincronizar datos cuando cambien los datos del admin o las categorías
   useEffect(() => {
-    if (adminMenuData && isAuthenticated) {
+    // FIXED: Esperar a que categories se hayan cargado antes de sincronizar
+    if (adminMenuData && isAuthenticated && Object.keys(categories).length > 0) {
       syncAdminData().then(() => {
         setLoading(false)
       })
     }
-  }, [adminMenuData, isAuthenticated])
+  }, [adminMenuData, isAuthenticated, categories])
 
   // Actualizar el orden de allCategories cuando cambie categories (después de reordenar)
   useEffect(() => {
@@ -1254,21 +1258,49 @@ export default function AdminPanel() {
         return
       }
 
-      // Agregar a todas las categorías
-      setAllCategories(prev => [...prev, {
-        id: categoryId,
-        name: categoryName,
-        isStandard: false
-      }])
+      // Obtener el orden máximo actual para agregar la nueva categoría al final
+      const maxOrder = Math.max(...Object.values(categories).map((c: any) => c.order || 0), 0)
 
-      // Inicializar menuSections con un array vacío para la nueva categoría
-      setMenuSections(prev => ({
-        ...prev,
-        [categoryId]: []
-      }))
+      // FIXED: Usar el endpoint POST correcto de MongoDB
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: categoryId,
+          name: categoryName,
+          description: "",
+          order: maxOrder + 1,
+          timeRestricted: false,
+          visible: true
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Error al crear categoría")
+      }
+
+      const result = await response.json()
+      console.log("✅ Categoría creada:", result)
+
+      // Esperar un momento para que MongoDB procese
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      // Recargar categorías desde la base de datos
+      await loadCategories()
+
+      // Recargar datos del menú
+      await refetchAdminMenu()
 
       // Cambiar a la nueva categoría
       setActiveTab(categoryId)
+
+      // Limpiar y cerrar modal
+      setNewCategoryName("")
+      setIsAddingCategory(false)
+
+      setNotificationStatus("✅ Categoría creada correctamente")
+      setTimeout(() => setNotificationStatus(""), 3000)
 
       // Hacer scroll a la nueva categoría después de un pequeño delay
       setTimeout(() => {
@@ -1276,65 +1308,11 @@ export default function AdminPanel() {
         if (newTab) {
           newTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
         }
-      }, 100)
+      }, 500)
 
-      // Crear la categoría en el archivo JSON del menú
-      const menuResponse = await fetch(`/api/menu/${categoryId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify([]),
-      })
-
-      if (menuResponse.ok) {
-        // También crear la categoría en categories.json
-        const categoryData = {
-          name: categoryName,
-          description: "",
-          order: allCategories.length + 1
-        }
-
-        // Obtener las categorías actuales
-        const categoriesResponse = await fetch("/api/categories")
-        if (categoriesResponse.ok) {
-          const currentCategories = await categoriesResponse.json()
-
-          // Agregar la nueva categoría
-          const updatedCategories = {
-            ...currentCategories,
-            [categoryId]: categoryData
-          }
-
-          // Actualizar categories.json
-          await fetch("/api/categories", {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(updatedCategories),
-          })
-        }
-
-        // FIXED: Esperar a que el archivo se escriba completamente antes de refetch
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        // Recargar categorías desde categories.json
-        await loadCategories()
-
-        // Recargar datos del menú
-        await refetchAdminMenu()
-
-        // Limpiar y cerrar modal
-        setNewCategoryName("")
-        setIsAddingCategory(false)
-
-        setNotificationStatus("✅ Categoría creada correctamente")
-        setTimeout(() => setNotificationStatus(""), 3000)
-      }
     } catch (error) {
       console.error("Error adding category:", error)
-      alert("Error al agregar la categoría")
+      alert(`Error al agregar la categoría: ${error instanceof Error ? error.message : 'Error desconocido'}`)
     }
   }
 

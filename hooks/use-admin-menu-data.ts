@@ -75,7 +75,8 @@ export function useAdminMenuData() {
     try {
       setLoading(true)
       // En el admin, incluir productos ocultos para poder gestionarlos
-      const data = await fetchMenuData(true) // true = incluir productos ocultos
+      // FIXED: Agregar isAdmin=true para deshabilitar filtrado por horario
+      const data = await fetchMenuData(true, false, true) // true = incluir ocultos, false = no bypass cache, true = isAdmin
       setMenuData(data)
       setError(null)
     } catch (err) {
@@ -97,7 +98,8 @@ export function useAdminMenuData() {
       try {
         setLoading(true)
         // FIXED: Bypass cache para obtener datos frescos del servidor
-        const data = await fetchMenuData(true, true) // true = incluir ocultos, true = bypass cache
+        // FIXED: Agregar isAdmin=true para deshabilitar filtrado por horario
+        const data = await fetchMenuData(true, true, true) // true = incluir ocultos, true = bypass cache, true = isAdmin
         setMenuData(data)
         setError(null)
       } catch (err) {
