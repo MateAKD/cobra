@@ -74,17 +74,20 @@ export async function GET(request: NextRequest) {
     const menuData: any = {}
 
     products.forEach((product: any) => {
-      // CRITICAL FIX: Always add product to its categoryId array
-      // This ensures products appear in their category regardless of section value
       const catId = product.categoryId
 
+      // Asegurar que el ID de la categoría exista en la raíz (esto es lo que usa Parrilla)
       if (!menuData[catId]) {
         menuData[catId] = []
       }
-      menuData[catId].push(product)
 
-      // ADDITIONALLY: If product has a specific section (like 'vinos', 'promociones'),
-      // also add it to nested structure for backwards compatibility
+      // Evitar duplicados si el producto ya fue agregado
+      const alreadyAdded = menuData[catId].some((p: any) => p.id === product.id)
+      if (!alreadyAdded) {
+        menuData[catId].push(product)
+      }
+
+      // Si tiene una sección específica (como 'vinos'), mantener compatibilidad legacy
       if (product.section && product.section !== 'menu' && product.section !== catId) {
         if (!menuData[product.section]) {
           menuData[product.section] = {}
@@ -92,7 +95,6 @@ export async function GET(request: NextRequest) {
         if (!menuData[product.section][catId]) {
           menuData[product.section][catId] = []
         }
-        // Only add if not already in the section (avoid duplicates)
         const alreadyInSection = menuData[product.section][catId].some((p: any) => p.id === product.id)
         if (!alreadyInSection) {
           menuData[product.section][catId].push(product)
