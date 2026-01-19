@@ -18,6 +18,8 @@ export interface IProduct extends Document {
     hiddenBy?: string;
     hiddenAt?: string;
     order: number;
+    deletedAt?: Date;
+    deletedBy?: string;
 }
 
 const ProductSchema: Schema = new Schema({
@@ -37,7 +39,9 @@ const ProductSchema: Schema = new Schema({
     hiddenReason: { type: String },
     hiddenBy: { type: String },
     hiddenAt: { type: String },
-    order: { type: Number, default: 0 }
+    order: { type: Number, default: 0 },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: String }
 }, {
     timestamps: true,
     toJSON: {

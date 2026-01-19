@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
+import AuditLog from "@/models/AuditLog"
 
 // GET - Obtener un elemento específico
 export async function GET(
@@ -47,6 +48,16 @@ export async function PUT(
 
     await connectDB()
 
+    // Get current product for audit logging
+    const currentProduct = await Product.findOne({ id: id }).lean()
+
+    if (!currentProduct) {
+      return NextResponse.json(
+        { error: `Elemento no encontrado: ${id}` },
+        { status: 404 }
+      )
+    }
+
     const updatedItem = await Product.findOneAndUpdate(
       { id: id },
       {
@@ -65,17 +76,46 @@ export async function PUT(
           glass: updatedData.glass,
           technique: updatedData.technique,
           garnish: updatedData.garnish,
-          tags: updatedData.tags
+          tags: updatedData.tags,
+          ...(updatedData.hidden !== undefined && { hidden: updatedData.hidden }),
+          ...(updatedData.hiddenReason && { hiddenReason: updatedData.hiddenReason }),
         }
       },
       { new: true }
     )
 
-    if (!updatedItem) {
-      return NextResponse.json(
-        { error: `Elemento no encontrado: ${id}` },
-        { status: 404 }
-      )
+    // Audit logging: Track changes
+    const changes: { field: string; oldValue: any; newValue: any }[] = []
+
+    // Track important field changes
+    const fieldsToTrack = ['price', 'name', 'description', 'hidden', 'categoryId', 'section']
+    fieldsToTrack.forEach(field => {
+      const currentValue = (currentProduct as any)[field]
+      const newValue = (updatedData as any)[field]
+      if (newValue !== undefined && currentValue !== newValue) {
+        changes.push({
+          field,
+          oldValue: currentValue,
+          newValue: newValue
+        })
+      }
+    })
+
+    // Log changes if any
+    if (changes.length > 0) {
+      try {
+        await AuditLog.create({
+          entityType: 'product',
+          entityId: id,
+          action: 'update',
+          changes,
+          performedBy: 'admin', // TODO: Get from session when auth is implemented
+          userAgent: request.headers.get('user-agent') || 'unknown'
+        })
+      } catch (auditError) {
+        // Log error but don't fail the update
+        console.error('Failed to create audit log:', auditError)
+      }
     }
 
     return NextResponse.json({
@@ -101,13 +141,42 @@ export async function DELETE(
     const { id } = params
 
     await connectDB()
-    const deleted = await Product.findOneAndDelete({ id: id })
+
+    // Soft delete: mark as deleted instead of removing from database
+    const deleted = await Product.findOneAndUpdate(
+      { id: id },
+      {
+        $set: {
+          deletedAt: new Date(),
+          deletedBy: 'admin' // TODO: Get from session when auth is implemented
+        }
+      },
+      { new: true }
+    )
 
     if (!deleted) {
       return NextResponse.json(
         { error: `Elemento no encontrado: ${id}` },
         { status: 404 }
       )
+    }
+
+    // Audit logging: Track deletion
+    try {
+      await AuditLog.create({
+        entityType: 'product',
+        entityId: id,
+        action: 'delete',
+        changes: [{
+          field: 'deleted',
+          oldValue: false,
+          newValue: true
+        }],
+        performedBy: 'admin', // TODO: Get from session when auth is implemented
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      })
+    } catch (auditError) {
+      console.error('Failed to create audit log for deletion:', auditError)
     }
 
     return NextResponse.json({
@@ -180,6 +249,24 @@ export async function POST(
     })
 
     await product.save()
+
+    // Audit logging: Track creation
+    try {
+      await AuditLog.create({
+        entityType: 'product',
+        entityId: generatedId,
+        action: 'create',
+        changes: [{
+          field: 'created',
+          oldValue: null,
+          newValue: product.toObject()
+        }],
+        performedBy: 'admin', // TODO: Get from session when auth is implemented
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      })
+    } catch (auditError) {
+      console.error('Failed to create audit log for creation:', auditError)
+    }
 
     return NextResponse.json({
       message: `Elemento agregado exitosamente`,

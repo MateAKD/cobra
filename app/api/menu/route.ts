@@ -34,9 +34,13 @@ export async function GET(request: NextRequest) {
     // Check if this is an admin request (admin panel should see ALL products)
     const { searchParams } = new URL(request.url)
     const isAdminRequest = searchParams.get('admin') === 'true'
+    const includeDeleted = searchParams.get('includeDeleted') === 'true'
 
-    // Obtener todos los productos ordenados
-    const products = await Product.find({}).sort({ order: 1 }).lean()
+    // Build filter: exclude deleted products unless includeDeleted is true
+    const filter = includeDeleted ? {} : { deletedAt: null }
+
+    // Obtener todos los productos ordenados, aplicando filtro de soft delete
+    const products = await Product.find(filter).sort({ order: 1 }).lean()
 
     // Obtener todas las categorías para verificar restricciones de tiempo
     let categories: any[] = []
@@ -77,19 +81,24 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // FILTER: Remove categories that are outside their time range
+    // FILTER: Remove categories that are outside their time range or invisible
     // BUT: Skip filtering if this is an admin request (admin should see everything)
     const filteredMenuData: any = {}
 
     if (isAdminRequest) {
-      // Admin mode: Return ALL categories without time filtering
+      // Admin mode: Return ALL categories without time or visibility filtering
       Object.entries(menuData).forEach(([categoryId, data]) => {
         filteredMenuData[categoryId] = data
       })
     } else {
-      // Public menu: Apply time-based filtering
+      // Public menu: Apply time-based filtering AND visibility filtering
       Object.entries(menuData).forEach(([categoryId, data]) => {
         const category = categoriesMap[categoryId]
+
+        // PHASE 4: Filter invisible categories in public mode
+        if (category && category.visible === false) {
+          return // Skip invisible category
+        }
 
         // Check if category has time restriction
         if (category?.timeRestricted && category.startTime && category.endTime) {
@@ -108,8 +117,15 @@ export async function GET(request: NextRequest) {
     }
 
     const response = NextResponse.json(filteredMenuData)
-    // Cache de 5s para no saturar DB pero datos frescos
-    response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
+
+    // PHASE 6: Different cache for admin vs public
+    if (isAdminRequest) {
+      // Admin: No cache, always fresh data
+      response.headers.set('Cache-Control', 'no-store, must-revalidate')
+    } else {
+      // Public: 5s cache for performance
+      response.headers.set('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=10')
+    }
 
     return response
   } catch (error) {
@@ -164,7 +180,8 @@ export async function POST(request: NextRequest) {
                 hiddenBy: item.hiddenBy,
                 ingredients: item.ingredients,
                 tags: item.tags,
-                order: index // Actualizar orden según llega en el array
+                // CRITICAL FIX: Only update order if not already set
+                ...(item.order !== undefined ? { order: item.order } : { order: index })
               }
             },
             upsert: true
