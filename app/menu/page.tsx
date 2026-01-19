@@ -642,6 +642,11 @@ export default function MenuPage() {
 
     switch (categoryId) {
       case 'parrilla':
+        console.log('🥩 Rendering Parrilla:', {
+          directProductCount: parrilla?.length || 0,
+          directProducts: parrilla,
+          willRenderSubcategories: true
+        })
         return (
           <>
             {parrilla?.map((item, index) => (
