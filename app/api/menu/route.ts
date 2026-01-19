@@ -114,13 +114,21 @@ export async function GET(request: NextRequest) {
       Object.entries(menuData).forEach(([categoryId, data]) => {
         const category = categoriesMap[categoryId]
 
+        // CRITICAL FIX: If category doesn't exist in metadata but has products, include it
+        // This handles cases where products exist but category wasn't created in admin
+        if (!category) {
+          // No metadata = no restrictions, include the category
+          filteredMenuData[categoryId] = data
+          return
+        }
+
         // PHASE 4: Filter invisible categories in public mode
-        if (category && category.visible === false) {
+        if (category.visible === false) {
           return // Skip invisible category
         }
 
         // Check if category has time restriction
-        if (category?.timeRestricted && category.startTime && category.endTime) {
+        if (category.timeRestricted && category.startTime && category.endTime) {
           const isInRange = isTimeInRange(category.startTime, category.endTime)
 
           // Only include if current time is WITHIN the allowed range
