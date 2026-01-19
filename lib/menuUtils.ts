@@ -129,14 +129,12 @@ export function countTotalItems(items: (MenuItem | DrinkItem | WineItem)[]): num
 
 // Función para verificar si una hora está dentro de un rango horario
 export function isTimeInRange(startTime: string, endTime: string): boolean {
-  // CAMBIO CRÍTICO: Usar hora de Argentina (GMT-3) siempre
-  // Esto evita problemas si el servidor está en UTC
+  // CAMBIO ROBUSTO: Usar offset manual para Argentina (UTC-3)
   const now = new Date()
 
-  // Obtener hora local ajustada a GMT-3 (Argentina)
-  // Convertimos a string en zona horaria específica y parseamos
-  const argentinaTimeStr = now.toLocaleString("en-US", { timeZone: "America/Argentina/Buenos_Aires" })
-  const argentinaTime = new Date(argentinaTimeStr)
+  // Argentina está en UTC-3. Calculamos la hora de Argentina independientemente de la hora del servidor.
+  const utcMilliseconds = now.getTime() + (now.getTimezoneOffset() * 60000)
+  const argentinaTime = new Date(utcMilliseconds - (3 * 3600000))
 
   const currentHour = argentinaTime.getHours()
   const currentMinute = argentinaTime.getMinutes()

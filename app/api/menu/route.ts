@@ -104,40 +104,38 @@ export async function GET(request: NextRequest) {
     // BUT: Skip filtering if this is an admin request (admin should see everything)
     const filteredMenuData: any = {}
 
+    // Function to check visibility recursively (including parents)
+    const checkVisibility = (catId: string): boolean => {
+      const category = categoriesMap[catId]
+
+      // If category doesn't exist in metadata, it's visible by default
+      if (!category) return true
+
+      // Check its own visibility
+      if (category.visible === false) return false
+
+      // Check its own time restriction
+      if (category.timeRestricted && category.startTime && category.endTime) {
+        if (!isTimeInRange(category.startTime, category.endTime)) return false
+      }
+
+      // Recursively check parent visibility if it exists
+      if (category.parentCategory && category.parentCategory !== catId) {
+        return checkVisibility(category.parentCategory)
+      }
+
+      return true
+    }
+
     if (isAdminRequest) {
       // Admin mode: Return ALL categories without time or visibility filtering
       Object.entries(menuData).forEach(([categoryId, data]) => {
         filteredMenuData[categoryId] = data
       })
     } else {
-      // Public menu: Apply time-based filtering AND visibility filtering
+      // Public menu: Apply recursive time-based and visibility filtering
       Object.entries(menuData).forEach(([categoryId, data]) => {
-        const category = categoriesMap[categoryId]
-
-        // CRITICAL FIX: If category doesn't exist in metadata but has products, include it
-        // This handles cases where products exist but category wasn't created in admin
-        if (!category) {
-          // No metadata = no restrictions, include the category
-          filteredMenuData[categoryId] = data
-          return
-        }
-
-        // PHASE 4: Filter invisible categories in public mode
-        if (category.visible === false) {
-          return // Skip invisible category
-        }
-
-        // Check if category has time restriction
-        if (category.timeRestricted && category.startTime && category.endTime) {
-          const isInRange = isTimeInRange(category.startTime, category.endTime)
-
-          // Only include if current time is WITHIN the allowed range
-          if (isInRange) {
-            filteredMenuData[categoryId] = data
-          }
-          // Otherwise skip this category entirely (it's hidden)
-        } else {
-          // No restriction or invalid config - include it
+        if (checkVisibility(categoryId)) {
           filteredMenuData[categoryId] = data
         }
       })
