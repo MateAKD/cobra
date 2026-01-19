@@ -133,11 +133,13 @@ export function isTimeInRange(startTime: string, endTime: string): boolean {
   const now = new Date()
 
   // Argentina está en UTC-3. Calculamos la hora de Argentina independientemente de la hora del servidor.
-  const utcMilliseconds = now.getTime() + (now.getTimezoneOffset() * 60000)
-  const argentinaTime = new Date(utcMilliseconds - (3 * 3600000))
+  // 1. Tomamos el tiempo UTC absoluto
+  // 2. Le restamos 3 horas (3 * 60 * 60 * 1000 ms)
+  const argentinaTime = new Date(now.getTime() - (3 * 3600000))
 
-  const currentHour = argentinaTime.getHours()
-  const currentMinute = argentinaTime.getMinutes()
+  // 3. Usamos getUTC* para obtener los componentes de esa hora ya ajustada
+  const currentHour = argentinaTime.getUTCHours()
+  const currentMinute = argentinaTime.getUTCMinutes()
   const currentTimeInMinutes = currentHour * 60 + currentMinute
 
   // Parsear hora de inicio
