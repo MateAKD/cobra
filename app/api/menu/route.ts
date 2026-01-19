@@ -42,6 +42,18 @@ export async function GET(request: NextRequest) {
     // Obtener todos los productos ordenados, aplicando filtro de soft delete
     const products = await Product.find(filter).sort({ order: 1 }).lean()
 
+    // DEBUG: Log parrilla products before filtering
+    const parrillaProducts = products.filter((p: any) => p.categoryId === 'parrilla')
+    console.log('🔍 DEBUG - Parrilla products from DB:', {
+      total: parrillaProducts.length,
+      products: parrillaProducts.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        hidden: p.hidden,
+        section: p.section
+      }))
+    })
+
     // Obtener todas las categorías para verificar restricciones de tiempo
     let categories: any[] = []
     try {
