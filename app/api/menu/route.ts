@@ -3,28 +3,9 @@ import Product from "@/models/Product"
 import Category from "@/models/Category"
 import connectDB from "@/lib/db"
 import { revalidatePath } from 'next/cache'
+import { isTimeInRange } from "@/lib/menuUtils"
 
-// Helper function to check if current time is within a time range
-function isTimeInRange(startTime: string, endTime: string): boolean {
-  const now = new Date()
-  const currentHour = now.getHours()
-  const currentMinute = now.getMinutes()
-  const currentTimeInMinutes = currentHour * 60 + currentMinute
 
-  const [startHour, startMinute] = startTime.split(':').map(Number)
-  const startTimeInMinutes = startHour * 60 + startMinute
-
-  const [endHour, endMinute] = endTime.split(':').map(Number)
-  const endTimeInMinutes = endHour * 60 + endMinute
-
-  // If range crosses midnight (e.g., 22:00 to 02:00)
-  if (startTimeInMinutes > endTimeInMinutes) {
-    return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes <= endTimeInMinutes
-  }
-
-  // Normal range within same day
-  return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes
-}
 
 // GET - Obtener todos los datos del menú desde MongoDB
 export async function GET(request: NextRequest) {
