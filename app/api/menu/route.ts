@@ -62,22 +62,29 @@ export async function GET(request: NextRequest) {
     const menuData: any = {}
 
     products.forEach((product: any) => {
-      // Determinar dónde va el producto
-      if (product.section === 'menu') {
-        // Categoría directa (ej: "entradas")
-        if (!menuData[product.categoryId]) {
-          menuData[product.categoryId] = []
-        }
-        menuData[product.categoryId].push(product)
-      } else {
-        // Sección anidada (ej: "vinos", "promociones")
+      // CRITICAL FIX: Always add product to its categoryId array
+      // This ensures products appear in their category regardless of section value
+      const catId = product.categoryId
+
+      if (!menuData[catId]) {
+        menuData[catId] = []
+      }
+      menuData[catId].push(product)
+
+      // ADDITIONALLY: If product has a specific section (like 'vinos', 'promociones'),
+      // also add it to nested structure for backwards compatibility
+      if (product.section && product.section !== 'menu' && product.section !== catId) {
         if (!menuData[product.section]) {
           menuData[product.section] = {}
         }
-        if (!menuData[product.section][product.categoryId]) {
-          menuData[product.section][product.categoryId] = []
+        if (!menuData[product.section][catId]) {
+          menuData[product.section][catId] = []
         }
-        menuData[product.section][product.categoryId].push(product)
+        // Only add if not already in the section (avoid duplicates)
+        const alreadyInSection = menuData[product.section][catId].some((p: any) => p.id === product.id)
+        if (!alreadyInSection) {
+          menuData[product.section][catId].push(product)
+        }
       }
     })
 
