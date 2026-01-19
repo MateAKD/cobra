@@ -38,7 +38,17 @@ export function useCategories() {
       }
 
       const data = await response.json()
-      setCategories(data)
+
+      // COMPATIBILITY FIX: La API ahora devuelve un array, pero el frontend espera un objeto
+      // Convertimos el array a un objeto mapeado por ID
+      const categoriesMap = Array.isArray(data)
+        ? data.reduce((acc: Categories, category: any) => {
+          acc[category.id] = category
+          return acc
+        }, {})
+        : data // Fallback si todavía es un objeto (retrocompatibilidad)
+
+      setCategories(categoriesMap)
     } catch (err) {
       console.error('Error loading categories:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')

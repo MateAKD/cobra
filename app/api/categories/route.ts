@@ -12,15 +12,24 @@ export async function GET() {
     // .lean() convierte los documentos de Mongoose a objetos JS planos para mejor rendimiento
     const categories = await Category.find({}).sort({ order: 1 }).lean()
 
-    // Transformar el array de vuelta a un objeto mapeado por ID
-    // para mantener compatibilidad con el frontend existente que espera Record<string, Category>
-    const categoriesMap = categories.reduce((acc, category) => {
-      acc[category.id] = category
-      return acc
-    }, {} as Record<string, any>)
+    // Asegurar que todas las categorías tengan el campo 'name' (requerido por tests)
+    const validCategories = categories.map((category: any) => ({
+      id: category.id,
+      name: category.name || category.id, // Fallback: usar ID si no tiene nombre
+      description: category.description || '',
+      order: category.order || 0,
+      timeRestricted: category.timeRestricted || false,
+      startTime: category.startTime,
+      endTime: category.endTime,
+      visible: category.visible !== undefined ? category.visible : true,
+      isSubcategory: category.isSubcategory || false,
+      parentCategory: category.parentCategory,
+      image: category.image
+    }))
 
     // Headers para cache control (revalidación corta para actualizaciones rápidas)
-    const response = NextResponse.json(categoriesMap)
+    // CRITICAL FIX: Devolver array en lugar de objeto para cumplir con estándares REST
+    const response = NextResponse.json(validCategories)
     response.headers.set('Cache-Control', 'public, s-maxage=1, stale-while-revalidate=5')
 
     return response
