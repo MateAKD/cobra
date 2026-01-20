@@ -138,10 +138,13 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error("CRITICAL: Error reading menu data from DB:", error)
+
+    const isProduction = process.env.NODE_ENV === 'production'
     return NextResponse.json(
       {
         error: "Error al leer los datos del menú",
-        details: error instanceof Error ? error.message : String(error)
+        // SECURITY: Don't expose error details in production
+        details: isProduction ? undefined : (error instanceof Error ? error.message : String(error))
       },
       { status: 500 }
     )

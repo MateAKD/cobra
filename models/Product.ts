@@ -54,6 +54,11 @@ const ProductSchema: Schema = new Schema({
     }
 });
 
+// Performance indexes for frequent queries
+ProductSchema.index({ deletedAt: 1, order: 1 }); // For main menu query with soft delete filter
+ProductSchema.index({ categoryId: 1, hidden: 1 }); // For filtering products by category and visibility
+ProductSchema.index({ section: 1, hidden: 1 }); // For section-based queries
+
 const Product: Model<IProduct> = mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema);
 
 export default Product;

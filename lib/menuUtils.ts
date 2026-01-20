@@ -299,16 +299,6 @@ export function shouldHideSubcategory(
 
 
 
-
-// DEPRECATED: Esta función ya no se usa para filtrar categorías del menú
-// Las categorías ahora siempre se muestran, con indicadores de disponibilidad
-// Mantenida solo para compatibilidad hacia atrás
-export function filterCategoriesByTime(menuData: any, categories: Record<string, Category>): any {
-  console.warn('⚠️ filterCategoriesByTime está deprecated y no debería usarse. Las categorías ya no se ocultan automáticamente.')
-  // Retornar todos los datos sin filtrar
-  return menuData
-}
-
 // NUEVA FUNCIÓN: Obtener información de disponibilidad sin ocultar categorías
 export interface CategoryAvailabilityStatus {
   categoryId: string

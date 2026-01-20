@@ -1,0 +1,35 @@
+{
+    "baseUrl": "https://cobramenu.com",
+    "testType": "full",
+    "authentication": {
+        "enabled": true,
+        "loginUrl": "https://cobramenu.com/admin",
+        "credentials": {
+            "password": "cobra2025"
+        }
+    },
+    "scope": {
+        "frontend": true,
+        "backend": true
+    },
+    "pages": [
+        {
+            "url": "https://cobramenu.com",
+            "name": "Home"
+        },
+        {
+            "url": "https://cobramenu.com/menu",
+            "name": "Menu"
+        },
+        {
+            "url": "https://cobramenu.com/admin",
+            "name": "Admin Panel",
+            "requiresAuth": true
+        }
+    ],
+    "apiEndpoints": [
+        "/api/menu",
+        "/api/categories",
+        "/api/admin"
+    ]
+}

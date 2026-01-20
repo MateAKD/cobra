@@ -38,6 +38,10 @@ const CategorySchema: Schema = new Schema({
     }
 });
 
+// Performance indexes for frequent queries
+CategorySchema.index({ order: 1 }); // For ordered category listing
+CategorySchema.index({ visible: 1, order: 1 }); // For filtering visible categories in order
+
 // Prevent model recompilation error in development
 const Category: Model<ICategory> = mongoose.models.Category || mongoose.model<ICategory>('Category', CategorySchema);
 

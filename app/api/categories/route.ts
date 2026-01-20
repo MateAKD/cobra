@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Category, { ICategory } from '@/models/Category'
 import connectDB from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { CategoryCreateSchema, CategoryBulkUpdateSchema } from '@/lib/validation/schemas'
+import { handleApiError, validateRequestBody } from '@/lib/errorHandling'
 
 // GET - Obtener todas las categorías para el Admin y el cliente
 export async function GET() {
@@ -43,12 +45,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await connectDB()
-    const categoryData = await request.json()
 
-    // Validar payload
-    if (!categoryData.id || !categoryData.name) {
-      return NextResponse.json({ error: 'ID y nombre son requeridos' }, { status: 400 })
-    }
+    // SECURITY: Validate input with Zod (prevents NoSQL injection, XSS)
+    const categoryData = await validateRequestBody(request, CategoryCreateSchema)
 
     // Verificar si la categoría ya existe
     const existingCategory = await Category.findOne({ id: categoryData.id })
@@ -56,21 +55,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'La categoría ya existe' }, { status: 409 })
     }
 
-    // Crear la nueva categoría
-    const newCategory = new Category({
-      id: categoryData.id,
-      name: categoryData.name,
-      description: categoryData.description || '',
-      order: categoryData.order || 0,
-      timeRestricted: categoryData.timeRestricted || false,
-      startTime: categoryData.startTime,
-      endTime: categoryData.endTime,
-      visible: categoryData.visible !== undefined ? categoryData.visible : true,
-      isSubcategory: categoryData.isSubcategory || false,
-      parentCategory: categoryData.parentCategory,
-      image: categoryData.image
-    })
-
+    // Crear la nueva categoría (datos ya validados por Zod)
+    const newCategory = new Category(categoryData)
     await newCategory.save()
 
     // Force revalidation of menu and admin pages
@@ -84,8 +70,7 @@ export async function POST(request: NextRequest) {
       category: newCategory
     })
   } catch (error) {
-    console.error('Error creating category in DB:', error)
-    return NextResponse.json({ error: 'Error al crear la categoría' }, { status: 500 })
+    return handleApiError(error, 'POST /api/categories')
   }
 }
 
