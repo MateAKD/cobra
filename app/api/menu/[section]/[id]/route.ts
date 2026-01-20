@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
 import AuditLog from "@/models/AuditLog"
+import { ProductUpdateSchema } from "@/lib/validation/schemas"
+import { handleApiError, validateRequestBody } from "@/lib/errorHandling"
 
 // GET - Obtener un elemento específico
 export async function GET(
@@ -43,10 +45,11 @@ export async function PUT(
 ) {
   const params = await props.params;
   try {
-    const updatedData = await request.json()
-    const { id, section } = params // Section from URL
-
     await connectDB()
+
+    // SECURITY: Validate input with Zod (prevents NoSQL injection, XSS)
+    const updatedData = await validateRequestBody(request, ProductUpdateSchema)
+    const { id, section } = params // Section from URL
 
     // Get current product for audit logging
     const currentProduct = await Product.findOne({ id: id }).lean()
@@ -123,11 +126,7 @@ export async function PUT(
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error("Error updating menu item in DB:", error)
-    return NextResponse.json(
-      { error: "Error al actualizar el elemento del menú" },
-      { status: 500 }
-    )
+    return handleApiError(error, "Error al actualizar el elemento del menú")
   }
 }
 

@@ -171,6 +171,21 @@ export const SubcategoryReorderSchema = z.object({
     ).min(1, 'Al menos una subcategoría requerida')
 })
 
+export const SubcategoryMappingSchema = z.record(
+    z.string()
+        .min(1, 'Child ID no puede estar vacío')
+        .max(50, 'Child ID muy largo'),
+    z.string()
+        .min(1, 'Parent ID no puede estar vacío')
+        .max(50, 'Parent ID muy largo')
+).refine(
+    (data) => Object.keys(data).length > 0,
+    { message: 'Debe haber al menos un mapeo' }
+).refine(
+    (data) => Object.keys(data).length <= 100,
+    { message: 'Máximo 100 mapeos permitidos' }
+)
+
 // ============================================================================
 // TYPE EXPORTS (para usar en TypeScript)
 // ============================================================================

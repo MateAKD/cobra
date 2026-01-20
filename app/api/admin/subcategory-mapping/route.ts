@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/db"
 import Category from "@/models/Category"
+import { SubcategoryMappingSchema } from "@/lib/validation/schemas"
+import { handleApiError, validateRequestBody } from "@/lib/errorHandling"
 
 export const dynamic = 'force-dynamic'
 
@@ -35,16 +37,10 @@ export async function GET() {
 // POST - Actualizar el mapeo de subcategorías
 export async function POST(request: NextRequest) {
   try {
-    const newMapping = (await request.json()) as Record<string, string>
-
-    if (typeof newMapping !== 'object' || newMapping === null) {
-      return NextResponse.json(
-        { error: "El mapeo debe ser un objeto válido" },
-        { status: 400 }
-      )
-    }
-
     await connectDB()
+
+    // SECURITY: Validate input with Zod (prevents NoSQL injection)
+    const newMapping = await validateRequestBody(request, SubcategoryMappingSchema)
 
     // Estrategia: Actualizar todas las categorías.
     // 1. Limpiar mappings antiguos? Depende. Si recibimos el mapping COMPLETO,
@@ -97,10 +93,6 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error("Error updating subcategory mapping in DB:", error)
-    return NextResponse.json(
-      { error: "Error al actualizar el mapeo de subcategorías" },
-      { status: 500 }
-    )
+    return handleApiError(error, "Error al actualizar el mapeo de subcategorías")
   }
 }

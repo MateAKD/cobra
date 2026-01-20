@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/db"
 import Category from "@/models/Category"
 import { revalidatePath } from "next/cache"
+import { SubcategoryReorderSchema } from "@/lib/validation/schemas"
+import { handleApiError, validateRequestBody } from "@/lib/errorHandling"
 
 export const dynamic = 'force-dynamic'
 
@@ -40,20 +42,12 @@ export async function GET() {
 // POST - Actualizar el orden de subcategorías
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { categoryId, subcategoryOrder } = body
+    await connectDB()
+
+    // SECURITY: Validate input with Zod (prevents NoSQL injection)
+    const { categoryId, subcategoryOrder } = await validateRequestBody(request, SubcategoryReorderSchema)
 
     console.log('📋 Subcategory Reorder Request:', { categoryId, subcategoryOrder })
-
-    if (!categoryId || !Array.isArray(subcategoryOrder)) {
-      console.log('❌ Invalid request: missing categoryId or subcategoryOrder is not array')
-      return NextResponse.json(
-        { error: "categoryId y subcategoryOrder (array) son requeridos" },
-        { status: 400 }
-      )
-    }
-
-    await connectDB()
 
     // First, verify all subcategories exist
     console.log('🔍 Verifying subcategories exist in DB...')
@@ -127,11 +121,7 @@ export async function POST(request: NextRequest) {
       message: "Orden de subcategorías actualizado correctamente en MongoDB"
     })
   } catch (error) {
-    console.error("Error updating subcategory order in DB:", error)
-    return NextResponse.json(
-      { error: "Error al actualizar el orden de subcategorías" },
-      { status: 500 }
-    )
+    return handleApiError(error, "Error al actualizar el orden de subcategorías")
   }
 }
 
