@@ -639,7 +639,9 @@ export default function AdminPanel() {
       })
 
       if (!response.ok) {
-        throw new Error("Error al actualizar el elemento")
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Server error details:", errorData);
+        throw new Error(errorData.error || errorData.details || "Error al actualizar el elemento");
       }
 
       // Actualizar el estado local
