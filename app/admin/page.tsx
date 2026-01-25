@@ -230,6 +230,7 @@ export default function AdminPanel() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer cobramenu2025'
         },
         body: JSON.stringify({ categories: reorderedCategories }),
       })
@@ -273,6 +274,7 @@ export default function AdminPanel() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer cobramenu2025'
         },
         body: JSON.stringify({
           categoryId: selectedCategoryForReorder,
@@ -631,6 +633,7 @@ export default function AdminPanel() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": "Bearer cobramenu2025"
         },
         body: JSON.stringify(updatedItem),
       })
@@ -735,6 +738,7 @@ export default function AdminPanel() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": "Bearer cobramenu2025"
         },
         body: JSON.stringify(newItem),
       })
@@ -851,6 +855,7 @@ export default function AdminPanel() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": "Bearer cobramenu2025"
         },
         body: JSON.stringify({
           hidden: action === 'hide',
@@ -1144,6 +1149,9 @@ export default function AdminPanel() {
         // Eliminar en el servidor
         const response = await fetch(`/api/menu/${section}/${id}`, {
           method: "DELETE",
+          headers: {
+            "Authorization": "Bearer cobramenu2025"
+          }
         })
 
         if (!response.ok) {
@@ -1396,6 +1404,7 @@ export default function AdminPanel() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": "Bearer cobramenu2025"
           },
           body: JSON.stringify(updatedSectionData),
         })
@@ -1525,6 +1534,7 @@ export default function AdminPanel() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": "Bearer cobramenu2025"
           },
           body: JSON.stringify([]), // Array vacío para la nueva subcategoría
         })
@@ -1546,6 +1556,7 @@ export default function AdminPanel() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": "Bearer cobramenu2025"
           },
           body: JSON.stringify(newMapping),
         })
@@ -1566,6 +1577,7 @@ export default function AdminPanel() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": "Bearer cobramenu2025"
           },
           body: JSON.stringify({
             id: finalSubcategoryId,

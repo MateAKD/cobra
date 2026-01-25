@@ -2,10 +2,14 @@ import { NextResponse } from "next/server"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
 import Category from "@/models/Category"
+import { validateAdminAuth } from "@/lib/auth"
 
 // GET - Crear backup completo de la base de datos
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const { authorized, errorResponse } = validateAdminAuth(request as any)
+        if (!authorized) return errorResponse
+
         await connectDB()
 
         // Obtener todas las categorías

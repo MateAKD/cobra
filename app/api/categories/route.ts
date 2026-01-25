@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { validateAdminAuth } from "@/lib/auth"
 import Category, { ICategory } from '@/models/Category'
 import connectDB from '@/lib/db'
 import { revalidatePath } from 'next/cache'
@@ -44,6 +45,9 @@ export async function GET() {
 // POST - Crear una nueva categoría o subcategoría
 export async function POST(request: NextRequest) {
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     await connectDB()
 
     // SECURITY: Validate input with Zod (prevents NoSQL injection, XSS)
@@ -77,6 +81,9 @@ export async function POST(request: NextRequest) {
 // PUT - Actualizar categorías (usado para reordenar o editar)
 export async function PUT(request: NextRequest) {
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     await connectDB()
     const updates = await request.json()
 

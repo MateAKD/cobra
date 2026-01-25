@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { validateAdminAuth } from "@/lib/auth"
 import connectDB from '@/lib/db'
 import NotificationLog from '@/models/NotificationLog'
 
@@ -7,6 +8,9 @@ export type NotificationAction = 'AGREGAR' | 'EDITAR' | 'ELIMINAR' | 'OCULTAR' |
 
 export async function POST(request: NextRequest) {
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request)
+    if (!authorized) return errorResponse
+
     const body = await request.json()
     const { action, product, timeRange, userInfo } = body
 

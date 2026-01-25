@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
 
@@ -57,6 +58,9 @@ export async function PUT(
 ) {
   const params = await props.params;
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     const sectionData = await request.json()
     const { section } = params
 
@@ -140,6 +144,9 @@ export async function DELETE(
 ) {
   const params = await props.params;
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     const { section } = params
 
     await connectDB()

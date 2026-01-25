@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
 import Category from "@/models/Category"
@@ -23,8 +24,11 @@ interface DuplicateReport {
 }
 
 // GET - Buscar duplicados en la base de datos
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const { authorized, errorResponse } = validateAdminAuth(request as any)
+        if (!authorized) return errorResponse
+
         await connectDB()
 
         const report: DuplicateReport = {

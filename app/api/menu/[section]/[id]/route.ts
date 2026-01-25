@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
 import AuditLog from "@/models/AuditLog"
@@ -45,6 +46,9 @@ export async function PUT(
 ) {
   const params = await props.params;
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     await connectDB()
 
     // SECURITY: Validate input with Zod (prevents NoSQL injection, XSS)
@@ -137,6 +141,9 @@ export async function DELETE(
 ) {
   const params = await props.params;
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     const { id } = params
 
     await connectDB()
@@ -205,6 +212,9 @@ export async function POST(
     )
   }
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     const newItem = await request.json()
     const { section } = params // section from URL could be 'vinos' or 'entradas'
     // Pero 'vinos' es section DB, 'entradas' es categoryId DB.

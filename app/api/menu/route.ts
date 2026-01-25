@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import Product from "@/models/Product"
 import Category from "@/models/Category"
 import connectDB from "@/lib/db"
@@ -154,6 +155,9 @@ export async function GET(request: NextRequest) {
 // POST - Actualizar items del menú (hace merge/upsert)
 export async function POST(request: NextRequest) {
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     // Nota: Este endpoint originalmente recibía TODO el JSON y lo guardaba.
     // Para no romper compatibilidad, aceptamos el JSON pero deberíamos procesarlo.
     // SIN EMBARGO, si el Admin panel usa este endpoint para guardar TODO de golpe,

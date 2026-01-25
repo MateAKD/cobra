@@ -50,7 +50,7 @@ export function handleApiError(error: unknown, context?: string): NextResponse<E
 
     // Generic errors (500 Internal Server Error)
     // SECURITY: Never expose error.message or stack in production
-    console.error(`[API Error] ${context || 'Unknown context'}:`, error)
+    console.error(`[API Error DEBUG] ${context || 'Unknown context'}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)))
 
     const errorMessage = error instanceof Error ? error.message : String(error)
 

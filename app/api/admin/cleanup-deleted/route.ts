@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
 
@@ -13,6 +14,9 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(request: NextRequest) {
     try {
+        const { authorized, errorResponse } = validateAdminAuth(request)
+        if (!authorized) return errorResponse
+
         await connectDB()
 
         const body = await request.json().catch(() => ({}))
@@ -96,8 +100,11 @@ export async function POST(request: NextRequest) {
  * GET /api/admin/cleanup-deleted
  * Obtiene estadísticas sin eliminar nada (dry run)
  */
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const { authorized, errorResponse } = validateAdminAuth(request as any)
+        if (!authorized) return errorResponse
+
         await connectDB()
 
         const retentionDays = 90

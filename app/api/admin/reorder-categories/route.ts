@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { validateAdminAuth } from "@/lib/auth"
 import Category from '@/models/Category'
 import connectDB from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     const { categories } = await request.json()
 
     if (!categories || !Array.isArray(categories)) {

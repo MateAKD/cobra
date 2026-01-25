@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import Product from "@/models/Product"
 import connectDB from "@/lib/db"
 
 // POST - Agregar productos de promociones
-export async function POST() {
+export async function POST(request: Request) {
     try {
+        const { authorized, errorResponse } = validateAdminAuth(request as any)
+        if (!authorized) return errorResponse
+
         await connectDB()
 
         const promocionProducts = [

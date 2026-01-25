@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
 import Category from "@/models/Category"
@@ -15,8 +16,11 @@ interface RemovalReport {
 }
 
 // POST - Eliminar duplicados de la base de datos
-export async function POST() {
+export async function POST(request: Request) {
     try {
+        const { authorized, errorResponse } = validateAdminAuth(request as any)
+        if (!authorized) return errorResponse
+
         await connectDB()
 
         const report: RemovalReport = {

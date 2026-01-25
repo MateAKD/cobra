@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import connectDB from "@/lib/db"
 import Category from "@/models/Category"
 import { SubcategoryMappingSchema } from "@/lib/validation/schemas"
@@ -37,6 +38,9 @@ export async function GET() {
 // POST - Actualizar el mapeo de subcategorías
 export async function POST(request: NextRequest) {
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request as any)
+    if (!authorized) return errorResponse
+
     await connectDB()
 
     // SECURITY: Validate input with Zod (prevents NoSQL injection)

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { validateAdminAuth } from "@/lib/auth"
 import connectDB from "@/lib/db"
 import Category from "@/models/Category"
 
@@ -35,6 +36,9 @@ export async function GET() {
 // POST - Agregar o actualizar una subcategoría
 export async function POST(request: NextRequest) {
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request)
+    if (!authorized) return errorResponse
+
     const body = await request.json()
     const { subcategoryId, parentId, level, type } = body
 
@@ -83,6 +87,9 @@ export async function POST(request: NextRequest) {
 // DELETE - Eliminar una subcategoría de la jerarquía
 export async function DELETE(request: NextRequest) {
   try {
+    const { authorized, errorResponse } = validateAdminAuth(request)
+    if (!authorized) return errorResponse
+
     const { searchParams } = new URL(request.url)
     const subcategoryId = searchParams.get("id")
 
