@@ -79,10 +79,7 @@ export const ProductCreateSchema = z.object({
     description: z.string()
         .max(1000, 'Descripción muy larga')
         .optional(),
-    price: z.union([
-        z.string().regex(/^\d+([.,]\d{1,3})?$/, 'Precio inválido'),
-        z.number().positive('Precio debe ser positivo')
-    ]),
+    price: z.string().regex(/^\d+([.,]\d{1,3})?$/, 'Precio inválido'),
     categoryId: z.string()
         .min(1, 'CategoryId es requerido')
         .max(50),
