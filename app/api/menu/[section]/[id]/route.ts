@@ -70,8 +70,19 @@ export async function PUT(
 
     // SECURITY: Validate input with Zod
     console.log(`[API_DEBUG] Validating schema...`);
-    const updatedData = ProductUpdateSchema.parse(bodyJson);
-    console.log(`[API_DEBUG] Schema valid.`);
+    let updatedData;
+    try {
+      updatedData = ProductUpdateSchema.parse(bodyJson);
+      console.log(`[API_DEBUG] Schema valid.`);
+    } catch (zodError) {
+      console.error(`[API_DEBUG] Zod Validation Error:`, JSON.stringify(zodError, null, 2));
+      const zodIssues = (zodError as any).issues || [];
+      return NextResponse.json({
+        error: "Datos de entrada inválidos",
+        details: zodIssues,
+        debug: JSON.stringify(zodIssues)
+      }, { status: 400 });
+    }
 
     const { id, section } = params // Section from URL
 
