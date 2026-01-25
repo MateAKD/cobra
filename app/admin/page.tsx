@@ -628,6 +628,8 @@ export default function AdminPanel() {
       setSaving(true)
       setNotificationStatus("Guardando cambios...")
 
+      console.log(`[DEBUG] Updating item: URL=/api/menu/${section}/${updatedItem.id}`, updatedItem);
+
       // Actualizar en el servidor
       const response = await fetch(`/api/menu/${section}/${updatedItem.id}`, {
         method: "PUT",

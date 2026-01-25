@@ -45,14 +45,34 @@ export async function PUT(
   props: { params: Promise<{ section: string; id: string }> }
 ) {
   const params = await props.params;
+  console.log(`[API_DEBUG] PUT Request received. Params:`, params);
+
   try {
     const { authorized, errorResponse } = validateAdminAuth(request as any)
-    if (!authorized) return errorResponse
+    if (!authorized) {
+      console.log(`[API_DEBUG] Auth failed`);
+      return errorResponse
+    }
 
     await connectDB()
+    console.log(`[API_DEBUG] DB Connected`);
 
-    // SECURITY: Validate input with Zod (prevents NoSQL injection, XSS)
-    const updatedData = await validateRequestBody(request, ProductUpdateSchema)
+    const bodyText = await request.text();
+    console.log(`[API_DEBUG] Raw Body:`, bodyText);
+
+    let bodyJson;
+    try {
+      bodyJson = JSON.parse(bodyText);
+    } catch (e) {
+      console.error(`[API_DEBUG] JSON parse error:`, e);
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    // SECURITY: Validate input with Zod
+    console.log(`[API_DEBUG] Validating schema...`);
+    const updatedData = ProductUpdateSchema.parse(bodyJson);
+    console.log(`[API_DEBUG] Schema valid.`);
+
     const { id, section } = params // Section from URL
 
     // Get current product for audit logging
