@@ -87,8 +87,8 @@ export const ProductCreateSchema = z.object({
         .min(1, 'Section es requerida')
         .max(50),
     image: z.string()
-        .url('URL de imagen inválida')
-        .optional(),
+        .optional()
+        .or(z.literal('')),
     ingredients: z.string()
         .max(500)
         .optional(),
