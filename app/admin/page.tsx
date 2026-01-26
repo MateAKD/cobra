@@ -635,7 +635,7 @@ export default function AdminPanel() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer cobramenu2025"
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
         },
         body: JSON.stringify(updatedItem),
       })
@@ -742,7 +742,7 @@ export default function AdminPanel() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer cobramenu2025"
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
         },
         body: JSON.stringify(newItem),
       })
@@ -859,7 +859,7 @@ export default function AdminPanel() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer cobramenu2025"
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
         },
         body: JSON.stringify({
           hidden: action === 'hide',
@@ -1276,7 +1276,10 @@ export default function AdminPanel() {
       // FIXED: Usar el endpoint POST correcto de MongoDB
       const response = await fetch("/api/categories", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
+        },
         body: JSON.stringify({
           id: categoryId,
           name: categoryName,
@@ -1581,7 +1584,7 @@ export default function AdminPanel() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer cobramenu2025"
+            "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
           },
           body: JSON.stringify({
             id: finalSubcategoryId,
@@ -1619,6 +1622,7 @@ export default function AdminPanel() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
           },
           body: JSON.stringify({
             subcategoryId: finalSubcategoryId,
@@ -1897,6 +1901,7 @@ export default function AdminPanel() {
       try {
         const deleteCategoryResponse = await fetch(`/api/categories/${categoryId}`, {
           method: "DELETE",
+          headers: { "Authorization": "Bearer cobra_xi92_secure_KEY_2026" }
         })
 
         if (!deleteCategoryResponse.ok && deleteCategoryResponse.status !== 404) {
@@ -2022,6 +2027,7 @@ export default function AdminPanel() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
         },
         body: JSON.stringify({
           subcategoryId: newSubSubId,
@@ -2063,6 +2069,7 @@ export default function AdminPanel() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
         },
         body: JSON.stringify(menuUpdate),
       })
@@ -2194,6 +2201,7 @@ export default function AdminPanel() {
       try {
         const deleteResponse = await fetch(`/api/menu/${subcategoryId}`, {
           method: "DELETE",
+          headers: { "Authorization": "Bearer cobra_xi92_secure_KEY_2026" }
         })
 
         if (deleteResponse.ok) {
@@ -2209,6 +2217,7 @@ export default function AdminPanel() {
       try {
         const deleteCategoryResponse = await fetch(`/api/categories/${subcategoryId}`, {
           method: "DELETE",
+          headers: { "Authorization": "Bearer cobra_xi92_secure_KEY_2026" }
         })
 
         if (deleteCategoryResponse.ok) {
@@ -2380,6 +2389,7 @@ export default function AdminPanel() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
           },
           body: JSON.stringify(item),
         })
@@ -2489,6 +2499,7 @@ export default function AdminPanel() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
         },
         body: JSON.stringify({ percentage }),
       })
@@ -2844,14 +2855,23 @@ export default function AdminPanel() {
           if (newId !== oldId) {
             await fetch(`/api/menu/${newId}`, {
               method: "PUT",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
+              },
               body: JSON.stringify(items),
             })
-            await fetch(`/api/menu/${oldId}`, { method: "DELETE" })
+            await fetch(`/api/menu/${oldId}`, {
+              method: "DELETE",
+              headers: { "Authorization": "Bearer cobra_xi92_secure_KEY_2026" }
+            })
           }
         } else if (newId !== oldId) {
           // Si no existía sección, no hay nada que copiar; solo asegurar eliminación por si acaso
-          await fetch(`/api/menu/${oldId}`, { method: "DELETE" }).catch(() => { })
+          await fetch(`/api/menu/${oldId}`, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer cobra_xi92_secure_KEY_2026" }
+          }).catch(() => { })
         }
       } catch (e) {
         console.warn("No se pudo renombrar sección en menú:", e)
@@ -2863,7 +2883,10 @@ export default function AdminPanel() {
       updatedMapping[newId] = newParent
       const mappingResp = await fetch("/api/admin/subcategory-mapping", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
+        },
         body: JSON.stringify(updatedMapping),
       })
       if (!mappingResp.ok) throw new Error("Error guardando mapeo")
@@ -2930,7 +2953,10 @@ export default function AdminPanel() {
       // Persistir en el servidor
       const response = await fetch(`/api/menu/${sectionKey}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer cobra_xi92_secure_KEY_2026"
+        },
         body: JSON.stringify(sorted),
       })
 

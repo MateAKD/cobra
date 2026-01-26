@@ -3,7 +3,7 @@ import { validateAdminAuth } from "@/lib/auth"
 import connectDB from "@/lib/db"
 import Product from "@/models/Product"
 import AuditLog from "@/models/AuditLog"
-import { ProductUpdateSchema } from "@/lib/validation/schemas"
+import { ProductUpdateSchema, ProductCreateSchema } from "@/lib/validation/schemas"
 import { handleApiError, validateRequestBody } from "@/lib/errorHandling"
 
 // GET - Obtener un elemento específico
@@ -246,16 +246,30 @@ export async function POST(
     const { authorized, errorResponse } = validateAdminAuth(request as any)
     if (!authorized) return errorResponse
 
-    const newItem = await request.json()
-    const { section } = params // section from URL could be 'vinos' or 'entradas'
-    // Pero 'vinos' es section DB, 'entradas' es categoryId DB.
-    // Necesitamos desambiguar si el frontend no manda categoryId.
+    const body = await request.json()
+
+    // 1. Sanitizar y completar datos antes de validar con Zod
+    if (!body.id) {
+      body.id = Date.now().toString()
+    }
+
+    // 2. Validar con Zod (ProductCreateSchema)
+    let newItem;
+    try {
+      newItem = ProductCreateSchema.parse(body);
+    } catch (zodError) {
+      console.error("Zod Validation Error:", zodError);
+      return NextResponse.json({
+        error: "Datos inválidos",
+        details: (zodError as any).issues
+      }, { status: 400 });
+    }
+
+    const { section } = params
 
     await connectDB()
 
-    // Generar ID
-    const timestamp = Date.now()
-    const generatedId = newItem.id || timestamp.toString()
+    const generatedId = newItem.id; // Ya validado
 
     // Determinar section y categoryId
     let dbSection = 'menu'
@@ -263,7 +277,6 @@ export async function POST(
 
     if (section.startsWith('vinos') || section === 'vinos') {
       dbSection = 'vinos'
-      // Si section URL es 'vinos-tintos', categoryId es 'tintos'
       if (section.includes('-')) {
         dbCategoryId = section.split('-')[1]
       } else if (newItem.categoryId) {
@@ -275,11 +288,11 @@ export async function POST(
         dbCategoryId = section.split('-')[1]
       }
     } else {
-      // Asumimos genérico: URL param es categoryId, section es 'menu'
-      // Salvo que venga en el body
       if (newItem.section) dbSection = newItem.section
     }
 
+    // 3. Crear producto usando solo datos validados (evita Mass Assignment externo)
+    // El spread ...newItem es seguro porque viene de Zod.parse()
     const product = new Product({
       ...newItem,
       id: generatedId,
@@ -301,7 +314,7 @@ export async function POST(
           oldValue: null,
           newValue: product.toObject()
         }],
-        performedBy: 'admin', // TODO: Get from session when auth is implemented
+        performedBy: 'admin',
         userAgent: request.headers.get('user-agent') || 'unknown'
       })
     } catch (auditError) {
