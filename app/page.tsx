@@ -12,7 +12,7 @@ export default function HomePage() {
         {/* Header con logo - grande y centrado */}
         <header className="flex flex-col items-center flex-shrink-0">
           <div className="text-center relative w-full flex justify-center mb-2 sm:mb-3">
-            <div className="h-40 sm:h-48 md:h-56 lg:h-64 w-auto relative aspect-[3/2]">
+            <div className="h-40 sm:h-48 md:h-56 lg:h-64 w-auto relative aspect-[3/2] flex justify-center items-center">
               <Image
                 src="/Logo cobra NEGRO.png"
                 alt="COBRA"
