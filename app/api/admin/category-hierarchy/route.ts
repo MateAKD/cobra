@@ -51,23 +51,34 @@ export async function POST(request: NextRequest) {
 
     await connectDB()
 
-    // Actualizar la categoría para asignarle el padre
-    const updated = await Category.findOneAndUpdate(
-      { id: subcategoryId },
-      {
-        $set: {
-          parentCategory: parentId,
-          isSubcategory: true
-        }
-      },
-      { new: true }
-    )
+    console.log(`[category-hierarchy POST] Procesando: subcategoryId=${subcategoryId}, parentId=${parentId}`)
 
-    if (!updated) {
-      // Si no existe, se podría crear, pero este endpoint asume que organizamos algo existente.
-      return NextResponse.json(
-        { error: "Categoría no encontrada" },
-        { status: 404 }
+    // Buscar o crear la categoría
+    let category = await Category.findOne({ id: subcategoryId })
+
+    if (!category) {
+      // Si no existe, crearla primero
+      console.log(`[category-hierarchy POST] Categoría ${subcategoryId} no existe, creando...`)
+      category = await Category.create({
+        id: subcategoryId,
+        name: subcategoryId.split('-').map((word: string) =>
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' '),
+        isSubcategory: true,
+        parentCategory: parentId
+      })
+      console.log(`[category-hierarchy POST] Categoría ${subcategoryId} creada exitosamente`)
+    } else {
+      // Si existe, actualizar el padre
+      category = await Category.findOneAndUpdate(
+        { id: subcategoryId },
+        {
+          $set: {
+            parentCategory: parentId,
+            isSubcategory: true
+          }
+        },
+        { new: true }
       )
     }
 

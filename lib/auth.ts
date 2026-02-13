@@ -21,12 +21,7 @@ export function validateAdminAuth(request: NextRequest) {
         }
     }
 
-    const FALLBACK_KEY = 'cobramenu2025';
 
-    if (authHeader === `Bearer ${FALLBACK_KEY}`) {
-        console.warn(`[AUTH WARNING] Legacy key used. Allowing temporary access.`);
-        return { authorized: true };
-    }
 
     if (!authHeader || authHeader !== `Bearer ${adminKey}`) {
         console.warn(`[AUTH FAIL] Invalid header. Received: '${authHeader}'. Expected: 'Bearer ${adminKey?.substring(0, 5)}...'`);
