@@ -1375,83 +1375,54 @@ export default function AdminPanel() {
         hidden: false
       }
 
-      // PERSISTIR EL PRODUCTO EN EL ARCHIVO JSON
+      // PERSISTIR EL PRODUCTO usando el endpoint POST individual
+      // Esto funciona correctamente tanto para categorías directas como subcategorías dinámicas
+      // (ej: "otros-principales", "bebidas-desayunos-y-meriendas", etc.)
       try {
-        // CRÍTICO: Obtener la versión MÁS RECIENTE del servidor antes de agregar
-        // Esto previene que se pierdan productos que fueron agregados por otros usuarios
-        // o en otras sesiones
-        const getCurrentDataResponse = await fetch(`/api/menu/${selectedSectionForProduct}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
+        // Determinar el categoryId y section correctos según el tipo de sección
+        let dbCategoryId = selectedSectionForProduct
+        let dbSection = "menu"
 
-        let currentSectionData: any[] = []
-
-        if (getCurrentDataResponse.ok) {
-          // Usar los datos del servidor (la versión más reciente)
-          currentSectionData = await getCurrentDataResponse.json()
-          if (!Array.isArray(currentSectionData)) {
-            currentSectionData = []
-          }
-        } else if (getCurrentDataResponse.status === 404) {
-          // Si la sección no existe, empezar con un array vacío
-          currentSectionData = []
-        } else {
-          // Si hay error, usar el estado local como fallback
-          console.warn("No se pudo obtener datos del servidor, usando estado local")
-          if (selectedSectionForProduct.startsWith("vinos-")) {
-            const subcat = selectedSectionForProduct.split("-")[1] as keyof typeof vinos
-            currentSectionData = [...(vinos[subcat] || [])]
-          } else {
-            switch (selectedSectionForProduct) {
-              case "parrilla": currentSectionData = [...parrilla]; break
-              case "tapeo": currentSectionData = [...tapeo]; break
-              case "cafeteria": currentSectionData = [...cafeteria]; break
-              case "pasteleria": currentSectionData = [...pasteleria]; break
-              case "bebidasSinAlcohol": currentSectionData = [...bebidasSinAlcohol]; break
-              case "cervezas": currentSectionData = [...cervezas]; break
-              case "tragosClasicos": currentSectionData = [...tragosClasicos]; break
-              case "tragosEspeciales": currentSectionData = [...tragosEspeciales]; break
-              case "tragosRedBull": currentSectionData = [...tragosRedBull]; break
-              case "botellas": currentSectionData = [...botellas]; break
-              default: currentSectionData = [...(menuSections[selectedSectionForProduct] || [])]
-            }
-          }
+        if (selectedSectionForProduct.startsWith("vinos-")) {
+          dbSection = "vinos"
+          dbCategoryId = selectedSectionForProduct.split("-").slice(1).join("-")
+        } else if (selectedSectionForProduct.startsWith("promociones-")) {
+          dbSection = "promociones"
+          dbCategoryId = selectedSectionForProduct.split("-").slice(1).join("-")
         }
 
-        // Agregar el nuevo producto a la sección (sin duplicados por ID)
-        const existingIds = new Set(currentSectionData.map((item: any) => item.id))
-        if (!existingIds.has(newProductItem.id)) {
-          currentSectionData = [...currentSectionData, newProductItem]
-        } else {
-          console.warn("Producto con ID duplicado, actualizando en lugar de agregar")
-          currentSectionData = currentSectionData.map((item: any) =>
-            item.id === newProductItem.id ? newProductItem : item
-          )
+        const payload = {
+          id: productId,
+          name: newProduct.name.trim(),
+          description: newProduct.description.trim() || undefined,
+          price: newProduct.price.trim(),
+          tags: newProduct.tags,
+          hidden: false,
+          categoryId: dbCategoryId,
+          section: dbSection,
         }
 
-        const updatedSectionData = currentSectionData
-
-        // Guardar en el servidor
-        const response = await fetch(`/api/menu/${selectedSectionForProduct}`, {
-          method: "PUT",
+        // Usar POST /api/menu/[section]/new — el endpoint correcto para crear productos
+        const response = await fetch(`/api/menu/${selectedSectionForProduct}/new`, {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": getAuthHeader()
           },
-          body: JSON.stringify(updatedSectionData),
+          body: JSON.stringify(payload),
         })
 
         if (!response.ok) {
-          throw new Error("Error al guardar el producto en el servidor")
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || `Error ${response.status} al guardar el producto`)
         }
 
         console.log("Producto guardado exitosamente en el servidor")
       } catch (error) {
         console.error("Error guardando producto en servidor:", error)
-        alert("Advertencia: El producto se agregó localmente pero no se pudo guardar en el servidor")
+        alert("Advertencia: El producto se agregó localmente pero no se pudo guardar en el servidor\n\nDetalle: " + (error instanceof Error ? error.message : "Error desconocido"))
+        // No continuamos si falló el servidor — evitamos inconsistencias
+        return
       }
 
       // Actualizar el estado local
