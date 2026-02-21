@@ -58,16 +58,22 @@ export function useCategories() {
   }, [])
 
   // OPTIMIZACIÓN: useCallback para evitar recrear la función en cada render
-  const updateCategories = useCallback(async (updatedCategories: Categories) => {
+  const updateCategories = useCallback(async (updatedCategories: Categories, authToken?: string) => {
     try {
       setLoading(true)
       setError(null)
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+
+      if (authToken) {
+        headers['Authorization'] = authToken
+      }
+
       const response = await fetch('/api/categories', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(updatedCategories),
       })
 
@@ -88,7 +94,7 @@ export function useCategories() {
   }, [])
 
   // OPTIMIZACIÓN: useCallback para evitar recrear la función en cada render
-  const updateCategory = useCallback(async (categoryId: string, updates: Partial<Category>) => {
+  const updateCategory = useCallback(async (categoryId: string, updates: Partial<Category>, authToken?: string) => {
     const updatedCategories = {
       ...categories,
       [categoryId]: {
@@ -97,7 +103,7 @@ export function useCategories() {
       },
     }
 
-    return await updateCategories(updatedCategories)
+    return await updateCategories(updatedCategories, authToken)
   }, [categories, updateCategories])
 
   return {

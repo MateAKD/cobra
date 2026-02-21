@@ -1065,7 +1065,7 @@ export default function AdminPanel() {
         }
 
       // Actualizar la categoría con los datos de horario
-      await updateCategory(selectedCategoryForTime, updateData)
+      await updateCategory(selectedCategoryForTime, updateData, getAuthHeader())
 
       // Enviar notificación por email
       try {
