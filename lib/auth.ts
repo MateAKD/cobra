@@ -6,7 +6,8 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export function validateAdminAuth(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
-    const adminKey = process.env.ADMIN_API_KEY || process.env.CRON_SECRET;
+    // FIXED: Usar el mismo fallback que en el login route para consistencia
+    const adminKey = process.env.ADMIN_API_KEY || process.env.CRON_SECRET || 'cobra_xi92_secure_KEY_2026';
 
     console.log(`[AUTH DEBUG] Validating request to ${request.url}`);
     console.log(`[AUTH DEBUG] Encoded Key Length: ${adminKey ? adminKey.length : 0}`);

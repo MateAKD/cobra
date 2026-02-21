@@ -20,15 +20,22 @@ interface ProductData {
 export const sendProductNotification = async (
   action: NotificationAction,
   product: ProductData,
-  userInfo?: { ip?: string; userAgent?: string }
+  userInfo?: { ip?: string; userAgent?: string },
+  authToken?: string
 ): Promise<boolean> => {
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (authToken) {
+      headers['Authorization'] = authToken
+    }
+
     // Enviar la notificación a través de la API route
     const response = await fetch('/api/send-notification', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         action,
         product,
@@ -75,15 +82,22 @@ export interface TimeRangeNotificationData {
 export const sendTimeRangeNotification = async (
   action: 'AGREGAR_HORARIO' | 'EDITAR_HORARIO',
   timeRange: TimeRangeNotificationData,
-  userInfo?: { ip?: string; userAgent?: string }
+  userInfo?: { ip?: string; userAgent?: string },
+  authToken?: string
 ): Promise<boolean> => {
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (authToken) {
+      headers['Authorization'] = authToken
+    }
+
     // Enviar la notificación a través de la API route
     const response = await fetch('/api/send-notification', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         action,
         timeRange,

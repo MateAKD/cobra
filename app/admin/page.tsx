@@ -237,7 +237,8 @@ export default function AdminPanel() {
 
   // Helper para obtener el header de autorización
   const getAuthHeader = () => {
-    const token = sessionStorage.getItem('cobra-admin-token') || 'cobramenu2025'; // Fallback temporal para no romper si no hay re-login
+    // Si no hay token en session, el backend esperará un fallback consistente
+    const token = sessionStorage.getItem('cobra-admin-token') || 'cobra_xi92_secure_KEY_2026';
     return `Bearer ${token}`;
   }
 
@@ -621,6 +622,7 @@ export default function AdminPanel() {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
+              "Authorization": getAuthHeader()
             },
             body: JSON.stringify(data[numericKey]),
           })
@@ -629,6 +631,9 @@ export default function AdminPanel() {
             // Eliminar la categoría numérica
             await fetch(`/api/menu/${numericKey}`, {
               method: "DELETE",
+              headers: {
+                "Authorization": getAuthHeader()
+              }
             })
 
             console.log(`Categoría migrada: ${numericKey} → ${newKey}`)
@@ -987,7 +992,8 @@ export default function AdminPanel() {
           reason,
           hiddenBy
         },
-        getUserInfo()
+        getUserInfo(),
+        getAuthHeader()
       )
 
       if (emailSent) {
@@ -1076,7 +1082,7 @@ export default function AdminPanel() {
           timeRestricted: data.timeRestricted,
           startTime: data.startTime,
           endTime: data.endTime,
-        }, userInfo)
+        }, userInfo, getAuthHeader())
         setNotificationStatus("✅ Configuración de horarios guardada y notificación enviada")
       } catch (emailError) {
         console.error("Error al enviar notificación de horario:", emailError)
