@@ -42,7 +42,7 @@ export default function DiagnosticTools() {
             setLoading(true)
             setMessage("Buscando duplicados...")
 
-            const response = await fetch("/api/find-duplicates")
+            const response = await fetch("/api/admin/diagnostics")
             const data = await response.json()
 
             setDuplicates(data)
@@ -69,7 +69,7 @@ export default function DiagnosticTools() {
             setLoading(true)
             setMessage("Eliminando duplicados...")
 
-            const response = await fetch("/api/remove-duplicates", {
+            const response = await fetch("/api/admin/diagnostics", {
                 method: "POST"
             })
             const data = await response.json()

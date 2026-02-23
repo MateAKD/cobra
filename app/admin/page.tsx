@@ -237,9 +237,16 @@ export default function AdminPanel() {
 
   // Helper para obtener el header de autorización
   const getAuthHeader = () => {
-    // Si no hay token en session, el backend esperará un fallback consistente
-    const token = sessionStorage.getItem('cobra-admin-token') || 'cobra_xi92_secure_KEY_2026';
-    return `Bearer ${token}`;
+    const token = sessionStorage.getItem('cobra-admin-token');
+    return `Bearer ${token ?? ''}`;
+  }
+
+  // Handler global de 401 — limpia sesión y fuerza re-login
+  const handle401 = () => {
+    setIsAuthenticated(false)
+    localStorage.removeItem('cobra-admin-auth')
+    sessionStorage.removeItem('cobra-admin-token')
+    setLoginError('Tu sesión expiró. Ingresá la contraseña de nuevo.')
   }
 
   // Función para manejar el reordenamiento de categorías
@@ -292,8 +299,8 @@ export default function AdminPanel() {
       console.log('📂 Parent category:', selectedCategoryForReorder)
 
       // Enviar al servidor
-      console.log('🌐 Making POST request to /api/admin/subcategory-order...')
-      const response = await fetch('/api/admin/subcategory-order', {
+      console.log('🌐 Making POST request to /api/admin/subcategories...')
+      const response = await fetch('/api/admin/subcategories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -345,7 +352,7 @@ export default function AdminPanel() {
     // Siempre cargar el mapeo de subcategorías más reciente desde la API
     let currentSubcategoryMapping = subcategoryMapping
     try {
-      const mappingResponse = await fetch(`/api/admin/subcategory-mapping?t=${Date.now()}`, { cache: 'no-store' })
+      const mappingResponse = await fetch(`/api/admin/subcategories?t=${Date.now()}`, { cache: 'no-store' })
       if (mappingResponse.ok) {
         currentSubcategoryMapping = await mappingResponse.json()
         setSubcategoryMapping(currentSubcategoryMapping)
@@ -356,7 +363,7 @@ export default function AdminPanel() {
 
     // Cargar el orden de subcategorías
     try {
-      const orderResponse = await fetch(`/api/admin/subcategory-order?t=${Date.now()}`, { cache: 'no-store' })
+      const orderResponse = await fetch(`/api/admin/subcategories?t=${Date.now()}`, { cache: 'no-store' })
       if (orderResponse.ok) {
         const order = await orderResponse.json()
         setSubcategoryOrder(order)
@@ -528,7 +535,7 @@ export default function AdminPanel() {
 
       // CARGAR EL MAPEO DE SUBCATEGORÍAS DESDE EL ARCHIVO JSON
       try {
-        const mappingResponse = await fetch("/api/admin/subcategory-mapping")
+        const mappingResponse = await fetch("/api/admin/subcategories")
         if (mappingResponse.ok) {
           const mappingData = await mappingResponse.json()
           setSubcategoryMapping(mappingData)
@@ -1558,7 +1565,7 @@ export default function AdminPanel() {
 
       // PERSISTIR EL MAPEO DE SUBCATEGORÍAS EN EL ARCHIVO JSON
       try {
-        const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+        const mappingResponse = await fetch("/api/admin/subcategories", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1617,7 +1624,7 @@ export default function AdminPanel() {
 
       // TAMBIÉN GUARDAR EN category-hierarchy.json con level: 1
       try {
-        const hierarchyResponse = await fetch("/api/admin/category-hierarchy", {
+        const hierarchyResponse = await fetch("/api/admin/subcategories", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1647,7 +1654,7 @@ export default function AdminPanel() {
 
       // Recargar el mapeo de subcategorías para asegurar sincronización
       try {
-        const mappingResponse = await fetch("/api/admin/subcategory-mapping")
+        const mappingResponse = await fetch("/api/admin/subcategories")
         if (mappingResponse.ok) {
           const mappingData = await mappingResponse.json()
           setSubcategoryMapping(mappingData)
@@ -2022,7 +2029,7 @@ export default function AdminPanel() {
 
       // PASO 1: Agregar a la jerarquía con level 2 PRIMERO
       // Esto mantiene la estructura correcta con los niveles
-      const hierarchyResponse = await fetch("/api/admin/category-hierarchy", {
+      const hierarchyResponse = await fetch("/api/admin/subcategories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -2056,7 +2063,7 @@ export default function AdminPanel() {
       newMapping[newSubSubId] = parentSubcategoryId
 
       // Persistir el mapeo
-      const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+      const mappingResponse = await fetch("/api/admin/subcategories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -2102,7 +2109,7 @@ export default function AdminPanel() {
       await new Promise(resolve => setTimeout(resolve, 300))
 
       // Recargar el mapeo
-      const reloadMapping = await fetch("/api/admin/subcategory-mapping", {
+      const reloadMapping = await fetch("/api/admin/subcategories", {
         cache: 'no-store'
       })
       if (reloadMapping.ok) {
@@ -2111,7 +2118,7 @@ export default function AdminPanel() {
       }
 
       // Recargar la jerarquía
-      const reloadHierarchy = await fetch("/api/admin/category-hierarchy", {
+      const reloadHierarchy = await fetch("/api/admin/subcategories", {
         cache: 'no-store'
       })
       if (reloadHierarchy.ok) {
@@ -2190,7 +2197,7 @@ export default function AdminPanel() {
 
       // PERSISTIR EL MAPEO DE SUBCATEGORÍAS EN EL ARCHIVO JSON
       try {
-        const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+        const mappingResponse = await fetch("/api/admin/subcategories", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -2245,7 +2252,7 @@ export default function AdminPanel() {
 
       // Recargar el mapeo de subcategorías para asegurar sincronización
       try {
-        const mappingResponse = await fetch("/api/admin/subcategory-mapping")
+        const mappingResponse = await fetch("/api/admin/subcategories")
         if (mappingResponse.ok) {
           const mappingData = await mappingResponse.json()
           setSubcategoryMapping(mappingData)
@@ -2278,7 +2285,7 @@ export default function AdminPanel() {
 
           // Guardar el mapeo limpio
           try {
-            const mappingResponse = await fetch("/api/admin/subcategory-mapping", {
+            const mappingResponse = await fetch("/api/admin/subcategories", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(cleanedMapping),
@@ -2892,7 +2899,7 @@ export default function AdminPanel() {
       const updatedMapping: any = { ...subcategoryMapping }
       delete updatedMapping[oldId]
       updatedMapping[newId] = newParent
-      const mappingResp = await fetch("/api/admin/subcategory-mapping", {
+      const mappingResp = await fetch("/api/admin/subcategories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
