@@ -364,8 +364,14 @@ export default function AdminPanel() {
         headers: { 'Authorization': getAuthHeader() }
       })
       if (mappingResponse.ok) {
-        currentSubcategoryMapping = await mappingResponse.json()
+        const fullData = await mappingResponse.json()
+        currentSubcategoryMapping = fullData.mapping || {}
         setSubcategoryMapping(currentSubcategoryMapping)
+
+        // También guardar el orden si viene en la respuesta
+        if (fullData.order) {
+          setSubcategoryOrder(fullData.order)
+        }
       }
     } catch (error) {
       console.warn("Error cargando mapeo de subcategorías:", error)
@@ -555,9 +561,14 @@ export default function AdminPanel() {
       try {
         const mappingResponse = await fetch("/api/admin/subcategories")
         if (mappingResponse.ok) {
-          const mappingData = await mappingResponse.json()
+          const fullData = await mappingResponse.json()
+          const mappingData = fullData.mapping || {}
           setSubcategoryMapping(mappingData)
           console.log("Mapeo de subcategorías cargado exitosamente:", mappingData)
+
+          if (fullData.order) {
+            setSubcategoryOrder(fullData.order)
+          }
         } else {
           console.warn("No se pudo cargar el mapeo de subcategorías")
         }
