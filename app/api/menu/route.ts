@@ -15,8 +15,18 @@ export async function GET(request: NextRequest) {
 
     // Check if this is an admin request (admin panel should see ALL products)
     const { searchParams } = new URL(request.url)
-    const isAdminRequest = searchParams.get('admin') === 'true'
+    const isAdminRequestParam = searchParams.get('admin') === 'true'
     const includeDeleted = searchParams.get('includeDeleted') === 'true'
+
+    // SECURITY: Validate admin token before granting admin access
+    let isAdminRequest = false
+    if (isAdminRequestParam) {
+      const { authorized } = validateAdminAuth(request as any)
+      if (!authorized) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      isAdminRequest = true
+    }
 
     // Build filter: exclude deleted products unless includeDeleted is true
     const filter = includeDeleted ? {} : { deletedAt: null }
@@ -178,27 +188,35 @@ export async function POST(request: NextRequest) {
     // Helper para generar operaciones
     const processItems = (items: any[], categoryId: string, section: string) => {
       items.forEach((item, index) => {
+        // INTEGRITY: Build $set with only content fields — never touch hidden/deletedAt state
+        const contentFields: any = {
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          categoryId: categoryId,
+          section: section,
+          image: item.image,
+          ingredients: item.ingredients,
+          tags: item.tags,
+          // Only update order if explicitly provided, otherwise preserve existing
+          ...(item.order !== undefined ? { order: item.order } : { order: index })
+        }
+
+        // INTEGRITY: Only write hidden state if it comes explicitly as boolean
+        // Avoids resetting visibility on bulk updates from incomplete payloads
+        if (typeof item.hidden === 'boolean') {
+          contentFields.hidden = item.hidden
+          if (item.hidden) {
+            // Only set reason/by if hiding; never overwrite with undefined on show
+            if (item.hiddenReason) contentFields.hiddenReason = item.hiddenReason
+            if (item.hiddenBy) contentFields.hiddenBy = item.hiddenBy
+          }
+        }
+
         bulkOps.push({
           updateOne: {
             filter: { id: item.id },
-            update: {
-              $set: {
-                name: item.name,
-                description: item.description,
-                price: item.price,
-                categoryId: categoryId,
-                section: section,
-                image: item.image,
-                visible: !item.hidden, // mapping legacy
-                hidden: item.hidden,
-                hiddenReason: item.hiddenReason,
-                hiddenBy: item.hiddenBy,
-                ingredients: item.ingredients,
-                tags: item.tags,
-                // CRITICAL FIX: Only update order if not already set
-                ...(item.order !== undefined ? { order: item.order } : { order: index })
-              }
-            },
+            update: { $set: contentFields },
             upsert: true
           }
         })

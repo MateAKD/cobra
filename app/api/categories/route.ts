@@ -108,7 +108,7 @@ export async function PUT(request: NextRequest) {
             // No actualizamos campos estructurales críticos automáticamente para evitar corrupción
           }
         },
-        upsert: true // Si no existe, crearla (útil para nuevas categorías)
+        upsert: false // SECURITY: PUT solo actualiza, nunca crea. Usar POST para crear categorías nuevas.
       }
     }))
 

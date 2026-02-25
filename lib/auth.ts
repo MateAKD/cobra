@@ -8,9 +8,7 @@ export function validateAdminAuth(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const adminKey = process.env.ADMIN_API_KEY || process.env.CRON_SECRET;
 
-    console.log(`[AUTH DEBUG] Validating request to ${request.url}`);
-    console.log(`[AUTH DEBUG] Encoded Key Length: ${adminKey ? adminKey.length : 0}`);
-    console.log(`[AUTH DEBUG] Auth Header: ${authHeader}`);
+
 
     // In production, we MUST have a key defined
     if (!adminKey) {
@@ -24,7 +22,7 @@ export function validateAdminAuth(request: NextRequest) {
 
 
     if (!authHeader || authHeader !== `Bearer ${adminKey}`) {
-        console.warn(`[AUTH FAIL] Invalid header. Received: '${authHeader}'. Expected: 'Bearer ${adminKey?.substring(0, 5)}...'`);
+        console.warn(`[AUTH FAIL] Unauthorized request to ${request.url}`);
         return {
             authorized: false,
             errorResponse: NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

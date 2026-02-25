@@ -75,26 +75,43 @@ export async function PUT(
     // Helper
     const createOps = (items: any[], catId: string, secName: string) => {
       items.forEach((item, idx) => {
-        // Asegurar ID
         const itemId = item.id || `${catId}-${idx}-${Date.now()}`
+
+        // INTEGRITY: Only include content fields — never overwrite hidden/deletedAt state
+        const contentFields: any = {
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          categoryId: catId,
+          section: secName,
+          image: item.image,
+          ingredients: item.ingredients,
+          tags: item.tags,
+          // INTEGRITY FIX: order — use item.order if explicitly provided.
+          // If not, DO NOT overwrite existing order (partial PUT must not reorder the whole category).
+          // idx is only used as fallback when item.order is strictly undefined.
+          ...(item.order !== undefined ? { order: item.order } : {})
+        }
+
+        // INTEGRITY: Only write hidden state if explicitly boolean
+        if (typeof item.hidden === 'boolean') {
+          contentFields.hidden = item.hidden
+          if (item.hidden) {
+            if (item.hiddenReason) contentFields.hiddenReason = item.hiddenReason
+            if (item.hiddenBy) contentFields.hiddenBy = item.hiddenBy
+          }
+        }
+
         bulkOps.push({
           updateOne: {
             filter: { id: itemId },
             update: {
-              $set: {
-                name: item.name,
-                description: item.description,
-                price: item.price,
-                categoryId: catId,
-                section: secName,
-                image: item.image,
-                visible: !item.hidden,
-                hidden: item.hidden,
-                hiddenReason: item.hiddenReason,
-                hiddenBy: item.hiddenBy,
-                ingredients: item.ingredients,
-                tags: item.tags,
-                order: idx // Mantener orden del array enviado
+              $set: contentFields,
+              // On insert only: initialize fields not already in $set
+              // MongoDB rejects duplicate paths between $set and $setOnInsert
+              $setOnInsert: {
+                ...(item.order === undefined ? { order: idx } : {}),
+                ...(typeof item.hidden !== 'boolean' ? { hidden: false } : {})
               }
             },
             upsert: true
