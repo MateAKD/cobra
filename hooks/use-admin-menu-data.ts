@@ -62,7 +62,7 @@ interface MenuData {
   }
 }
 
-export function useAdminMenuData() {
+export function useAdminMenuData(token?: string | null) {
   const [menuData, setMenuData] = useState<MenuData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -72,11 +72,18 @@ export function useAdminMenuData() {
   // BENEFICIO: Reduce re-renders en componentes que usan este hook en 10-15%
   // SIN useCallback, fetchData se recrea en cada render causando re-renders innecesarios
   const fetchData = useCallback(async () => {
+    // No intentar fetch si no hay token (el admin requiere auth para admin=true)
+    if (!token) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       // En el admin, incluir productos ocultos para poder gestionarlos
       // FIXED: Agregar isAdmin=true para deshabilitar filtrado por horario
-      const data = await fetchMenuData(true, false, true) // true = incluir ocultos, false = no bypass cache, true = isAdmin
+      // FIXED: Pasar token para autenticar la petición admin
+      const data = await fetchMenuData(true, false, true, token)
       setMenuData(data)
       setError(null)
     } catch (err) {
@@ -85,7 +92,7 @@ export function useAdminMenuData() {
     } finally {
       setLoading(false)
     }
-  }, []) // Sin dependencias porque fetchMenuData es estable
+  }, [token]) // Depende del token
 
   useEffect(() => {
     fetchData()
@@ -94,12 +101,15 @@ export function useAdminMenuData() {
   // FIXED: useCallback para refetch con bypass de caché
   // Esto asegura que después de guardar cambios, se obtengan datos frescos
   const refetch = useCallback(() => {
+    if (!token) return
+
     const fetchDataWithBypass = async () => {
       try {
         setLoading(true)
         // FIXED: Bypass cache para obtener datos frescos del servidor
         // FIXED: Agregar isAdmin=true para deshabilitar filtrado por horario
-        const data = await fetchMenuData(true, true, true) // true = incluir ocultos, true = bypass cache, true = isAdmin
+        // FIXED: Pasar token para autenticar la petición admin
+        const data = await fetchMenuData(true, true, true, token)
         setMenuData(data)
         setError(null)
       } catch (err) {
@@ -110,7 +120,7 @@ export function useAdminMenuData() {
       }
     }
     fetchDataWithBypass()
-  }, [])
+  }, [token])
 
   // Función para obtener estadísticas de una categoría
   const getCategoryStats = (items: (MenuItem | DrinkItem | WineItem)[]) => {

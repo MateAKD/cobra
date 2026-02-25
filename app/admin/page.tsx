@@ -87,7 +87,8 @@ export default function AdminPanel() {
   const [loginError, setLoginError] = useState("")
 
   // Hook para datos del menú del admin (incluye productos ocultos)
-  const { menuData: adminMenuData, loading: adminMenuLoading, refetch: refetchAdminMenu, getCategoryStats } = useAdminMenuData()
+  const [authToken, setAuthToken] = useState<string | null>(null)
+  const { menuData: adminMenuData, loading: adminMenuLoading, refetch: refetchAdminMenu, getCategoryStats } = useAdminMenuData(authToken)
 
   // Hook para gestionar categorías
   const { categories, updateCategory, updateCategories, loadCategories } = useCategories()
@@ -187,8 +188,11 @@ export default function AdminPanel() {
   // Verificar autenticación al cargar
   useEffect(() => {
     const authStatus = localStorage.getItem('cobra-admin-auth')
-    if (authStatus === 'true') {
+    const token = sessionStorage.getItem('cobra-admin-token')
+
+    if (authStatus === 'true' && token) {
       setIsAuthenticated(true)
+      setAuthToken(token)
 
       // Verificar configuración de Resend
       if (!validateEmailConfig()) {
@@ -218,6 +222,7 @@ export default function AdminPanel() {
         localStorage.setItem('cobra-admin-auth', 'true')
         // Guardar el token de forma segura en session (no en localStorage para que expire al cerrar navegador)
         sessionStorage.setItem('cobra-admin-token', data.token)
+        setAuthToken(data.token) // Actualizar estado para que el hook lo use
         setPassword("")
       } else {
         setLoginError(data.error || "Contraseña incorrecta")
@@ -230,6 +235,7 @@ export default function AdminPanel() {
   // Función de logout
   const handleLogout = () => {
     setIsAuthenticated(false)
+    setAuthToken(null)
     localStorage.removeItem('cobra-admin-auth')
     sessionStorage.removeItem('cobra-admin-token')
     setPassword("")
@@ -244,6 +250,7 @@ export default function AdminPanel() {
   // Handler global de 401 — limpia sesión y fuerza re-login
   const handle401 = () => {
     setIsAuthenticated(false)
+    setAuthToken(null)
     localStorage.removeItem('cobra-admin-auth')
     sessionStorage.removeItem('cobra-admin-token')
     setLoginError('Tu sesión expiró. Ingresá la contraseña de nuevo.')
@@ -352,7 +359,10 @@ export default function AdminPanel() {
     // Siempre cargar el mapeo de subcategorías más reciente desde la API
     let currentSubcategoryMapping = subcategoryMapping
     try {
-      const mappingResponse = await fetch(`/api/admin/subcategories?t=${Date.now()}`, { cache: 'no-store' })
+      const mappingResponse = await fetch(`/api/admin/subcategories?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Authorization': getAuthHeader() }
+      })
       if (mappingResponse.ok) {
         currentSubcategoryMapping = await mappingResponse.json()
         setSubcategoryMapping(currentSubcategoryMapping)
@@ -363,7 +373,10 @@ export default function AdminPanel() {
 
     // Cargar el orden de subcategorías
     try {
-      const orderResponse = await fetch(`/api/admin/subcategories?t=${Date.now()}`, { cache: 'no-store' })
+      const orderResponse = await fetch(`/api/admin/subcategories?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Authorization': getAuthHeader() }
+      })
       if (orderResponse.ok) {
         const order = await orderResponse.json()
         setSubcategoryOrder(order)
@@ -492,7 +505,12 @@ export default function AdminPanel() {
   const loadMenuData = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/menu")
+      // Usar ?admin=true y el token si es posible
+      const response = await fetch("/api/menu?admin=true", {
+        headers: {
+          'Authorization': getAuthHeader()
+        }
+      })
 
       if (!response.ok) {
         throw new Error("Error al cargar los datos del menú")

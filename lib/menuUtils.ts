@@ -82,12 +82,18 @@ export function filterHiddenItems(data: any): any {
 // OPTIMIZACIÓN: Usa cache con revalidación en lugar de no-store
 // FIXED: Agregado parámetro bypassCache para forzar datos frescos cuando sea necesario
 // FIXED: Agregado parámetro isAdmin para deshabilitar filtrado por horario en admin
-export async function fetchMenuData(includeHidden: boolean = false, bypassCache: boolean = false, isAdmin: boolean = false) {
+// FIXED: Agregado parámetro token para autenticar peticiones de administración protegidas
+export async function fetchMenuData(includeHidden: boolean = false, bypassCache: boolean = false, isAdmin: boolean = false, token?: string) {
   try {
+    const headers: HeadersInit = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     // FIXED: Si bypassCache es true, usar no-store para obtener datos frescos
     const fetchOptions: RequestInit = bypassCache
-      ? { cache: 'no-store' }
-      : { next: { revalidate: 5 } }
+      ? { cache: 'no-store', headers }
+      : { next: { revalidate: 5 }, headers }
 
     // FIXED: Si es admin, agregar parámetro admin=true a la URL
     const url = isAdmin ? "/api/menu?admin=true" : "/api/menu"
