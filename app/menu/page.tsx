@@ -94,22 +94,28 @@ const MenuSection = ({ title, description, children }: { title: string; descript
 )
 
 const MenuItemComponent = ({ item }: { item: MenuItem }) => (
-  <div className="menu-item-hover">
-    <div className="flex justify-between items-start gap-2 sm:gap-3">
+  <div className="menu-item-hover py-3 sm:py-4">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1 sm:gap-4">
       <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
-        <h3 className="text-lg sm:text-xl break-words bebas-title" style={{ color: '#231F20' }}>{item.name}</h3>
+        <h3 className="text-lg sm:text-xl font-bold bebas-title leading-tight" style={{ color: '#231F20' }}>
+          {item.name}
+        </h3>
         {item.tags && (
-          <div className="flex gap-1 sm:gap-2 flex-shrink-0 mt-0.5">
+          <div className="flex gap-1 sm:gap-2 flex-shrink-0 mt-1">
             {item.tags.map((tag) => (
               <MenuIcon key={tag} type={tag} />
             ))}
           </div>
         )}
       </div>
-      <span className="text-lg sm:text-xl flex-shrink-0 ml-2 text-coral bebas-title">${item.price}</span>
+      <div className="flex sm:block">
+        <span className="text-lg sm:text-xl font-bold whitespace-nowrap text-coral bebas-title">
+          ${item.price}
+        </span>
+      </div>
     </div>
     {item.description && (
-      <p className="description-text">
+      <p className="description-text mt-1 max-w-[90%] sm:max-w-full">
         {capitalizeFirstLetter(item.description)}
       </p>
     )}
@@ -120,20 +126,28 @@ const SubcategorySection = ({ title, children }: { title: string; children: Reac
   <div className="neon-subcategory-container">
     <h3 className="bebas-title-subcategory">{title}</h3>
     <div className="neon-subcategory-divider"></div>
-    {children}
+    <div className="flex flex-col">
+      {children}
+    </div>
   </div>
 )
 
 const DrinkItemComponent = ({ item }: { item: DrinkItem }) => (
-  <div className="menu-item-hover">
-    <div className="flex justify-between items-start gap-2 sm:gap-3">
+  <div className="menu-item-hover py-3 sm:py-4">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1 sm:gap-4">
       <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
-        <h3 className="text-lg sm:text-xl break-words bebas-title" style={{ color: '#231F20' }}>{item.name}</h3>
+        <h3 className="text-lg sm:text-xl font-bold bebas-title leading-tight" style={{ color: '#231F20' }}>
+          {item.name}
+        </h3>
       </div>
-      <span className="text-lg sm:text-xl flex-shrink-0 ml-2 text-coral bebas-title">${item.price}</span>
+      <div className="flex sm:block">
+        <span className="text-lg sm:text-xl font-bold whitespace-nowrap text-coral bebas-title">
+          ${item.price}
+        </span>
+      </div>
     </div>
     {item.description && (
-      <p className="description-text">
+      <p className="description-text mt-1 max-w-[90%] sm:max-w-full">
         {capitalizeFirstLetter(item.description)}
       </p>
     )}

@@ -38,8 +38,8 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   /* Configurando fuentes Podium Sharp y Gotham */
-  --font-main: "Podium Sharp 4.1", sans-serif;
-  --font-secondary: "Gotham", sans-serif;
+  --font-main: var(--font-podium), sans-serif;
+  --font-secondary: var(--font-gotham), sans-serif;
 }
 
 .dark {
@@ -115,8 +115,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   /* Configurando fuentes para el menú */
-  --font-sans: var(--font-main);
-  --font-serif: var(--font-secondary);
+  --font-sans: var(--font-secondary);
+  --font-serif: var(--font-main);
 }
 
 @layer base {
@@ -209,16 +209,16 @@
 }
 
 /* Tipografías con colores consistentes */
-/* Tipografía base para títulos Bebas Neue */
+/* Tipografía para nombres de productos y precios: Gotham */
 .bebas-title {
-  font-family: var(--font-main);
+  font-family: var(--font-secondary);
   color: #c45a2a;
   /* Naranja/rojizo como en la imagen */
   text-transform: uppercase;
   vertical-align: middle;
 }
 
-/* Categorías principales: Bebas Neue Bold 40px */
+/* Categorías principales: Podium Sharp */
 .bebas-title-category {
   font-family: var(--font-main);
   font-weight: 700;
@@ -230,7 +230,7 @@
   vertical-align: middle;
 }
 
-/* Subcategorías: Bebas Neue Regular responsive */
+/* Subcategorías: Podium Sharp responsive */
 .bebas-title-subcategory {
   font-family: var(--font-main);
   font-weight: 400;
@@ -258,7 +258,7 @@
   }
 }
 
-/* Barra de categorías: Bebas Neue Regular 12px */
+/* Barra de categorías: Podium Sharp */
 .bebas-title-category-bar {
   font-family: var(--font-main);
   font-weight: 400;
@@ -270,7 +270,7 @@
   text-transform: uppercase;
 }
 
-/* Descripciones de platos: Inter Light 14px */
+/* Descripciones de platos: Gotham Extra Light */
 .description-text {
   font-family: var(--font-secondary);
   font-weight: 300;
@@ -1804,7 +1804,7 @@ html {
 /* Estilos individuales de cada logo */
 .logo-item {
   flex-shrink: 0;
-  font-family: var(--font-main);
+  font-family: var(--font-secondary);
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.1em;

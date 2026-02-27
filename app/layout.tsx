@@ -1,14 +1,20 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
+import localFont from "next/font/local"
 import "./globals.css"
 
-const inter = Inter({
-  subsets: ["latin"],
+const podiumSharp = localFont({
+  src: "./fonts/PodiumSharp-411.otf",
+  variable: "--font-podium",
   display: "swap",
-  variable: "--font-inter",
-  weight: ["400", "500", "600"],
 })
+
+const gotham = localFont({
+  src: "./fonts/Gotham-ExtraLight.otf",
+  variable: "--font-gotham",
+  display: "swap",
+})
+
 
 export const metadata: Metadata = {
   title: "Cobra - Menú 2025",
@@ -34,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} antialiased`} suppressHydrationWarning>
+    <html lang="es" className={`${podiumSharp.variable} ${gotham.variable} antialiased`} suppressHydrationWarning>
       <head>
         {/* Viewport handled by export above */}
       </head>
