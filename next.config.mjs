@@ -60,12 +60,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-inline necesario para Next.js
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https: blob:", // Más permisivo
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com *",
-              "font-src 'self' https://fonts.gstatic.com",
+              "font-src 'self' data: https://fonts.gstatic.com *", // Permitir fuentes locales y externas mejor
               "img-src 'self' data: blob: https:",
               "media-src 'self' blob:",
-              "connect-src 'self' https:",
+              "connect-src 'self' https: wss:",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
@@ -96,7 +96,7 @@ const nextConfig = {
       },
       {
         // Assets estáticos: Cache largo
-        source: '/:path*\\.(jpg|jpeg|png|gif|svg|ico|webp|woff|woff2|ttf|eot)',
+        source: '/:path*\\.(jpg|jpeg|png|gif|svg|ico|webp|woff|woff2|ttf|eot|otf)',
         headers: [
           {
             key: 'Cache-Control',

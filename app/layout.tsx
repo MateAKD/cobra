@@ -4,13 +4,13 @@ import localFont from "next/font/local"
 import "./globals.css"
 
 const podiumSharp = localFont({
-  src: "./fonts/PodiumSharp-411.otf",
+  src: "../public/fonts/PodiumSharp-411.otf",
   variable: "--font-podium",
   display: "swap",
 })
 
 const gotham = localFont({
-  src: "./fonts/Gotham-ExtraLight.otf",
+  src: "../public/fonts/Gotham-ExtraLight.otf",
   variable: "--font-gotham",
   display: "swap",
 })
