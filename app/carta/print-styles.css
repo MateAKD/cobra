@@ -10,10 +10,9 @@
   min-height: 100vh;
   padding: 60px 20px 20px 20px;
   position: relative;
-  /* Sobrescribir fuentes solo para /carta */
-  --font-bebas: "Podium Sharp 411", sans-serif;
-  --font-podium: "Gotham", sans-serif;
-  --font-inter: "Gotham", sans-serif;
+  /* Las fuentes se heredan de layout.tsx via next/font/local:
+     --font-podium = Podium Sharp 411 (categorías y Menú)
+     --font-gotham = Gotham Extra Light (nombres de productos y descripciones) */
 }
 
 /* Fondo con textura */
@@ -275,25 +274,20 @@
 }
 
 .carta-item h3 {
-  font-family: "Podium Sharp 411", sans-serif;
+  font-family: var(--font-gotham), sans-serif;
   font-size: 13.5px;
-  /* Reducido 0.5px */
   color: #000000;
-  /* Negro para nombres de platos */
   margin-bottom: 0.09rem;
-  /* Reducido levemente */
   line-height: 1.08;
-  /* Más compacto */
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .carta-description {
-  font-family: var(--font-podium);
+  font-family: var(--font-gotham), sans-serif;
   font-weight: 300;
   font-size: 9.8px;
-  /* Reducido 0.2px */
   line-height: 1.32;
-  /* Más compacto */
   color: #775729;
   margin: 0;
 }
@@ -307,15 +301,13 @@
 }
 
 .carta-item-simple h3 {
-  font-family: "Podium Sharp 411", sans-serif;
+  font-family: var(--font-gotham), sans-serif;
   font-size: 11.5px;
-  /* Reducido 0.5px */
   color: #000000;
-  /* Negro para nombres de platos */
   margin: 0;
   line-height: 1.12;
-  /* Más compacto */
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* ===== SUBCATEGORÍAS ===== */
@@ -361,29 +353,22 @@
 }
 
 .carta-subcategory p {
-  font-family: var(--font-podium);
+  font-family: var(--font-gotham), sans-serif;
   font-size: 10.5px;
-  /* Reducido 0.5px */
   color: #775729;
   margin: 0.18rem 0;
-  /* Reducido levemente */
   padding-left: 0.38rem;
-  /* Reducido levemente */
   line-height: 1.28;
-  /* Más compacto */
 }
 
 .carta-subtitle {
-  font-family: var(--font-podium);
+  font-family: var(--font-gotham), sans-serif;
   font-weight: 300;
   font-size: 9.5px;
-  /* Reducido 0.5px */
   color: #775729;
   margin-bottom: 0.38rem;
-  /* Reducido levemente */
   font-style: italic;
   line-height: 1.28;
-  /* Más compacto */
 }
 
 /* ===== ITEMS CON PRECIO (PROMOCIONES) ===== */
@@ -398,17 +383,18 @@
 }
 
 .carta-item-with-price h3 {
-  font-family: "Podium Sharp 411", sans-serif;
+  font-family: var(--font-gotham), sans-serif;
   font-size: 13.5px;
   color: #000000;
   margin: 0;
   line-height: 1.08;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
   flex: 1;
 }
 
 .carta-item-price {
-  font-family: "Podium Sharp 411", sans-serif;
+  font-family: var(--font-gotham), sans-serif;
   font-size: 13.5px;
   color: #C35C3C;
   margin-left: 8px;
