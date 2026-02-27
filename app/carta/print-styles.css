@@ -10,6 +10,10 @@
   min-height: 100vh;
   padding: 60px 20px 20px 20px;
   position: relative;
+  /* Sobrescribir fuentes solo para /carta */
+  --font-bebas: "Podium Sharp 411", sans-serif;
+  --font-podium: "Gotham", sans-serif;
+  --font-inter: "Gotham", sans-serif;
 }
 
 /* Fondo con textura */
@@ -61,7 +65,7 @@
   border-radius: 8px;
   background: #C35C3C;
   color: white;
-  font-family: var(--font-main);
+  font-family: var(--font-bebas);
   font-size: 14px;
   letter-spacing: 0.5px;
   cursor: pointer;
@@ -131,7 +135,7 @@
 }
 
 .carta-main-title {
-  font-family: var(--font-main);
+  font-family: "Podium Sharp 411", sans-serif;
   font-size: 15pt;
   /* Reducido 1pt */
   font-weight: 700;
@@ -235,7 +239,7 @@
 }
 
 .carta-category-title {
-  font-family: var(--font-main);
+  font-family: "Podium Sharp 411", sans-serif;
   font-weight: 700;
   font-size: 25px;
   /* Reducido 1px */
@@ -271,7 +275,7 @@
 }
 
 .carta-item h3 {
-  font-family: var(--font-main);
+  font-family: "Podium Sharp 411", sans-serif;
   font-size: 13.5px;
   /* Reducido 0.5px */
   color: #000000;
@@ -284,7 +288,7 @@
 }
 
 .carta-description {
-  font-family: var(--font-secondary);
+  font-family: var(--font-podium);
   font-weight: 300;
   font-size: 9.8px;
   /* Reducido 0.2px */
@@ -303,7 +307,7 @@
 }
 
 .carta-item-simple h3 {
-  font-family: var(--font-main);
+  font-family: "Podium Sharp 411", sans-serif;
   font-size: 11.5px;
   /* Reducido 0.5px */
   color: #000000;
@@ -341,7 +345,7 @@
 }
 
 .carta-subcategory h4 {
-  font-family: var(--font-main);
+  font-family: "Podium Sharp 411", sans-serif;
   font-weight: 400;
   font-size: 14.5px;
   /* Reducido 0.5px */
@@ -357,7 +361,7 @@
 }
 
 .carta-subcategory p {
-  font-family: var(--font-secondary);
+  font-family: var(--font-podium);
   font-size: 10.5px;
   /* Reducido 0.5px */
   color: #775729;
@@ -370,7 +374,7 @@
 }
 
 .carta-subtitle {
-  font-family: var(--font-secondary);
+  font-family: var(--font-podium);
   font-weight: 300;
   font-size: 9.5px;
   /* Reducido 0.5px */
@@ -394,7 +398,7 @@
 }
 
 .carta-item-with-price h3 {
-  font-family: var(--font-main);
+  font-family: "Podium Sharp 411", sans-serif;
   font-size: 13.5px;
   color: #000000;
   margin: 0;
@@ -404,7 +408,7 @@
 }
 
 .carta-item-price {
-  font-family: var(--font-main);
+  font-family: "Podium Sharp 411", sans-serif;
   font-size: 13.5px;
   color: #C35C3C;
   margin-left: 8px;
