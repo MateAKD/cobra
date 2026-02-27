@@ -37,9 +37,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  /* Configurando fuentes Bebas Neue y Podium Sharp */
-  --font-bebas: "Bebas Neue", sans-serif;
-  --font-podium: "Inter", sans-serif;
+  /* Configurando fuentes Podium Sharp y Gotham */
+  --font-main: "Podium Sharp 4.1", sans-serif;
+  --font-secondary: "Gotham", sans-serif;
 }
 
 .dark {
@@ -115,8 +115,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   /* Configurando fuentes para el menú */
-  --font-sans: var(--font-bebas);
-  --font-serif: var(--font-podium);
+  --font-sans: var(--font-main);
+  --font-serif: var(--font-secondary);
 }
 
 @layer base {
@@ -211,7 +211,7 @@
 /* Tipografías con colores consistentes */
 /* Tipografía base para títulos Bebas Neue */
 .bebas-title {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   color: #c45a2a;
   /* Naranja/rojizo como en la imagen */
   text-transform: uppercase;
@@ -220,7 +220,7 @@
 
 /* Categorías principales: Bebas Neue Bold 40px */
 .bebas-title-category {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-weight: 700;
   font-size: 40px;
   line-height: 32px;
@@ -232,7 +232,7 @@
 
 /* Subcategorías: Bebas Neue Regular responsive */
 .bebas-title-subcategory {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-weight: 400;
   font-size: 24px;
   line-height: 20px;
@@ -260,7 +260,7 @@
 
 /* Barra de categorías: Bebas Neue Regular 12px */
 .bebas-title-category-bar {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
@@ -272,7 +272,7 @@
 
 /* Descripciones de platos: Inter Light 14px */
 .description-text {
-  font-family: var(--font-podium);
+  font-family: var(--font-secondary);
   font-weight: 300;
   font-size: 14px;
   line-height: 22.75px;
@@ -282,14 +282,14 @@
 }
 
 .podium-text {
-  font-family: var(--font-podium);
+  font-family: var(--font-secondary);
   font-weight: 400;
   color: #333333;
   /* Gris oscuro para texto general */
 }
 
 .podium-soft {
-  font-family: var(--font-podium);
+  font-family: var(--font-secondary);
   font-weight: 300;
   color: #4a4a4a;
   /* Gris medio para texto suave */
@@ -568,7 +568,7 @@
   margin: 0 0.3rem;
   border: 1px solid transparent;
   /* Aplicando tipografía específica para barra de categorías */
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
@@ -633,7 +633,7 @@
   border-radius: 9999px;
   padding: 0.5rem 1rem;
   margin: 0 0.25rem;
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-size: 0.875rem;
   letter-spacing: 0.05em;
 }
@@ -1804,7 +1804,7 @@ html {
 /* Estilos individuales de cada logo */
 .logo-item {
   flex-shrink: 0;
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.1em;

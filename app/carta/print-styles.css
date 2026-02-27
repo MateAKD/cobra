@@ -61,7 +61,7 @@
   border-radius: 8px;
   background: #C35C3C;
   color: white;
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-size: 14px;
   letter-spacing: 0.5px;
   cursor: pointer;
@@ -109,10 +109,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3.5mm;
-  /* Reducido para pantalla */
-  gap: 2.5mm;
-  /* Reducido para pantalla */
+  margin-bottom: 2.5mm;
+  gap: 2mm;
 }
 
 .header-center {
@@ -133,7 +131,7 @@
 }
 
 .carta-main-title {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-size: 15pt;
   /* Reducido 1pt */
   font-weight: 700;
@@ -220,10 +218,8 @@
 .carta-category {
   border: 1px solid #AEAEAE;
   border-radius: 10px;
-  padding: 0.75rem;
-  /* Reducido levemente */
-  margin: 0.6rem 0;
-  /* Reducido para mejor simetría */
+  padding: 0.6rem;
+  margin: 0.45rem 0;
   background: transparent;
   position: relative;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
@@ -239,7 +235,7 @@
 }
 
 .carta-category-title {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-weight: 700;
   font-size: 25px;
   /* Reducido 1px */
@@ -269,15 +265,13 @@
 /* ===== ITEMS ===== */
 
 .carta-item {
-  margin-bottom: 0.32rem;
-  /* Reducido levemente */
-  padding: 0.18rem 0;
-  /* Reducido levemente */
+  margin-bottom: 0.25rem;
+  padding: 0.12rem 0;
   break-inside: avoid;
 }
 
 .carta-item h3 {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-size: 13.5px;
   /* Reducido 0.5px */
   color: #000000;
@@ -290,7 +284,7 @@
 }
 
 .carta-description {
-  font-family: var(--font-podium);
+  font-family: var(--font-secondary);
   font-weight: 300;
   font-size: 9.8px;
   /* Reducido 0.2px */
@@ -309,7 +303,7 @@
 }
 
 .carta-item-simple h3 {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-size: 11.5px;
   /* Reducido 0.5px */
   color: #000000;
@@ -327,8 +321,7 @@
   /* Reducido levemente */
   padding-left: 0.85rem;
   /* Reducido levemente */
-  margin: 0.55rem 0;
-  /* Reducido levemente */
+  margin: 0.4rem 0;
   border-radius: 0 4px 4px 0;
   position: relative;
   break-inside: avoid;
@@ -348,7 +341,7 @@
 }
 
 .carta-subcategory h4 {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-weight: 400;
   font-size: 14.5px;
   /* Reducido 0.5px */
@@ -364,7 +357,7 @@
 }
 
 .carta-subcategory p {
-  font-family: var(--font-podium);
+  font-family: var(--font-secondary);
   font-size: 10.5px;
   /* Reducido 0.5px */
   color: #775729;
@@ -377,7 +370,7 @@
 }
 
 .carta-subtitle {
-  font-family: var(--font-podium);
+  font-family: var(--font-secondary);
   font-weight: 300;
   font-size: 9.5px;
   /* Reducido 0.5px */
@@ -401,7 +394,7 @@
 }
 
 .carta-item-with-price h3 {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-size: 13.5px;
   color: #000000;
   margin: 0;
@@ -411,7 +404,7 @@
 }
 
 .carta-item-price {
-  font-family: var(--font-bebas);
+  font-family: var(--font-main);
   font-size: 13.5px;
   color: #C35C3C;
   margin-left: 8px;
@@ -432,7 +425,7 @@
 
 .carta-qr-image {
   width: 100%;
-  max-width: 300px;
+  max-width: 600px;
   height: auto;
   aspect-ratio: 1;
   object-fit: contain;
@@ -483,8 +476,8 @@
     min-height: 297mm !important;
     max-height: 297mm !important;
     margin: 0 !important;
-    padding: 8mm 12mm !important;
-    /* Reducido arriba/abajo */
+    padding: 6mm 10mm !important;
+    /* Reducido significativamente */
     box-shadow: none !important;
     page-break-after: always !important;
     page-break-inside: avoid !important;
@@ -525,13 +518,11 @@
 
   /* Header */
   .carta-header-centered {
-    margin-bottom: 2.5mm !important;
-    /* Reducido levemente */
+    margin-bottom: 1.5mm !important;
   }
 
   .carta-logo-center {
-    height: 14mm !important;
-    /* Reducido 1mm */
+    height: 12mm !important;
   }
 
   .carta-main-title {
@@ -548,10 +539,8 @@
 
   /* Contenido */
   .carta-category {
-    margin: 0.5rem 0 !important;
-    /* Reducido para mejor simetría */
-    padding: 0.65rem !important;
-    /* Reducido levemente */
+    margin: 0.35rem 0 !important;
+    padding: 0.5rem !important;
   }
 
   .carta-column>.carta-category:first-child {
@@ -563,11 +552,10 @@
   }
 
   .carta-category-title {
-    font-size: 21px !important;
-    /* Reducido 1px */
-    line-height: 19px !important;
-    margin-bottom: 0.18rem !important;
-    /* Reducido levemente */
+    font-size: 19px !important;
+    /* Reducido más */
+    line-height: 17px !important;
+    margin-bottom: 0.12rem !important;
   }
 
   .carta-divider {
@@ -577,10 +565,8 @@
   }
 
   .carta-item {
-    margin-bottom: 0.28rem !important;
-    /* Reducido levemente */
-    padding: 0.12rem 0 !important;
-    /* Reducido levemente */
+    margin-bottom: 0.12rem !important;
+    padding: 0.05rem 0 !important;
   }
 
   .carta-item h3 {
@@ -593,9 +579,9 @@
   }
 
   .carta-description {
-    font-size: 8.5px !important;
-    /* Reducido 0.5px */
-    line-height: 1.28 !important;
+    font-size: 8px !important;
+    /* Más chico aún */
+    line-height: 1.2 !important;
     /* Más compacto */
   }
 
@@ -616,10 +602,8 @@
   }
 
   .carta-subcategory {
-    margin: 0.45rem 0 !important;
-    /* Reducido levemente */
+    margin: 0.15rem 0 !important;
     padding-left: 0.75rem !important;
-    /* Reducido levemente */
   }
 
   .carta-subcategory h4 {
@@ -676,15 +660,15 @@
   }
 
   .carta-qr-container {
-    margin-top: 0.05rem !important;
-    margin-bottom: 2.5rem !important;
-    padding: 0.1rem 0.3rem 1.2rem 0.3rem !important;
+    margin-top: 0.02rem !important;
+    margin-bottom: 0.5rem !important;
+    padding: 0.1rem 0 !important;
     width: 100% !important;
   }
 
   .carta-qr-image {
-    width: 100% !important;
-    max-width: 300px !important;
+    width: auto !important;
+    max-width: 200px !important;
     height: auto !important;
     aspect-ratio: 1 !important;
   }

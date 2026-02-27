@@ -303,6 +303,19 @@ export default function CartaPage() {
                 <p className="carta-description">Girgolas asadas, rucula, pickle de cebolla morada y alioli de berenjena. Con papas fritas.</p>
               </div>
             </section>
+
+            {/* QR CODE - Igual que hoja 2 pero adaptado al espacio */}
+            <div style={{ textAlign: 'center', marginTop: '4px' }}>
+              <p style={{ fontSize: '0.7em', fontStyle: 'italic', color: '#666', fontWeight: 300, marginBottom: '4px' }}>Escaneando este QR podés ver nuestros tragos de autor</p>
+              <div className="carta-qr-container" style={{ marginBottom: '0', padding: '0' }}>
+                <img
+                  src="/qr-cobra.png"
+                  alt="QR Code Cobra"
+                  className="carta-qr-image"
+                  style={{ maxWidth: '200px' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -478,17 +491,17 @@ export default function CartaPage() {
 
           {/* COLUMNA DERECHA */}
           <div className="carta-column">
-            {/* BEBIDAS */}
+            {/* BEBIDAS SIN ALCOHOL */}
             <section className="carta-category">
-              <h2 className="carta-category-title bebas-title">Bebidas</h2>
+              <h2 className="carta-category-title bebas-title">Bebidas sin alcohol</h2>
               <div className="carta-divider"></div>
 
               <div className="carta-item-simple">
-                <h3 className="bebas-title">Agua sin gas</h3>
+                <h3 className="bebas-title">Agua sin gas Eco de los Andes</h3>
               </div>
 
               <div className="carta-item-simple">
-                <h3 className="bebas-title">Agua con gas</h3>
+                <h3 className="bebas-title">Agua con gas Eco de los Andes</h3>
               </div>
 
               <div className="carta-item-simple">
@@ -504,39 +517,18 @@ export default function CartaPage() {
               </div>
 
               <div className="carta-item-simple">
+                <h3 className="bebas-title">Limonada / Pomelada / Exprimido</h3>
+              </div>
+
+              <div className="carta-item-simple">
                 <h3 className="bebas-title">Red Bull</h3>
               </div>
-            </section>
-
-            {/* LICUADOS Y JUGOS */}
-            <section className="carta-category">
-              <h2 className="carta-category-title bebas-title">Licuados y jugos</h2>
-              <div className="carta-divider"></div>
 
               <div className="carta-item-simple">
-                <h3 className="bebas-title">Limonada</h3>
-              </div>
-
-              <div className="carta-item-simple">
-                <h3 className="bebas-title">Pomelada</h3>
-              </div>
-
-              <div className="carta-item-simple">
-                <h3 className="bebas-title">Jugo de naranja</h3>
-              </div>
-
-              <div className="carta-item-simple">
-                <h3 className="bebas-title">Licuado de banana</h3>
-              </div>
-
-              <div className="carta-item-simple">
-                <h3 className="bebas-title">Licuado de frutilla y naranja</h3>
-              </div>
-
-              <div className="carta-item-simple">
-                <h3 className="bebas-title">Detox del día</h3>
+                <h3 className="bebas-title">Corona 0.0% 330cc / Stella Artois 0.0%</h3>
               </div>
             </section>
+
 
             {/* CERVEZAS */}
             <section className="carta-category">
@@ -545,19 +537,19 @@ export default function CartaPage() {
 
               <div className="carta-subcategory">
                 <h4 className="bebas-title">Tiradas</h4>
-                <p>Línea Patagonia</p>
+                <p style={{ fontSize: '0.85em', color: '#666', marginBottom: '4px' }}>Pinta o Media Pinta</p>
+                <div style={{ marginBottom: '8px' }}>
+                  <p>Patagonia</p>
+                  <p style={{ fontSize: '0.8em', fontStyle: 'italic', fontWeight: 300, marginLeft: '8px' }}>Amber Lager / Lager del Sur / 24.7</p>
+                </div>
                 <p>Stella Artois</p>
               </div>
 
               <div className="carta-subcategory">
                 <h4 className="bebas-title">Porrones</h4>
-                <p>Stella Artois</p>
-                <p>Corona</p>
-              </div>
-
-              <div className="carta-subcategory">
-                <h4 className="bebas-title">Sin alcohol</h4>
-                <p>Stella Artois</p>
+                <p>Stella Artois 330cc</p>
+                <p>Corona 330cc</p>
+                <p>Michelob Ultra 275cc</p>
               </div>
             </section>
 
