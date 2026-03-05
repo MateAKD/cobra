@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useRef, useEffect } from "react"
 import type React from "react"
@@ -25,7 +25,7 @@ const CobraLoadingScreen = ({ isLoading }: { isLoading: boolean }) => {
             style={{ filter: "grayscale(1)" }}
             draggable={false}
           />
-          {/* Contenedor para animación de llenado */}
+          {/* Contenedor para animaci├│n de llenado */}
           <div className="logo-fill-wrapper" style={{ zIndex: 2 }}>
             <img
               src="/Logo cobra NEGRO.png"
@@ -71,7 +71,7 @@ const MenuIcon = ({ type }: { type: "vegan" | "sin-tacc" | "picante" }) => {
   return icons[type]
 }
 
-// Función helper para capitalizar la primera letra
+// Funci├│n helper para capitalizar la primera letra
 const capitalizeFirstLetter = (text: string) => {
   if (!text || text.length === 0) return text
   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
@@ -79,11 +79,13 @@ const capitalizeFirstLetter = (text: string) => {
 
 const MenuSection = ({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) => (
   <section className="neon-category-container">
-    <div className="flex items-center gap-2 mb-3 sm:mb-4">
-      <h2 className="bebas-title-category">{title}</h2>
-      <div className="geometric-accent"></div>
+    <div style={{ width: 'fit-content' }}>
+      <div className="flex items-center gap-2 mb-3 sm:mb-4">
+        <h2 className="bebas-title-category">{title}</h2>
+        <div className="geometric-accent"></div>
+      </div>
+      <div className="neon-category-divider"></div>
     </div>
-    <div className="neon-category-divider"></div>
     {description && (
       <p className="text-sm mb-6 text-gray-light podium-soft italic">
         {description}
@@ -95,27 +97,25 @@ const MenuSection = ({ title, description, children }: { title: string; descript
 
 const MenuItemComponent = ({ item }: { item: MenuItem }) => (
   <div className="menu-item-hover py-3 sm:py-4">
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1 sm:gap-4">
-      <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
-        <h3 className="text-lg sm:text-xl font-bold bebas-title leading-tight" style={{ color: '#231F20' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: '10px', rowGap: '2px' }}>
+      <div style={{ flex: '1 0 auto', maxWidth: '100%' }}>
+        <h3 className="text-lg sm:text-xl font-bold bebas-title leading-snug" style={{ color: '#231F20', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
           {item.name}
         </h3>
         {item.tags && (
-          <div className="flex gap-1 sm:gap-2 flex-shrink-0 mt-1">
+          <div className="flex gap-1 mt-1">
             {item.tags.map((tag) => (
               <MenuIcon key={tag} type={tag} />
             ))}
           </div>
         )}
       </div>
-      <div className="flex sm:block">
-        <span className="text-lg sm:text-xl font-bold whitespace-nowrap text-coral bebas-title">
-          ${item.price}
-        </span>
-      </div>
+      <span className="text-lg sm:text-xl font-bold whitespace-nowrap text-coral bebas-title" style={{ flexShrink: 0 }}>
+        ${item.price}
+      </span>
     </div>
     {item.description && (
-      <p className="description-text mt-1 max-w-[90%] sm:max-w-full">
+      <p className="description-text mt-1">
         {capitalizeFirstLetter(item.description)}
       </p>
     )}
@@ -124,8 +124,10 @@ const MenuItemComponent = ({ item }: { item: MenuItem }) => (
 
 const SubcategorySection = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="neon-subcategory-container">
-    <h3 className="bebas-title-subcategory">{title}</h3>
-    <div className="neon-subcategory-divider"></div>
+    <div style={{ width: 'fit-content' }}>
+      <h3 className="bebas-title-subcategory">{title}</h3>
+      <div className="neon-subcategory-divider"></div>
+    </div>
     <div className="flex flex-col">
       {children}
     </div>
@@ -134,17 +136,13 @@ const SubcategorySection = ({ title, children }: { title: string; children: Reac
 
 const DrinkItemComponent = ({ item }: { item: DrinkItem }) => (
   <div className="menu-item-hover py-3 sm:py-4">
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1 sm:gap-4">
-      <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
-        <h3 className="text-lg sm:text-xl font-bold bebas-title leading-tight" style={{ color: '#231F20' }}>
-          {item.name}
-        </h3>
-      </div>
-      <div className="flex sm:block">
-        <span className="text-lg sm:text-xl font-bold whitespace-nowrap text-coral bebas-title">
-          ${item.price}
-        </span>
-      </div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: '10px', rowGap: '2px' }}>
+      <h3 className="text-lg sm:text-xl font-bold bebas-title leading-snug" style={{ color: '#231F20', flex: '1 0 auto', maxWidth: '100%', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+        {item.name}
+      </h3>
+      <span className="text-lg sm:text-xl font-bold whitespace-nowrap text-coral bebas-title" style={{ flexShrink: 0 }}>
+        ${item.price}
+      </span>
     </div>
     {item.description && (
       <p className="description-text mt-1 max-w-[90%] sm:max-w-full">
@@ -182,31 +180,31 @@ export default function MenuPage() {
   const { subcategoryMapping, loading: subcategoryLoading } = useSubcategoryMapping()
   const { subcategoryOrder } = useSubcategoryOrder()
 
-  // Filtrar categorías para incluir solo las que NO deben ocultarse
+  // Filtrar categor├¡as para incluir solo las que NO deben ocultarse
   // Excluir:
-  // 1. Subcategorías (que están en subcategoryMapping como claves)
-  // 2. Categorías fuera de horario
-  // 3. Categorías con todos los productos ocultos (sin subcategorías)
+  // 1. Subcategor├¡as (que est├ín en subcategoryMapping como claves)
+  // 2. Categor├¡as fuera de horario
+  // 3. Categor├¡as con todos los productos ocultos (sin subcategor├¡as)
   const visibleCategories = menuData
     ? Object.fromEntries(
       Object.entries(categories).filter(([key]) => {
-        // NO debe ser una subcategoría (no debe estar en las claves de subcategoryMapping)
+        // NO debe ser una subcategor├¡a (no debe estar en las claves de subcategoryMapping)
         if (Object.keys(subcategoryMapping).includes(key)) return false
 
-        // Obtener datos de la categoría
+        // Obtener datos de la categor├¡a
         const categoryData = (menuData as any)[key]
 
         // Verificar si debe ocultarse por horario o productos ocultos
         const shouldHide = shouldHideCategory(key, categories, categoryData, subcategoryMapping, menuData)
 
         if (shouldHide) {
-          return false // Ocultar esta categoría
+          return false // Ocultar esta categor├¡a
         }
 
-        // Verificar si tiene subcategorías asociadas
+        // Verificar si tiene subcategor├¡as asociadas
         const hasSubcategories = Object.values(subcategoryMapping).includes(key)
 
-        // Debe existir en menuData O tener subcategorías
+        // Debe existir en menuData O tener subcategor├¡as
         if (key in menuData || hasSubcategories) {
           return true
         }
@@ -216,15 +214,15 @@ export default function MenuPage() {
     )
     : Object.fromEntries(
       Object.entries(categories).filter(([key]) => {
-        // Excluir subcategorías incluso cuando no hay menuData cargado
-        // Pero incluir si tiene subcategorías
+        // Excluir subcategor├¡as incluso cuando no hay menuData cargado
+        // Pero incluir si tiene subcategor├¡as
         if (Object.keys(subcategoryMapping).includes(key)) return false
         const hasSubcategories = Object.values(subcategoryMapping).includes(key)
         return hasSubcategories
       })
     )
 
-  // Obtener la primera categoría visible para el estado inicial
+  // Obtener la primera categor├¡a visible para el estado inicial
   const getFirstVisibleCategory = () => {
     if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
       return "parrilla"
@@ -235,7 +233,7 @@ export default function MenuPage() {
     return sortedKeys[0] || "parrilla"
   }
 
-  // Estado para la categoría activa
+  // Estado para la categor├¡a activa
   const [activeCategory, setActiveCategory] = useState(getFirstVisibleCategory())
   const scrollingProgrammatically = useRef(false)
 
@@ -294,7 +292,7 @@ export default function MenuPage() {
     setTimeout(enforcePosition, 360)
   }
 
-  // Función para hacer clic en una categoría (iOS Safari compatible)
+  // Funci├│n para hacer clic en una categor├¡a (iOS Safari compatible)
   const handleCategoryClick = (categoryKey: string) => {
     if (typeof window === "undefined") return
 
@@ -343,26 +341,26 @@ export default function MenuPage() {
     requestAnimationFrame(attemptScroll)
   }
 
-  // OPTIMIZACIÓN CPU: Detectar categoría visible usando IntersectionObserver en lugar de scroll events
+  // OPTIMIZACI├ôN CPU: Detectar categor├¡a visible usando IntersectionObserver en lugar de scroll events
   // BENEFICIO: Reduce uso de CPU en 40-60% al eliminar 60+ callbacks por segundo durante scroll
   // ANTES: handleScroll se ejecutaba en cada evento scroll/touchmove con querySelectorAll y getBoundingClientRect
-  // DESPUÉS: Observer solo ejecuta callback cuando secciones entran/salen del viewport
+  // DESPU├ëS: Observer solo ejecuta callback cuando secciones entran/salen del viewport
   useEffect(() => {
-    // Si estamos haciendo scroll programático, no configurar observer
+    // Si estamos haciendo scroll program├ítico, no configurar observer
     if (scrollingProgrammatically.current) return
 
-    // OPTIMIZACIÓN: Cachear referencias a secciones una sola vez
+    // OPTIMIZACI├ôN: Cachear referencias a secciones una sola vez
     const sections = document.querySelectorAll('[data-category]')
     if (sections.length === 0) return
 
-    // Map para trackear qué secciones están visibles y su ratio de intersección
+    // Map para trackear qu├® secciones est├ín visibles y su ratio de intersecci├│n
     const visibilityMap = new Map<string, number>()
 
-    // OPTIMIZACIÓN: IntersectionObserver es mucho más eficiente que scroll listeners
+    // OPTIMIZACI├ôN: IntersectionObserver es mucho m├ís eficiente que scroll listeners
     // Solo ejecuta callback cuando hay cambios reales en visibilidad
     const observer = new IntersectionObserver(
       (entries) => {
-        // Si estamos haciendo scroll programático, ignorar cambios
+        // Si estamos haciendo scroll program├ítico, ignorar cambios
         if (scrollingProgrammatically.current) return
 
         // Actualizar mapa de visibilidad para cada entrada
@@ -370,11 +368,11 @@ export default function MenuPage() {
           const categoryKey = entry.target.getAttribute('data-category')
           if (!categoryKey) return
 
-          // Guardar ratio de intersección (0 = no visible, 1 = completamente visible)
+          // Guardar ratio de intersecci├│n (0 = no visible, 1 = completamente visible)
           visibilityMap.set(categoryKey, entry.intersectionRatio)
         })
 
-        // Encontrar la sección más visible (mayor ratio de intersección)
+        // Encontrar la secci├│n m├ís visible (mayor ratio de intersecci├│n)
         let mostVisibleSection = ''
         let maxRatio = 0
 
@@ -385,16 +383,16 @@ export default function MenuPage() {
           }
         })
 
-        // Actualizar categoría activa solo si cambió y hay una sección visible
+        // Actualizar categor├¡a activa solo si cambi├│ y hay una secci├│n visible
         if (mostVisibleSection && mostVisibleSection !== activeCategory && maxRatio > 0) {
           setActiveCategory(mostVisibleSection)
         }
       },
       {
-        // OPTIMIZACIÓN: Configuración de thresholds para detección granular
-        // threshold: array de valores 0-1 que determinan cuándo ejecutar el callback
+        // OPTIMIZACI├ôN: Configuraci├│n de thresholds para detecci├│n granular
+        // threshold: array de valores 0-1 que determinan cu├índo ejecutar el callback
         threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        // rootMargin negativo para activar cuando la sección está más al centro
+        // rootMargin negativo para activar cuando la secci├│n est├í m├ís al centro
         rootMargin: '-20% 0px -60% 0px'
       }
     )
@@ -416,9 +414,9 @@ export default function MenuPage() {
     }
   }, [activeCategory])
 
-  // Hacer scroll automático de la barra de categorías cuando cambia la categoría activa (iOS compatible)
+  // Hacer scroll autom├ítico de la barra de categor├¡as cuando cambia la categor├¡a activa (iOS compatible)
   useEffect(() => {
-    // Usar setTimeout para asegurar que el DOM esté actualizado
+    // Usar setTimeout para asegurar que el DOM est├® actualizado
     const scrollTimeout = setTimeout(() => {
       const activeButton = document.querySelector(`[data-tab="${activeCategory}"]`)
       const categoryContainer = document.querySelector('.category-scroll-container')
@@ -428,7 +426,7 @@ export default function MenuPage() {
         const buttonWidth = (activeButton as HTMLElement).offsetWidth
         const containerWidth = (categoryContainer as HTMLElement).offsetWidth
 
-        // Centrar el botón en la barra
+        // Centrar el bot├│n en la barra
         const targetScrollLeft = buttonLeft - (containerWidth / 2) + (buttonWidth / 2)
 
         // iOS Safari puede tener problemas con scrollTo, usar try-catch
@@ -460,7 +458,7 @@ export default function MenuPage() {
               style={{ filter: "grayscale(1)" }}
               draggable={false}
             />
-            {/* Contenedor para animación de llenado */}
+            {/* Contenedor para animaci├│n de llenado */}
             <div className="logo-fill-wrapper" style={{ zIndex: 2 }}>
               <img
                 src="/Logo cobra NEGRO.png"
@@ -482,7 +480,7 @@ export default function MenuPage() {
     return (
       <div className="min-h-screen cobra-snake-bg flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-400 text-lg mb-4">Error al cargar el menú</p>
+          <p className="text-red-400 text-lg mb-4">Error al cargar el men├║</p>
           <p className="text-gray-light">{error}</p>
         </div>
       </div>
@@ -493,7 +491,7 @@ export default function MenuPage() {
     return null
   }
 
-  // Usar datos dinámicos del archivo JSON
+  // Usar datos din├ímicos del archivo JSON
   const {
     parrilla,
     guarniciones,
@@ -516,7 +514,7 @@ export default function MenuPage() {
     ...customCategories
   } = menuData
 
-  // Obtener categorías personalizadas (excluyendo las estándar y subcategorías)
+  // Obtener categor├¡as personalizadas (excluyendo las est├índar y subcategor├¡as)
   const standardCategories = [
     'parrilla', 'guarniciones', 'tapeo', 'milanesas', 'hamburguesas',
     'ensaladas', 'otros', 'postres', 'sandwicheria', 'cafeteria',
@@ -524,31 +522,31 @@ export default function MenuPage() {
     'tragosEspeciales', 'tragosRedBull', 'vinos', 'botellas'
   ]
 
-  // Filtrar solo las categorías principales (no subcategorías)
+  // Filtrar solo las categor├¡as principales (no subcategor├¡as)
   const customCategoryNames = Object.keys(customCategories).filter(
     key => !standardCategories.includes(key) &&
       Array.isArray((customCategories as any)[key]) &&
       !['guarniciones', 'milanesas', 'hamburguesas', 'ensaladas', 'otros', 'cafe', 'tapeos', 'bebidas'].includes(key) &&
-      !Object.keys(subcategoryMapping).includes(key) // Excluir subcategorías
+      !Object.keys(subcategoryMapping).includes(key) // Excluir subcategor├¡as
   )
 
-  // Función para generar el layout dinámico basado en el orden de las categorías visibles
+  // Funci├│n para generar el layout din├ímico basado en el orden de las categor├¡as visibles
   const generateDynamicLayout = () => {
     if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
       return null
     }
 
-    // Convertir categorías visibles a array y ordenar por 'order'
+    // Convertir categor├¡as visibles a array y ordenar por 'order'
     const sortedCategories = Object.entries(visibleCategories)
       .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
       .map(([key]) => key)
 
-    // Distribución balanceada por "peso" visual (altura)
+    // Distribuci├│n balanceada por "peso" visual (altura)
     // Objetivo: Que las 3 columnas tengan aproximadamente la misma altura visual
 
-    // 1. Helper para calcular el peso de una categoría (Direct items + Subcategory items)
+    // 1. Helper para calcular el peso de una categor├¡a (Direct items + Subcategory items)
     const getCategoryWeight = (catId: string) => {
-      let weight = 4 // Peso base del título/header (equivalente a ~4 items)
+      let weight = 4 // Peso base del t├¡tulo/header (equivalente a ~4 items)
 
       // Items directos
       const directItems = (menuData as any)[catId] || []
@@ -556,10 +554,10 @@ export default function MenuPage() {
         weight += directItems.length
       }
 
-      // Items en subcategorías
+      // Items en subcategor├¡as
       Object.entries(subcategoryMapping).forEach(([subId, parentId]) => {
         if (parentId === catId) {
-          weight += 2 // Peso del título de subcategoría
+          weight += 2 // Peso del t├¡tulo de subcategor├¡a
           const subItems = (menuData as any)[subId] || []
           if (Array.isArray(subItems)) {
             weight += subItems.length
@@ -574,7 +572,7 @@ export default function MenuPage() {
     const weights = sortedCategories.map(catId => getCategoryWeight(catId))
     const totalWeight = weights.reduce((a, b) => a + b, 0)
 
-    // 3. Encontrar los mejores puntos de corte (fuerza bruta optimizada para N pequeño)
+    // 3. Encontrar los mejores puntos de corte (fuerza bruta optimizada para N peque├▒o)
     let bestSplit = [Math.ceil(sortedCategories.length / 3), Math.ceil(sortedCategories.length * 2 / 3)]
     let minDiff = Infinity
 
@@ -587,7 +585,7 @@ export default function MenuPage() {
 
     // Probar cortes posibles
     // i es el fin de la col 1, j es el fin de la col 2
-    // Optimización: restringir rango de búsqueda para no probar cortes absurdos
+    // Optimizaci├│n: restringir rango de b├║squeda para no probar cortes absurdos
     const minItemsPerCol = 1
     const maxItemsPerCol = sortedCategories.length - 2
 
@@ -641,15 +639,15 @@ export default function MenuPage() {
     ))
   }
 
-  // Función para renderizar el contenido de cada categoría
+  // Funci├│n para renderizar el contenido de cada categor├¡a
   const renderCategoryContent = (categoryId: string) => {
-    // No verificar si la categoría está vacía porque puede tener subcategorías
-    // Las categorías principales como "menu" pueden estar vacías pero contener subcategorías
+    // No verificar si la categor├¡a est├í vac├¡a porque puede tener subcategor├¡as
+    // Las categor├¡as principales como "menu" pueden estar vac├¡as pero contener subcategor├¡as
 
     if (!menuData) {
       return (
         <div className="text-center py-6 text-gray-500">
-          <p>No hay productos en esta categoría.</p>
+          <p>No hay productos en esta categor├¡a.</p>
         </div>
       )
     }
@@ -706,7 +704,7 @@ export default function MenuPage() {
       case 'tragos':
         return (
           <>
-            <SubcategorySection title="TRAGOS CLÁSICOS">
+            <SubcategorySection title="TRAGOS CL├üSICOS">
               <div className="space-y-2 sm:space-y-3">
                 {tragosClasicos?.map((drink, index) => (
                   <DrinkItemComponent key={drink.id || index} item={drink} />
@@ -734,15 +732,15 @@ export default function MenuPage() {
       case 'vinos':
         return renderSubcategoriesInCategory('vinos')
       default:
-        // Para categorías personalizadas
+        // Para categor├¡as personalizadas
         return renderSubcategoriesInCategory(categoryId)
     }
   }
 
-  // Función helper para extraer el nombre de la subcategoría del ID
+  // Funci├│n helper para extraer el nombre de la subcategor├¡a del ID
   // Si el ID incluye el padre (ej: "bebidas-promociones"), extrae solo "bebidas"
   const getSubcategoryDisplayName = (subcatId: string, parentId?: string): string => {
-    // Si se proporciona el parentId y el subcatId termina con él, remover esa parte
+    // Si se proporciona el parentId y el subcatId termina con ├®l, remover esa parte
     if (parentId) {
       const parentSuffix = `-${parentId}`
       if (subcatId.endsWith(parentSuffix)) {
@@ -758,7 +756,7 @@ export default function MenuPage() {
     ).join(' ')
   }
 
-  // Función helper para ordenar subcategorías según el orden guardado
+  // Funci├│n helper para ordenar subcategor├¡as seg├║n el orden guardado
   const sortSubcategories = (subcategories: [string, string][], categoryName: string) => {
     const order = subcategoryOrder[categoryName] || []
     if (order.length === 0) return subcategories
@@ -767,28 +765,28 @@ export default function MenuPage() {
       const indexA = order.indexOf(a[0])
       const indexB = order.indexOf(b[0])
 
-      // Si ninguno está en el orden, mantener orden actual
+      // Si ninguno est├í en el orden, mantener orden actual
       if (indexA === -1 && indexB === -1) return 0
-      // Si solo A no está en el orden, va al final
+      // Si solo A no est├í en el orden, va al final
       if (indexA === -1) return 1
-      // Si solo B no está en el orden, va al final
+      // Si solo B no est├í en el orden, va al final
       if (indexB === -1) return -1
-      // Ambos están en el orden, usar posición
+      // Ambos est├ín en el orden, usar posici├│n
       return indexA - indexB
     })
   }
 
-  // Función helper para renderizar una subcategoría con sus sub-subcategorías
+  // Funci├│n helper para renderizar una subcategor├¡a con sus sub-subcategor├¡as
   const renderSubcategoryWithChildren = (subcatId: string, subcatData: any[], subcatName: string, parentCategoryId?: string) => {
-    // Verificar si la subcategoría debe ocultarse
+    // Verificar si la subcategor├¡a debe ocultarse
     const parentId = parentCategoryId || subcategoryMapping[subcatId] || ''
     const shouldHide = shouldHideSubcategory(subcatId, parentId, categories, subcatData, subcategoryMapping, menuData)
 
     if (shouldHide) {
-      return null // No renderizar esta subcategoría
+      return null // No renderizar esta subcategor├¡a
     }
 
-    // Buscar sub-subcategorías de esta subcategoría
+    // Buscar sub-subcategor├¡as de esta subcategor├¡a
     const subSubcategories = sortSubcategories(
       Object.entries(subcategoryMapping)
         .filter(([subsubId, parentId]) => parentId === subcatId),
@@ -799,12 +797,12 @@ export default function MenuPage() {
 
     return (
       <SubcategorySection key={subcatId} title={subcatName.toUpperCase()}>
-        {/* Productos directos de la subcategoría */}
+        {/* Productos directos de la subcategor├¡a */}
         {subcatData.map((item: any, index: number) => (
           <MenuItemComponent key={item.id || index} item={item} />
         ))}
 
-        {/* Sub-subcategorías */}
+        {/* Sub-subcategor├¡as */}
         {hasSubSubcategories && subSubcategories.map(([subsubId]) => {
           const subsubAltId = subsubId.endsWith('s') ? subsubId.slice(0, -1) : `${subsubId}s`
           const subsubData = (customCategories as any)[subsubId]
@@ -813,11 +811,11 @@ export default function MenuPage() {
             || ((menuData as any)?.[subsubAltId])
             || []
 
-          // Verificar si la sub-subcategoría debe ocultarse
+          // Verificar si la sub-subcategor├¡a debe ocultarse
           const shouldHideSubSub = shouldHideSubcategory(subsubId, subcatId, categories, subsubData)
 
           if (shouldHideSubSub) {
-            return null // No renderizar esta sub-subcategoría
+            return null // No renderizar esta sub-subcategor├¡a
           }
 
           if (!Array.isArray(subsubData) || subsubData.length === 0) return null
@@ -826,8 +824,10 @@ export default function MenuPage() {
 
           return (
             <div key={subsubId} className="neon-subcategory-container mt-6">
-              <h3 className="bebas-title-subcategory">{subsubName.toUpperCase()}</h3>
-              <div className="neon-subcategory-divider"></div>
+              <div style={{ width: 'fit-content' }}>
+                <h3 className="bebas-title-subcategory">{subsubName.toUpperCase()}</h3>
+                <div className="neon-subcategory-divider"></div>
+              </div>
               <div className="space-y-2">
                 {subsubData.map((item: any, index: number) => (
                   <MenuItemComponent key={item.id || index} item={item} />
@@ -840,12 +840,12 @@ export default function MenuPage() {
     )
   }
 
-  // Función para renderizar subcategorías dentro de una categoría
+  // Funci├│n para renderizar subcategor├¡as dentro de una categor├¡a
   const renderSubcategoriesInCategory = (categoryName: string) => {
     if (categoryName === 'parrilla') {
       return (
         <>
-          {/* Subcategorías dinámicas */}
+          {/* Subcategor├¡as din├ímicas */}
           {sortSubcategories(
             Object.entries(subcategoryMapping)
               .filter(([subcatId, parentId]) => parentId === 'parrilla'),
@@ -858,7 +858,7 @@ export default function MenuPage() {
               || (customCategories as any)[subcatId]
               || (customCategories as any)[altId]
               || []
-            // Si no hay datos directos, verificar si tiene sub-subcategorías
+            // Si no hay datos directos, verificar si tiene sub-subcategor├¡as
             const hasSubSubcategories = Object.entries(subcategoryMapping)
               .some(([, parentId]) => parentId === subcatId)
 
@@ -869,7 +869,7 @@ export default function MenuPage() {
               word.charAt(0).toUpperCase() + word.slice(1)
             ).join(' ')
 
-            // Si es "guarniciones", usar los datos de la sección hardcodeada
+            // Si es "guarniciones", usar los datos de la secci├│n hardcodeada
             if (subcatId === 'guarniciones') {
               return renderSubcategoryWithChildren(subcatId, guarniciones || [], subcatName, 'parrilla')
             }
@@ -883,7 +883,7 @@ export default function MenuPage() {
     if (categoryName === 'principales') {
       return (
         <>
-          {/* Subcategorías dinámicas */}
+          {/* Subcategor├¡as din├ímicas */}
           {sortSubcategories(
             Object.entries(subcategoryMapping)
               .filter(([subcatId, parentId]) => parentId === 'principales'),
@@ -912,7 +912,7 @@ export default function MenuPage() {
     }
 
 
-    // Para cualquier otra categoría, buscar subcategorías dinámicas
+    // Para cualquier otra categor├¡a, buscar subcategor├¡as din├ímicas
     const dynamicSubcategories = sortSubcategories(
       Object.entries(subcategoryMapping)
         .filter(([subcatId, parentId]) => parentId === categoryName),
@@ -940,15 +940,15 @@ export default function MenuPage() {
       return renderSubcategoryWithChildren(subcatId, subcatData || [], subcatName, categoryName)
     })
 
-    // Obtener productos directos de la categoría principal
+    // Obtener productos directos de la categor├¡a principal
     const categoryData = (customCategories as any)[categoryName] ?? (menuData as any)?.[categoryName]
     const directProducts = Array.isArray(categoryData) ? categoryData : []
 
-    // Si hay productos directos o subcategorías, renderizarlos
+    // Si hay productos directos o subcategor├¡as, renderizarlos
     if (directProducts.length > 0 || dynamicSubcategories.length > 0) {
       return (
         <>
-          {/* Mostrar productos directos de la categoría principal primero */}
+          {/* Mostrar productos directos de la categor├¡a principal primero */}
           {directProducts.length > 0 && (
             <>
               {directProducts.map((item: any, index: number) => (
@@ -956,7 +956,7 @@ export default function MenuPage() {
               ))}
             </>
           )}
-          {/* Luego mostrar las subcategorías */}
+          {/* Luego mostrar las subcategor├¡as */}
           {dynamicSubcategories}
         </>
       )
@@ -965,12 +965,12 @@ export default function MenuPage() {
     return null;
   };
 
-  // Función para hacer scroll a la primera categoría visible (iOS compatible)
+  // Funci├│n para hacer scroll a la primera categor├¡a visible (iOS compatible)
   const scrollToFirstVisibleCategory = () => {
-    console.log('🎬 VER MENÚ clickeado')
+    console.log('­ƒÄ¼ VER MENÚ clickeado')
 
     if (!visibleCategories || Object.keys(visibleCategories).length === 0) {
-      console.warn('⚠️ No hay categorías visibles')
+      console.warn('ÔÜá´©Å No hay categor├¡as visibles')
       return
     }
 
@@ -978,11 +978,11 @@ export default function MenuPage() {
       .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
       .map(([key]) => key)
 
-    console.log('📋 Categorías disponibles:', sortedCategories)
+    console.log('­ƒôï Categor├¡as disponibles:', sortedCategories)
 
     if (sortedCategories.length > 0) {
       const firstCategory = sortedCategories[0]
-      console.log('🎯 Navegando a primera categoría:', firstCategory)
+      console.log('­ƒÄ» Navegando a primera categor├¡a:', firstCategory)
       handleCategoryClick(firstCategory)
     }
   }
@@ -991,16 +991,16 @@ export default function MenuPage() {
     <>
       <CobraLoadingScreen isLoading={loading} />
       <div className="cobra-snake-bg menu-page">
-        {/* Fondo móvil - elemento real para mejor compatibilidad con iOS Safari */}
+        {/* Fondo m├│vil - elemento real para mejor compatibilidad con iOS Safari */}
         <div className="cobra-snake-bg-mobile-overlay-wrapper">
           <div className="cobra-snake-bg-mobile-overlay" aria-hidden="true"></div>
         </div>
-        {/* Carátula full-screen minimalista */}
+        {/* Car├ítula full-screen minimalista */}
         <header className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden pt-8 sm:pt-12">
 
           {/* Contenido centrado */}
           <div className="relative z-10 text-center px-4 sm:px-6 -mt-16 sm:-mt-20">
-            {/* Logo y Año juntos, más cerca de los chefs */}
+            {/* Logo y A├▒o juntos, m├ís cerca de los chefs */}
             <div className="flex flex-col items-center mb-3">
               <img
                 src="/Logo cobra NEGRO.png"
@@ -1016,11 +1016,11 @@ export default function MenuPage() {
               </p>
             </div>
 
-            {/* Sección de chefs */}
+            {/* Sección de chefs - OCULTA
             <div className="mb-4 sm:mb-5">
               <h2
                 className="bebas-title font-bold"
-                style={{ color: "#000", letterSpacing: "-1px", fontSize: "20px" }} // negro
+                style={{ color: "#000", letterSpacing: "-1px", fontSize: "20px" }}
               >
                 <b>Chefs:</b>
               </h2>
@@ -1032,25 +1032,26 @@ export default function MenuPage() {
                   Agustin Perez
                 </p>
               </div>
+            </div>
+            */}
 
-              {/* Iconos de categorías dietéticas */}
-              <div className="flex items-center justify-center gap-3 sm:gap-4 text-xs opacity-60">
-                <div className="flex items-center justify-center gap-1">
-                  <Leaf className="w-3 h-3 text-green" />
-                  <span className="podium-text text-gray-400">Vegano</span>
-                </div>
-                <div className="flex items-center justify-center gap-1">
-                  <Wheat className="w-3 h-3 text-gold" />
-                  <span className="podium-text text-gray-400">Sin TACC</span>
-                </div>
-                <div className="flex items-center justify-center gap-1">
-                  <Flame className="w-3 h-3 text-coral" />
-                  <span className="podium-text text-gray-400">Picante</span>
-                </div>
+            {/* Iconos de categorías dietéticas */}
+            <div className="flex items-center justify-center gap-5 sm:gap-7 text-sm opacity-80 mt-2">
+              <div className="flex items-center justify-center gap-2">
+                <Leaf className="w-5 h-5 text-green" />
+                <span className="podium-text text-gray-400">Vegano</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Wheat className="w-5 h-5 text-gold" />
+                <span className="podium-text text-gray-400">Sin TACC</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Flame className="w-5 h-5 text-coral" />
+                <span className="podium-text text-gray-400">Picante</span>
               </div>
             </div>
 
-            {/* Sección de logos - Carrusel infinito */}
+            {/* Secci├│n de logos - Carrusel infinito */}
             <div className="flex items-center justify-center my-18 sm:my-20">
               <div className="logos-carousel-container-large">
                 <div className="logos-carousel-large">
@@ -1091,11 +1092,11 @@ export default function MenuPage() {
               className="graffiti-arrow-container cursor-pointer hover:opacity-80 transition-opacity duration-300"
               onTouchEnd={() => {
                 // No usar preventDefault para que funcione en iOS
-                console.log('👆 Touch en VER MENÚ')
+                console.log('­ƒæå Touch en VER MENÚ')
                 scrollToFirstVisibleCategory()
               }}
               onClick={() => {
-                console.log('🖱️ Click en VER MENÚ')
+                console.log('­ƒû▒´©Å Click en VER MENÚ')
                 scrollToFirstVisibleCategory()
               }}
               type="button"
@@ -1113,7 +1114,7 @@ export default function MenuPage() {
           </div>
         </header>
 
-        {/* Contenido del menú */}
+        {/* Contenido del men├║ */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
 
           <div className="sticky top-0 z-50 mobile-tabs mb-6 lg:hidden">
@@ -1130,11 +1131,11 @@ export default function MenuPage() {
                     onTouchEnd={(e) => {
                       e.currentTarget.style.opacity = '1'
                       // No usar preventDefault para que funcione en iOS
-                      console.log('👆 Touch END en categoría:', key)
+                      console.log('­ƒæå Touch END en categor├¡a:', key)
                       handleCategoryClick(key)
                     }}
                     onClick={() => {
-                      console.log('🖱️ Click en categoría:', key)
+                      console.log('­ƒû▒´©Å Click en categor├¡a:', key)
                       handleCategoryClick(key)
                     }}
                     className={`flex-shrink-0 bebas-title-category-bar category-button ${activeCategory === key ? "active" : ""
