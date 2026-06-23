@@ -85,20 +85,7 @@ export default function CartaPage() {
                 <p className="carta-description">Con cheddar, bacon y verdeo.</p>
               </div>
 
-              <div className="carta-item">
-                <h3 className="bebas-title">Croquetas de jamón crudo</h3>
-                <p className="carta-description">Con alioli de albahaca.</p>
-              </div>
 
-              <div className="carta-item">
-                <h3 className="bebas-title">Croquetas de hongos</h3>
-                <p className="carta-description">Con salsa teriyaki y romesco.</p>
-              </div>
-
-              <div className="carta-item">
-                <h3 className="bebas-title">Burrata</h3>
-                <p className="carta-description">Con jamón crudo, tostadas y manteca cítrica.</p>
-              </div>
 
               <div className="carta-item">
                 <h3 className="bebas-title">Rabas</h3>
@@ -130,10 +117,7 @@ export default function CartaPage() {
                 <p className="carta-description">Con alioli de morrón.</p>
               </div>
 
-              <div className="carta-item">
-                <h3 className="bebas-title">Provoleta</h3>
-                <p className="carta-description">Con pesto y morrones asados en conserva.</p>
-              </div>
+
             </section>
 
             {/* HAMBURGUESAS */}
@@ -151,15 +135,7 @@ export default function CartaPage() {
                 <p className="carta-description">Con salsa estilo doble cuarto de libra.</p>
               </div>
 
-              <div className="carta-item">
-                <h3 className="bebas-title">Provo Cobra</h3>
-                <p className="carta-description">Con provoleta y morrones en conserva.</p>
-              </div>
 
-              <div className="carta-item">
-                <h3 className="bebas-title">Vegan</h3>
-                <p className="carta-description">Pan de remolacha, medallón de lentejas, lechuga, tomate y ketchup de remolacha.</p>
-              </div>
             </section>
 
             {/* ENSALADAS */}
@@ -182,6 +158,18 @@ export default function CartaPage() {
                 <p className="carta-description">Mix de verdes, cherry, hongos asados, pickle de cebolla morada y pepino, palta y vinagreta de limón con semillas.</p>
               </div>
             </section>
+
+            {/* QR CODE - Columna izquierda hoja 1 */}
+            <div style={{ textAlign: 'center', marginTop: '4px' }}>
+              <p style={{ fontSize: '0.9em', fontStyle: 'italic', color: '#666', fontWeight: 300, marginBottom: 0 }}>Escaneando este QR podés ver nuestros tragos de autor</p>
+            </div>
+            <div className="carta-qr-container">
+              <img
+                src="/qr-cobra.png"
+                alt="QR Code Cobra"
+                className="carta-qr-image"
+              />
+            </div>
           </div>
 
           {/* COLUMNA DERECHA */}
@@ -262,20 +250,7 @@ export default function CartaPage() {
                 <p className="carta-description">Con salsa de tomate, muzzarella, jamón y orégano.</p>
               </div>
 
-              <div className="carta-item">
-                <h3 className="bebas-title">Francesa</h3>
-                <p className="carta-description">Con queso azul y cebolla caramelizada.</p>
-              </div>
 
-              <div className="carta-item">
-                <h3 className="bebas-title">Mexicana</h3>
-                <p className="carta-description">Con guacamole y muzzarella.</p>
-              </div>
-
-              <div className="carta-item">
-                <h3 className="bebas-title">Suiza</h3>
-                <p className="carta-description">Con muzzarella, provoleta y parmesano.</p>
-              </div>
             </section>
 
             {/* PRINCIPALES */}
@@ -304,18 +279,6 @@ export default function CartaPage() {
               </div>
             </section>
 
-            {/* QR CODE - Igual que hoja 2 pero adaptado al espacio */}
-            <div style={{ textAlign: 'center', marginTop: '4px' }}>
-              <p style={{ fontSize: '0.7em', fontStyle: 'italic', color: '#666', fontWeight: 300, marginBottom: '4px' }}>Escaneando este QR podés ver nuestros tragos de autor</p>
-              <div className="carta-qr-container" style={{ marginBottom: '0', padding: '0' }}>
-                <img
-                  src="/qr-cobra.png"
-                  alt="QR Code Cobra"
-                  className="carta-qr-image"
-                  style={{ maxWidth: '200px' }}
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -537,19 +500,30 @@ export default function CartaPage() {
 
               <div className="carta-subcategory">
                 <h4 className="bebas-title">Tiradas</h4>
-                <p style={{ fontSize: '0.85em', color: '#666', marginBottom: '4px' }}>Pinta o Media Pinta</p>
-                <div style={{ marginBottom: '8px' }}>
-                  <p>Patagonia</p>
-                  <p style={{ fontSize: '0.8em', fontStyle: 'italic', fontWeight: 300, marginLeft: '8px' }}>Amber Lager / Lager del Sur / 24.7</p>
+                <p className="carta-description" style={{ marginBottom: '4px' }}>Pinta o Media Pinta</p>
+                <div className="carta-item-simple">
+                  <h3 className="bebas-title">Patagonia</h3>
                 </div>
-                <p>Stella Artois</p>
+                <p className="carta-description" style={{ marginLeft: '4px', marginBottom: '6px' }}>Amber Lager · Lager del Sur · 24.7</p>
+                <div className="carta-item-simple">
+                  <h3 className="bebas-title">Stella Artois</h3>
+                </div>
               </div>
 
               <div className="carta-subcategory">
                 <h4 className="bebas-title">Porrones</h4>
-                <p>Stella Artois 330cc</p>
-                <p>Corona 330cc</p>
-                <p>Michelob Ultra 275cc</p>
+                <div className="carta-item-simple">
+                  <h3 className="bebas-title">Stella Artois</h3>
+                </div>
+                <p className="carta-description" style={{ marginLeft: '4px', marginBottom: '4px' }}>330cc</p>
+                <div className="carta-item-simple">
+                  <h3 className="bebas-title">Corona</h3>
+                </div>
+                <p className="carta-description" style={{ marginLeft: '4px', marginBottom: '4px' }}>330cc</p>
+                <div className="carta-item-simple">
+                  <h3 className="bebas-title">Michelob Ultra</h3>
+                </div>
+                <p className="carta-description" style={{ marginLeft: '4px' }}>275cc</p>
               </div>
             </section>
 

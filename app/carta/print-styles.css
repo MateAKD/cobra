@@ -134,14 +134,12 @@
 }
 
 .carta-main-title {
-  font-family: "Podium Sharp 411", sans-serif;
+  font-family: var(--font-main), sans-serif;
   font-size: 15pt;
-  /* Reducido 1pt */
   font-weight: 700;
   color: #C35C3C;
   margin: 0;
   letter-spacing: 1.4px;
-  /* Reducido levemente */
   text-transform: uppercase;
 }
 
@@ -221,8 +219,8 @@
 .carta-category {
   border: 1px solid #AEAEAE;
   border-radius: 10px;
-  padding: 0.6rem;
-  margin: 0.45rem 0;
+  padding: 0.9rem;
+  margin: 0.6rem 0;
   background: transparent;
   position: relative;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
@@ -238,76 +236,67 @@
 }
 
 .carta-category-title {
-  font-family: "Podium Sharp 411", sans-serif;
+  font-family: var(--font-main), sans-serif;
   font-weight: 700;
-  font-size: 25px;
-  /* Reducido 1px */
-  line-height: 21px;
-  /* Reducido 1px */
-  letter-spacing: 1.15px;
-  /* Reducido levemente */
+  font-size: 30px;
+  line-height: 26px;
+  letter-spacing: 1.3px;
   color: #C35C3C;
   text-transform: uppercase;
-  margin-bottom: 0.23rem;
-  /* Reducido levemente */
+  margin-bottom: 0.3rem;
 }
 
 .carta-divider {
   height: 2.4px;
-  /* Reducido levemente */
-  margin: 0.18rem 0 0.55rem 0;
-  /* Reducido levemente */
+  margin: 0.25rem 0 0.7rem 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 4' preserveAspectRatio='none'><path d='M1 2c8-1 16 1 24 0s16-2 24-1 16 3 24 1 16-2 24 0' fill='none' stroke='%23C35C3C' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' opacity='0.95'/></svg>");
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  width: 105px;
-  /* Reducido levemente */
+  width: 120px;
   max-width: 70%;
 }
 
 /* ===== ITEMS ===== */
 
 .carta-item {
-  margin-bottom: 0.25rem;
-  padding: 0.12rem 0;
+  margin-bottom: 0.45rem;
+  padding: 0.18rem 0;
   break-inside: avoid;
 }
 
 .carta-item h3 {
-  font-family: var(--font-gotham), sans-serif;
-  font-size: 13.5px;
-  color: #000000;
-  margin-bottom: 0.09rem;
-  line-height: 1.08;
+  font-family: var(--font-secondary), var(--font-gotham), sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #231F20;
+  margin-bottom: 0.12rem;
+  line-height: 1.1;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .carta-description {
   font-family: var(--font-gotham), sans-serif;
   font-weight: 300;
-  font-size: 9.8px;
-  line-height: 1.32;
+  font-size: 11.5px;
+  line-height: 1.4;
   color: #775729;
   margin: 0;
 }
 
 .carta-item-simple {
-  margin-bottom: 0.23rem;
-  /* Reducido levemente */
-  padding: 0.13rem 0;
-  /* Reducido levemente */
+  margin-bottom: 0.35rem;
+  padding: 0.18rem 0;
   break-inside: avoid;
 }
 
 .carta-item-simple h3 {
-  font-family: var(--font-gotham), sans-serif;
-  font-size: 11.5px;
-  color: #000000;
+  font-family: var(--font-secondary), var(--font-gotham), sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #231F20;
   margin: 0;
-  line-height: 1.12;
+  line-height: 1.15;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 /* ===== SUBCATEGORÍAS ===== */
@@ -337,19 +326,14 @@
 }
 
 .carta-subcategory h4 {
-  font-family: "Podium Sharp 411", sans-serif;
-  font-weight: 400;
-  font-size: 14.5px;
-  /* Reducido 0.5px */
-  line-height: 13.5px;
-  /* Reducido 0.5px */
-  letter-spacing: 0.75px;
-  /* Reducido levemente */
+  font-family: var(--font-main), sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 15px;
+  letter-spacing: 0.85px;
   color: #000000;
-  /* Negro para subcategorías */
   text-transform: uppercase;
-  margin-bottom: 0.18rem;
-  /* Reducido levemente */
+  margin-bottom: 0.25rem;
 }
 
 .carta-subcategory p {
@@ -383,13 +367,13 @@
 }
 
 .carta-item-with-price h3 {
-  font-family: var(--font-gotham), sans-serif;
+  font-family: var(--font-secondary), var(--font-gotham), sans-serif;
+  font-weight: 700;
   font-size: 13.5px;
-  color: #000000;
+  color: #231F20;
   margin: 0;
   line-height: 1.08;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
   flex: 1;
 }
 

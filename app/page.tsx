@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { MapPin, Calendar, Phone, ChevronRight } from "lucide-react"
+import { Cake, Calendar, Phone, ChevronRight } from "lucide-react"
 
 export default function HomePage() {
   return (
@@ -46,25 +46,9 @@ export default function HomePage() {
               </div>
             </Link>
 
-            {/* Botón ¿Cómo llegar? */}
-            <a
-              href="https://maps.app.goo.gl/hm41Y1D2AyMAVe9U7"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <div className="bg-transparent rounded-2xl shadow-sm border border-gray-200 py-3 sm:py-4 px-4 sm:px-5 flex items-center justify-between hover:bg-gray-100/20 transition-colors cursor-pointer min-h-[56px] sm:min-h-[64px]">
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 sm:w-6 h-5 sm:h-6 text-gray-700" />
-                  <span className="text-base sm:text-lg font-medium text-gray-900">¿Cómo llegar?</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </div>
-            </a>
-
             {/* Botón Reservas */}
             <a
-              href="https://wa.me/5491159919880?text=Hola,%20quiero%20hacer%20una%20reserva%20para%20el%20día..."
+              href="https://www.wokiapp.com/reservas/cobra-bar-"
               target="_blank"
               rel="noopener noreferrer"
               className="block"
@@ -78,7 +62,23 @@ export default function HomePage() {
               </div>
             </a>
 
-            {/* Botón Eventos */}
+            {/* Botón Festeja tu cumple */}
+            <a
+              href="https://www.wokiapp.com/reservas/cobra-bar-"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <div className="bg-transparent rounded-2xl shadow-sm border border-gray-200 py-3 sm:py-4 px-4 sm:px-5 flex items-center justify-between hover:bg-gray-100/20 transition-colors cursor-pointer min-h-[56px] sm:min-h-[64px]">
+                <div className="flex items-center gap-3">
+                  <Cake className="w-5 sm:w-6 h-5 sm:h-6 text-gray-700" />
+                  <span className="text-base sm:text-lg font-medium text-gray-900">Festeja tu cumple</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+            </a>
+
+            {/* Botón Eventos Corporativos */}
             <a
               href="/PPT_COBRA.pdf"
               download="Eventos Cobra.pdf"
@@ -87,7 +87,7 @@ export default function HomePage() {
               <div className="bg-transparent rounded-2xl shadow-sm border border-gray-200 py-3 sm:py-4 px-4 sm:px-5 flex items-center justify-between hover:bg-gray-100/20 transition-colors cursor-pointer min-h-[56px] sm:min-h-[64px]">
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 sm:w-6 h-5 sm:h-6 text-gray-700" />
-                  <span className="text-base sm:text-lg font-medium text-gray-900">Eventos</span>
+                  <span className="text-base sm:text-lg font-medium text-gray-900">Eventos corporativos</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </div>
