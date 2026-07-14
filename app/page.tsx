@@ -48,7 +48,7 @@ export default function HomePage() {
 
             {/* Botón Reservas */}
             <a
-              href="https://www.wokiapp.com/reservas/cobra-bar-"
+              href="https://cobrabar.wokiapp.com"
               target="_blank"
               rel="noopener noreferrer"
               className="block"
@@ -64,7 +64,7 @@ export default function HomePage() {
 
             {/* Botón Festeja tu cumple */}
             <a
-              href="https://www.wokiapp.com/reservas/cobra-bar-"
+              href="https://cobrabar.wokiapp.com"
               target="_blank"
               rel="noopener noreferrer"
               className="block"
