@@ -800,6 +800,25 @@ export default function AdminPanel() {
       setSaving(true)
       setNotificationStatus("Agregando producto...")
 
+      // Determinar categoryId y section para el schema Zod (requeridos)
+      let dbCategoryId = section
+      let dbSection = "menu"
+
+      if (section.startsWith("vinos-")) {
+        dbSection = "vinos"
+        dbCategoryId = section.split("-").slice(1).join("-")
+      } else if (section.startsWith("promociones-")) {
+        dbSection = "promociones"
+        dbCategoryId = section.split("-").slice(1).join("-")
+      }
+
+      // Enriquecer el payload con los campos requeridos por ProductCreateSchema
+      const payload = {
+        ...newItem,
+        categoryId: newItem.categoryId || dbCategoryId,
+        section: newItem.section || dbSection,
+      }
+
       // Agregar en el servidor
       const response = await fetch(`/api/menu/${section}/new`, {
         method: "POST",
@@ -807,11 +826,12 @@ export default function AdminPanel() {
           "Content-Type": "application/json",
           "Authorization": getAuthHeader()
         },
-        body: JSON.stringify(newItem),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
-        throw new Error("Error al agregar el elemento")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Error ${response.status} al agregar el elemento`)
       }
 
       const result = await response.json()
